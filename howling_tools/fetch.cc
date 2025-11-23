@@ -14,11 +14,9 @@
 #include "api/schwab.h"
 #include "containers/vector.h"
 #include "data/stock.pb.h"
-#include "google/protobuf/duration.pb.h"
 #include "google/protobuf/text_format.h"
-#include "google/protobuf/timestamp.pb.h"
-#include "google/protobuf/util/time_util.h"
 #include "howling_tools/init.h"
+#include "time/conversion.h"
 
 ABSL_FLAG(std::string, stock, "", "Stock symbol to fetch.");
 ABSL_FLAG(
@@ -40,32 +38,8 @@ ABSL_FLAG(
 namespace howling {
 namespace {
 
-using ::google::protobuf::Duration;
 using ::google::protobuf::TextFormat;
-using ::google::protobuf::Timestamp;
-using ::google::protobuf::util::TimeUtil;
 using ::std::chrono::system_clock;
-
-char to_upper(char c) { return std::toupper(c); }
-
-system_clock::time_point to_std_chrono(absl::Time time) {
-  using namespace ::std::chrono;
-  return absl::ToChronoTime(time);
-}
-
-auto to_std_chrono(absl::Duration duration) {
-  return absl::ToChronoMicroseconds(duration);
-}
-
-Timestamp to_proto(system_clock::time_point time) {
-  using namespace ::std::chrono;
-  return TimeUtil::MicrosecondsToTimestamp(
-      duration_cast<microseconds>(time.time_since_epoch()).count());
-}
-
-Duration to_proto(absl::Duration duration) {
-  return TimeUtil::MicrosecondsToDuration(absl::ToInt64Microseconds(duration));
-}
 
 bool has_started_at() {
   return absl::GetFlag(FLAGS_start) != absl::UniversalEpoch();
