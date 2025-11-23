@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/bazel-bin",
+                "${workspaceFolder}/bazel-bin/**",
+                "${workspaceFolder}/bazel-howling-trader/external/*/include",
+                "${workspaceFolder}/bazel-howling-trader/external/*/src",
+                "${workspaceFolder}/bazel-howling-trader/external/*/*"
+            ],
+            "recursiveIncludes": {
+                "reduce": "never"
+            },
+            "defines": [],
+            "cStandard": "c23",
+            "intelliSenseMode": "linux-gcc-x64",
+            "cppStandard": "c++23"
+        }
+    ],
+    "version": 4
+}

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+package howling;
+
+message Candle {
+  double open = 1;
+  double close = 2;
+  double high = 3;
+  double low = 4;
+  int64 volume = 5;
+  google.protobuf.Timestamp opened_at = 6;
+  google.protobuf.Duration duration = 7;
+}

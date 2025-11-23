@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "data/candle.proto";
+
+package howling.stock;
+
+enum Symbol {
+  SYMBOL_UNSPECIFIED = 0;
+  NVDA = 1;
+}
+
+message History {
+  Symbol symbol = 1;
+  google.protobuf.Timestamp started_at = 2;
+  google.protobuf.Duration duration = 3;
+  repeated Candle candles = 4;
+}
