@@ -2,6 +2,12 @@ load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
+filegroup(
+    name = "history",
+    data = glob(["history/**/*.textproto"]),
+    visibility = ["//visibility:public"],
+)
+
 cc_library(
     name = "analyzer",
     srcs = ["analyzer.cc"],

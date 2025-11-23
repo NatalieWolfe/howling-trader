@@ -48,3 +48,22 @@ cc_library(
     hdrs = ["runfiles_init.h"],
     deps = [":runfiles"],
 )
+
+cc_binary(
+    name = "visualize",
+    srcs = ["visualize.cc"],
+    data = ["//data:history"],
+    deps = [
+        ":init",
+        ":runfiles",
+        "//cli:printing",
+        "//data:candle_cc_proto",
+        "//data:stock_cc_proto",
+        "//strings:format",
+        "//time:conversion",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/time",
+        "@protobuf",
+    ],
+)
