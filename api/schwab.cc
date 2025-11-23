@@ -68,14 +68,14 @@ public:
       : _stream{std::move(stream)},
         _code_callback{std::forward<Callback>(callback)} {}
 
-  // Initiate the asynchronous operations associated with the connection.
+  /** Reads the incoming request and initiates a deadline timer. */
   void start() {
     _read_request();
-    _check_deadline();
+    _schedule_deadline();
   }
 
 private:
-  // Asynchronously receive a complete request message.
+  /** Read the entire request into the buffer. */
   void _read_request() {
     beast::http::async_read(
         *_stream,
@@ -86,20 +86,17 @@ private:
         });
   }
 
-  // Determine what needs to be done with the request message.
   void _process_request() {
     _response.version(_request.version());
     _response.keep_alive(false);
 
     switch (_request.method()) {
       case beast::http::verb::get:
-        _response.result(beast::http::status::ok);
         _process_get();
         break;
 
       default:
-        // We return responses indicating an error if
-        // we do not recognize the request method.
+        // Only GET supported.
         _response.result(beast::http::status::bad_request);
         _response.set(beast::http::field::content_type, "text/plain");
         beast::ostream(_response.body())
@@ -110,8 +107,8 @@ private:
     _write_response();
   }
 
-  // Construct a response message based on the program state.
   void _process_get() {
+    // Only requests to the callback URI are supported.
     urls::url_view url_view{_request.target()};
     if (url_view.path() != "/schwab/oauth-callback") {
       _response.result(beast::http::status::not_found);
@@ -120,6 +117,7 @@ private:
       return;
     }
 
+    // Must contain the authorization code as a URL parameter.
     auto code_itr = url_view.params().find("code");
     if (code_itr == url_view.params().end() || (*code_itr).value.empty()) {
       _response.result(beast::http::status::bad_request);
@@ -133,13 +131,14 @@ private:
     beast::ostream(_response.body()) << "You may now close this window.\n";
     // TODO: Make the window self-closing.
 
+    // Send the authorization code to the callback so the OAuth sequence can
+    // continue.
     _stream->get_executor().execute(
         [self = shared_from_this(), code = (*code_itr).value]() {
           self->_code_callback(code);
         });
   }
 
-  // Asynchronously transmit the response message.
   void _write_response() {
     _response.set(
         beast::http::field::content_length,
@@ -154,41 +153,30 @@ private:
         });
   }
 
-  // Check whether we have spent enough time on this connection.
-  void _check_deadline() {
+  /** Starts a deadline timer running. */
+  void _schedule_deadline() {
     _deadline.async_wait([self = shared_from_this()](beast::error_code ec) {
-      if (!ec) {
-        // Close socket to cancel any outstanding operation.
-        self->_stream->next_layer().close(ec);
-      }
+      if (!ec) self->_stream->next_layer().close(ec);
     });
   }
 
-  // The socket for the currently connected client.
   std::shared_ptr<ssl_socket> _stream;
-
-  // The buffer for performing reads.
   beast::flat_buffer _buffer{8192};
-
-  // The request message.
   http_request _request;
-
-  // The response message.
   http_response _response;
-
-  // The timer for putting a deadline on connection processing.
   boost::asio::basic_waitable_timer<std::chrono::steady_clock> _deadline{
       _stream->get_executor(), std::chrono::seconds(60)};
-
   std::function<void(std::string)> _code_callback;
 };
 
+/** Returns the path to the cache folder for the current user. */
 fs::path get_user_cache_folder() {
   static const fs::path cache_path =
       fs::path{getenv("HOME")} / ".cache" / "howling-trader";
   return cache_path;
 }
 
+/** Checks that all the required flags are set. */
 void check_schwab_flags() {
   if (absl::GetFlag(FLAGS_schwab_api_host).empty()) {
     throw std::runtime_error("--schwab_api_host flag is required.");
@@ -258,9 +246,9 @@ Json::Value send_oauth_request(
       .service = "https",
       .host = absl::GetFlag(FLAGS_schwab_api_host),
       .target = "/v1/oauth/token"};
-
   LOG(INFO) << "POST " << oauth_url.target;
 
+  // Initialize request with authorization headers.
   using http_headers = ::boost::beast::http::field;
   beast::http::request<beast::http::string_body> req{
       beast::http::verb::post,
@@ -278,6 +266,7 @@ Json::Value send_oauth_request(
                   absl::GetFlag(FLAGS_schwab_api_key_secret)))));
   req.set(http_headers::accept, "application/json");
 
+  // Construct the request body as URL-encoded parameters.
   urls::url body;
   if (params.code) {
     body.params().append({"grant_type", "authorization_code"});
@@ -294,13 +283,14 @@ Json::Value send_oauth_request(
   req.set(http_headers::content_type, "application/x-www-form-urlencoded");
   req.body() = body.query();
 
+  // Send the request, read the response.
   beast::http::write(conn->stream(), req);
   beast::flat_buffer buffer;
   http_response res;
   beast::http::read(conn->stream(), buffer, res);
 
+  // Throw on error.
   LOG(INFO) << res.result_int() << " " << res.reason();
-
   if (res.result_int() != 200) {
     LOG(ERROR) << beast::buffers_to_string(res.body().data());
     throw std::runtime_error(
@@ -310,9 +300,9 @@ Json::Value send_oauth_request(
             " ",
             std::string_view{res.reason()}));
   }
-
   LOG(INFO) << "response(" << res.body().size() << " bytes)";
 
+  // Stash the refresh token to disk if available.
   // TODO: Encrypt the refresh token on disk.
   Json::Value root = to_json(res);
   const Json::Value* next_refresh_token = root.find("refresh_token");
@@ -326,6 +316,7 @@ Json::Value send_oauth_request(
   return root;
 }
 
+/** Attempts to refresh authorization using the token stored to disk. */
 std::optional<Json::Value>
 refresh_token(const std::unique_ptr<net::connection>& conn) {
   fs::path refresh_token_path =
@@ -355,12 +346,19 @@ refresh_token(const std::unique_ptr<net::connection>& conn) {
   return std::nullopt;
 }
 
+/** Runs a new oauth sequence with the user by opening the browser. */
 Json::Value execute_oauth(const std::unique_ptr<net::connection>& conn) {
+  // Run an HTTPS server in another thread which will listen for the OAuth
+  // callback with the authentication code to be exchanged for the bearer token.
   std::string auth_code;
   std::jthread server_thread{[&]() {
+    // localhost:15986
     asio::ip::address address = asio::ip::make_address("0.0.0.0");
     unsigned short port = 15986;
 
+    // Configure the SSL context using the pre-packaged self-signed certs. The
+    // browser will reject these certs initially, so it will be necessary to
+    // type `thisisunsafe` at least once.
     asio::ssl::context ssl_context{asio::ssl::context::tlsv13};
     ssl_context.set_options(
         asio::ssl::context::default_workarounds | asio::ssl::context::no_sslv2 |
@@ -371,8 +369,9 @@ Json::Value execute_oauth(const std::unique_ptr<net::connection>& conn) {
         runfile("howling-trader/net/local.wolfe.dev.key"),
         asio::ssl::context::pem);
 
+    // On new connection, run the SSL handshake sequence and then pass the
+    // socket over to the `http_connection` class to manage the request.
     asio::io_context io_context{/*concurrency_hint=*/1};
-
     asio::ip::tcp::acceptor acceptor{io_context, {address, port}};
     std::function<void()> do_accept;
     do_accept = [&]() {
@@ -410,6 +409,8 @@ Json::Value execute_oauth(const std::unique_ptr<net::connection>& conn) {
     io_context.run();
   }};
 
+  // Now that the server is running, open up the browser to the Schwab auth
+  // page.
   urls::url url;
   url.set_scheme("https");
   url.set_host(absl::GetFlag(FLAGS_schwab_api_host));
@@ -425,7 +426,8 @@ Json::Value execute_oauth(const std::unique_ptr<net::connection>& conn) {
     throw std::runtime_error("Failed to open browser to Schwab OAuth flow.");
   }
 
-  // Server will shut down once the code is retrieved.
+  // Server will shut down once the code is retrieved, so we can use the thread
+  // as a semaphore for the auth code being set.
   server_thread.join();
   if (auth_code.empty()) {
     throw std::runtime_error("Failed to retrieve authorization from Schwab.");
@@ -433,6 +435,17 @@ Json::Value execute_oauth(const std::unique_ptr<net::connection>& conn) {
   return send_oauth_request(conn, {.code = auth_code});
 }
 
+/**
+ * Returns a bearer token to use for the API.
+ *
+ * In order, this method gets the bearer token from:
+ *  - In-memory cache of the bearer token,
+ *  - Refreshing the token from a disk-cached refresh token, or
+ *  - Executing a fresh OAuth login sequence.
+ *
+ * The latter options will cache the retrieved bearer token in memory upon
+ * success so subsequent calls will be quicker.
+ */
 std::string_view get_bearer_token(
     const std::unique_ptr<net::connection>& conn, bool clear_cache = false) {
   // Check for a cached bearer token in memory.
@@ -445,10 +458,13 @@ std::string_view get_bearer_token(
   }
   if (!cached_token.empty()) return cached_token;
 
-  // Try to refresh the bearer token using a refresh token saved to disk.
+  // Try to refresh the bearer token using a refresh token saved to disk. If
+  // refresh fails, runs a new OAuth sequence.
   std::optional<Json::Value> root = refresh_token(conn);
   if (!root) { root = execute_oauth(conn); }
 
+  // Cache the retrieved token with its expiration. We will refresh the token
+  // early to avoid any clock skew.
   cached_token = (*root)["access_token"].asString();
   cache_expiration = steady_clock::now() +
       seconds((*root)["expires_in"].asInt64()) - minutes(1);
