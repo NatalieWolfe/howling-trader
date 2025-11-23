@@ -8,9 +8,6 @@
 #include <string>
 
 #include "absl/flags/flag.h"
-#include "absl/flags/parse.h"
-#include "absl/log/initialize.h"
-#include "absl/log/log_sink_registry.h"
 #include "absl/strings/str_cat.h"
 #include "absl/time/time.h"
 #include "api/alpaca.h"
@@ -21,8 +18,7 @@
 #include "google/protobuf/text_format.h"
 #include "google/protobuf/timestamp.pb.h"
 #include "google/protobuf/util/time_util.h"
-#include "howling_tools/runfiles_init.h"
-#include "logs/stdout_sink.h"
+#include "howling_tools/init.h"
 
 ABSL_FLAG(std::string, stock, "", "Stock symbol to fetch.");
 ABSL_FLAG(
@@ -85,8 +81,9 @@ system_clock::time_point get_started_at() {
 stock::Symbol get_stock_symbol() {
   std::string stock_name = absl::GetFlag(FLAGS_stock) |
       std::views::transform(to_upper) | std::ranges::to<std::string>();
-  if (stock_name.empty())
+  if (stock_name.empty()) {
     throw std::runtime_error("Must specify --stock flag.");
+  }
   stock::Symbol symbol;
   if (!stock::Symbol_Parse(stock_name, &symbol)) {
     throw std::runtime_error(
@@ -151,11 +148,7 @@ void run_schwab() {
 } // namespace howling
 
 int main(int argc, char** argv) {
-  absl::ParseCommandLine(argc, argv);
-  absl::InitializeLog();
-  howling::StdoutLogSink log_sink;
-  absl::AddLogSink(&log_sink);
-  howling::initialize_runfiles(argv[0]);
+  howling::init(argc, argv);
 
   try {
     if (absl::GetFlag(FLAGS_api) == "alpaca") {

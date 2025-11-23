@@ -4,22 +4,29 @@ cc_binary(
     name = "fetch",
     srcs = ["fetch.cc"],
     deps = [
-        ":runfiles_init",
+        ":init",
         "//api:alpaca",
         "//api:schwab",
         "//containers:vector",
         "//data:candle_cc_proto",
         "//data:stock_cc_proto",
-        "//logs:stdout_sink",
         "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/time",
+        "@protobuf",
+    ],
+)
+
+cc_library(
+    name = "init",
+    srcs = ["init.cc"],
+    hdrs = ["init.h"],
+    deps = [
+        ":runfiles_init",
+        "//logs:stdout_sink",
         "@abseil-cpp//absl/flags:parse",
         "@abseil-cpp//absl/log:flags",
         "@abseil-cpp//absl/log:initialize",
-        "@abseil-cpp//absl/strings",
-        "@protobuf",
-        "@protobuf//:duration_cc_proto",
-        "@protobuf//:time_util",
-        "@protobuf//:timestamp_cc_proto",
     ],
 )
 
