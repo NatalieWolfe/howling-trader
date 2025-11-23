@@ -16,6 +16,7 @@
 #include "data/stock.pb.h"
 #include "google/protobuf/text_format.h"
 #include "howling_tools/init.h"
+#include "strings/format.h"
 #include "time/conversion.h"
 
 ABSL_FLAG(std::string, stock, "", "Stock symbol to fetch.");

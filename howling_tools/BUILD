@@ -10,6 +10,7 @@ cc_binary(
         "//containers:vector",
         "//data:candle_cc_proto",
         "//data:stock_cc_proto",
+        "//strings:format",
         "//time:conversion",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/strings",
