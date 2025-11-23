@@ -9,9 +9,9 @@ filegroup(
 )
 
 cc_library(
-    name = "analyzer",
-    srcs = ["analyzer.cc"],
-    hdrs = ["analyzer.h"],
+    name = "aggregate",
+    srcs = ["aggregate.cc"],
+    hdrs = ["aggregate.h"],
     deps = [
         ":candle_cc_proto",
         "//containers:vector",

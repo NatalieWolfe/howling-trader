@@ -1,4 +1,4 @@
-#include "data/analyzer.h"
+#include "data/aggregate.h"
 
 #include <algorithm>
 #include <span>
@@ -76,7 +76,7 @@ void add_next_window(window& a, const window& b) {
   a.moving_average += b.candle.close();
 }
 
-void aggregate(
+void do_aggregate(
     window& a, double mean, std::span<const Candle> one_minute_candles) {
   a.moving_average = mean;
   double sq_diff_sum = 0;
@@ -91,37 +91,37 @@ void aggregate(
 
 } // namespace
 
-analysis analyze(const howling::vector<Candle>& one_minute_candles) {
-  analysis anal; // :3
+aggregations aggregate(const vector<Candle>& one_minute_candles) {
+  aggregations aggr;
   window five_minute = blank_window();
   window twenty_minute = blank_window();
 
   for (size_t i = 0; i < one_minute_candles.size(); ++i) {
     const Candle& candle = one_minute_candles.at(i);
-    anal.one_minute.push_back(to_window(candle));
+    aggr.one_minute.push_back(to_window(candle));
 
     // TODO: Calculate sequence counters.
 
-    add_next_window(five_minute, anal.one_minute.back());
-    add_next_window(twenty_minute, anal.one_minute.back());
+    add_next_window(five_minute, aggr.one_minute.back());
+    add_next_window(twenty_minute, aggr.one_minute.back());
 
     if (i == 0 || i % 5) continue;
-    aggregate(
+    do_aggregate(
         five_minute,
         five_minute.moving_average / 5.0,
         one_minute_candles.last_n(5));
-    anal.five_minute.push_back(five_minute);
+    aggr.five_minute.push_back(five_minute);
     five_minute = blank_window();
 
     if (i % 20) continue;
-    aggregate(
+    do_aggregate(
         twenty_minute,
         twenty_minute.moving_average / 20.0,
         one_minute_candles.last_n(20));
-    anal.twenty_minute.push_back(twenty_minute);
+    aggr.twenty_minute.push_back(twenty_minute);
     twenty_minute = blank_window();
   }
-  return anal;
+  return aggr;
 }
 
-} // namespace howling
+} // namespace

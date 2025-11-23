@@ -31,12 +31,12 @@ struct window {
   int countdown_counter;
 };
 
-struct analysis {
-  howling::vector<window> one_minute;
-  howling::vector<window> five_minute;
-  howling::vector<window> twenty_minute;
+struct aggregations {
+  vector<window> one_minute;
+  vector<window> five_minute;
+  vector<window> twenty_minute;
 };
 
-analysis analyze(const howling::vector<Candle>& one_minute_candles);
+aggregations aggregate(const vector<Candle>& one_minute_candles);
 
 } // namespace howling
