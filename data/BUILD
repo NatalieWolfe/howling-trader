@@ -12,10 +12,18 @@ cc_library(
     name = "aggregate",
     srcs = ["aggregate.cc"],
     hdrs = ["aggregate.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":candle_cc_proto",
         "//containers:vector",
     ],
+)
+
+cc_library(
+    name = "analyzer",
+    hdrs = ["analyzer.h"],
+    visibility = ["//visibility:public"],
+    deps = [":aggregate"],
 )
 
 proto_library(
