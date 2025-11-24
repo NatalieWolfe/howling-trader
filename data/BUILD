@@ -56,3 +56,14 @@ cc_proto_library(
     visibility = ["//visibility:public"],
     deps = [":stock_proto"],
 )
+
+cc_library(
+    name = "trading_state",
+    srcs = ["trading_state.cc"],
+    hdrs = ["trading_state.h"],
+    deps = [
+        ":aggregate",
+        ":stock_cc_proto",
+        "//containers:vector",
+    ],
+)
