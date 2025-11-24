@@ -23,7 +23,10 @@ cc_library(
     name = "analyzer",
     hdrs = ["analyzer.h"],
     visibility = ["//visibility:public"],
-    deps = [":aggregate"],
+    deps = [
+        ":stock_cc_proto",
+        ":trading_state",
+    ],
 )
 
 proto_library(
@@ -61,6 +64,7 @@ cc_library(
     name = "trading_state",
     srcs = ["trading_state.cc"],
     hdrs = ["trading_state.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":aggregate",
         ":stock_cc_proto",

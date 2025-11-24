@@ -1,6 +1,9 @@
 #pragma once
 
-#include "data/aggregate.h"
+#include <unordered_map>
+
+#include "data/stock.pb.h"
+#include "data/trading_state.h"
 
 namespace howling {
 
@@ -15,8 +18,13 @@ class analyzer {
 public:
   virtual ~analyzer() = default;
 
-  virtual decision analyze(const aggregations& data) = 0;
-  decision operator()(const aggregations& data) { return analyze(data); }
+  virtual std::unordered_map<stock::Symbol, decision>
+  analyze(const trading_state& data) = 0;
+
+  std::unordered_map<stock::Symbol, decision>
+  operator()(const trading_state& data) {
+    return analyze(data);
+  }
 };
 
 } // namespace howling

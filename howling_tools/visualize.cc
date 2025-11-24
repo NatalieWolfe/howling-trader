@@ -20,6 +20,7 @@
 #include "data/analyzers/zig_zag.h"
 #include "data/candle.pb.h"
 #include "data/stock.pb.h"
+#include "data/trading_state.h"
 #include "google/protobuf/text_format.h"
 #include "howling_tools/init.h"
 #include "howling_tools/runfiles.h"
@@ -29,6 +30,11 @@
 ABSL_FLAG(std::string, stock, "", "Stock symbol to visualize.");
 ABSL_FLAG(std::string, date, "", "Day to visualize.");
 ABSL_FLAG(std::string, analyzer, "", "Name of an analyzer to run.");
+ABSL_FLAG(
+    double,
+    initial_funds,
+    200'000,
+    "Available funds at begining of period to visualize.");
 
 namespace howling {
 namespace {
@@ -75,8 +81,7 @@ std::unique_ptr<analyzer> load_analyzer(const stock::History& history) {
   }
   if (anal_name == "zig_zag" || anal_name == "optimal") {
     return std::make_unique<zig_zag_analyzer>(
-        vector<Candle>{history.candles().begin(), history.candles().end()},
-        zig_zag_analyzer::options{.threshold = 0.5});
+        history, zig_zag_analyzer::options{.threshold = 0.5});
   }
   throw std::runtime_error(absl::StrCat("Unknown analyzer: ", anal_name));
 }
@@ -110,11 +115,13 @@ void run() {
     max_close = std::max(max_close, candle.close());
   }
 
+  trading_state state{
+      .initial_funds = absl::GetFlag(FLAGS_initial_funds),
+      .available_funds = absl::GetFlag(FLAGS_initial_funds)};
   vector<Candle> observed;
   int buy_counter = 0;
   int sell_counter = 0;
   double last_buy = std::numeric_limits<double>::max();
-  double profit = 0;
   for (const Candle& candle : history.candles()) {
     using namespace ::std::chrono;
     zoned_time opened_at{current_zone(), to_std_chrono(candle.opened_at())};
@@ -129,17 +136,26 @@ void run() {
     std::cout << print_candle(candle, extents) << " | ";
 
     observed.push_back(candle);
-    decision d = anal->analyze(aggregate(observed));
-    if (d.act == action::BUY) {
+    state.time_now =
+        to_std_chrono(candle.opened_at()) + to_std_chrono(candle.duration());
+    state.market[symbol] = aggregate(observed);
+    std::unordered_map<stock::Symbol, decision> decisions =
+        anal->analyze(state);
+    // TODO: Support quantities and target prices in buy and sell decisions.
+    auto itr = decisions.find(symbol);
+    std::optional<decision> d =
+        itr == decisions.end() ? std::nullopt : std::make_optional(itr->second);
+    if (d && d->act == action::BUY) {
       ++buy_counter;
       last_buy = candle.low();
+      state.available_funds -= last_buy;
       std::cout << colorize(print_price(candle.low()), color::RED) << " - Buy ("
-                << d.confidence << ")";
-    } else if (d.act == action::SELL) {
+                << d->confidence << ")";
+    } else if (d && d->act == action::SELL) {
       ++sell_counter;
-      profit += candle.high() - last_buy;
+      state.available_funds += candle.high();
       std::cout << colorize(print_price(candle.high()), color::GREEN)
-                << " - Sell (" << d.confidence << "; "
+                << " - Sell (" << d->confidence << "; "
                 << print_price(candle.high() - last_buy) << ")";
     } else if (candle.close() == min_close) {
       std::cout << colorize(print_price(candle.close()), color::RED);
@@ -151,6 +167,7 @@ void run() {
     std::cout << '\n';
   }
   if (buy_counter > 0) {
+    double profit = state.available_funds - state.initial_funds;
     std::cout << "\n"
               << "Buys:   " << buy_counter << "\n"
               << "Sells:  " << sell_counter << "\n"

@@ -6,8 +6,9 @@ cc_library(
     name = "noop",
     hdrs = ["noop.h"],
     deps = [
-        "//data:aggregate",
         "//data:analyzer",
+        "//data:stock_cc_proto",
+        "//data:trading_state",
     ],
 )
 
@@ -17,8 +18,9 @@ cc_library(
     hdrs = ["zig_zag.h"],
     deps = [
         "//containers:vector",
-        "//data:aggregate",
         "//data:analyzer",
         "//data:candle_cc_proto",
+        "//data:stock_cc_proto",
+        "//data:trading_state",
     ],
 )
