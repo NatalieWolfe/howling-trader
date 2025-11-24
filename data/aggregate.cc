@@ -76,52 +76,38 @@ void add_next_window(window& a, const window& b) {
   a.moving_average += b.candle.close();
 }
 
-void do_aggregate(
-    window& a, double mean, std::span<const Candle> one_minute_candles) {
-  a.moving_average = mean;
+window do_aggregate(std::span<const Candle> one_minute_candles) {
+  window w = blank_window();
+  for (const Candle& candle : one_minute_candles) {
+    add_next_window(w, to_window(candle));
+  }
+  w.moving_average /= one_minute_candles.size();
   double sq_diff_sum = 0;
   for (const Candle& candle : one_minute_candles) {
-    double diff = candle.close() - mean;
+    double diff = candle.close() - w.moving_average;
     sq_diff_sum += diff * diff;
   }
-  a.stddev = std::sqrt(sq_diff_sum);
-  a.upper_bollinger_band = a.moving_average + (2.0 * a.stddev);
-  a.lower_bollinger_band = a.moving_average - (2.0 * a.stddev);
+  w.stddev = std::sqrt(sq_diff_sum);
+  w.upper_bollinger_band = w.moving_average + (2.0 * w.stddev);
+  w.lower_bollinger_band = w.moving_average - (2.0 * w.stddev);
+
+  return w;
 }
 
 } // namespace
 
 aggregations aggregate(const vector<Candle>& one_minute_candles) {
   aggregations aggr;
-  window five_minute = blank_window();
-  window twenty_minute = blank_window();
 
   for (size_t i = 0; i < one_minute_candles.size(); ++i) {
     const Candle& candle = one_minute_candles.at(i);
     aggr.one_minute.push_back(to_window(candle));
+    aggr.five_minute.push_back(do_aggregate(one_minute_candles.last_n(5)));
+    aggr.twenty_minute.push_back(do_aggregate(one_minute_candles.last_n(20)));
 
     // TODO: Calculate sequence counters.
-
-    add_next_window(five_minute, aggr.one_minute.back());
-    add_next_window(twenty_minute, aggr.one_minute.back());
-
-    if (i == 0 || i % 5) continue;
-    do_aggregate(
-        five_minute,
-        five_minute.moving_average / 5.0,
-        one_minute_candles.last_n(5));
-    aggr.five_minute.push_back(five_minute);
-    five_minute = blank_window();
-
-    if (i % 20) continue;
-    do_aggregate(
-        twenty_minute,
-        twenty_minute.moving_average / 20.0,
-        one_minute_candles.last_n(20));
-    aggr.twenty_minute.push_back(twenty_minute);
-    twenty_minute = blank_window();
   }
   return aggr;
 }
 
-} // namespace
+} // namespace howling

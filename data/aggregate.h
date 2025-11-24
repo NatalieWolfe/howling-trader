@@ -31,6 +31,11 @@ struct window {
   int countdown_counter;
 };
 
+/**
+ * Moving data aggregations over different window sizes.
+ *
+ * All lists of aggregations step forward by 1 minute for each contained window.
+ */
 struct aggregations {
   vector<window> one_minute;
   vector<window> five_minute;
@@ -38,5 +43,7 @@ struct aggregations {
 };
 
 aggregations aggregate(const vector<Candle>& one_minute_candles);
+
+// TODO: Add an accumulating aggregation method.
 
 } // namespace howling
