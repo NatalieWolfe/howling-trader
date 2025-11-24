@@ -14,6 +14,18 @@ cc_library(
 )
 
 cc_library(
+    name = "market_hours",
+    srcs = ["market_hours.cc"],
+    hdrs = ["market_hours.h"],
+    deps = [
+        "//data:analyzer",
+        "//data:stock_cc_proto",
+        "//data:trading_state",
+        "@abseil-cpp//absl/flags:flag",
+    ],
+)
+
+cc_library(
     name = "noop",
     hdrs = ["noop.h"],
     deps = [

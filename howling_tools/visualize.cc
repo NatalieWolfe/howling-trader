@@ -17,6 +17,7 @@
 #include "cli/printing.h"
 #include "data/analyzer.h"
 #include "data/analyzers/bollinger.h"
+#include "data/analyzers/market_hours.h"
 #include "data/analyzers/noop.h"
 #include "data/analyzers/zig_zag.h"
 #include "data/candle.pb.h"
@@ -82,6 +83,9 @@ std::unique_ptr<analyzer> load_analyzer(const stock::History& history) {
   }
   if (anal_name == "bollinger") {
     return std::make_unique<bollinger_analyzer>();
+  }
+  if (anal_name == "market_hours") {
+    return std::make_unique<market_hours_analyzer>();
   }
   if (anal_name == "zig_zag" || anal_name == "optimal") {
     return std::make_unique<zig_zag_analyzer>(
