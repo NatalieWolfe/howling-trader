@@ -21,6 +21,7 @@ cc_library(
 
 cc_library(
     name = "analyzer",
+    srcs = ["analyzer.cc"],
     hdrs = ["analyzer.h"],
     visibility = ["//visibility:public"],
     deps = [

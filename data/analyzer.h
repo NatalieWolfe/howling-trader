@@ -25,6 +25,18 @@ public:
   operator()(const trading_state& data) {
     return analyze(data);
   }
+
+protected:
+  /**
+   * Returns true if there are enough available funds to buy a single share of
+   * the given stock at its current low.
+   */
+  bool can_buy(stock::Symbol symbol, const trading_state& data) const;
+
+  /**
+   * Returns true if any positions of the given stock are currently held.
+   */
+  bool can_sell(stock::Symbol symbol, const trading_state& data) const;
 };
 
 } // namespace howling
