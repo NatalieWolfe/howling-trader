@@ -25,7 +25,7 @@ public:
   }
 
   T& operator()(int64_t i) { return (*this)[i]; }
-  const T& operator()(int64_t i) const { return at(_normalize(i)); }
+  const T& operator()(int64_t i) const { return this->at(_normalize(i)); }
 
   std::span<T> operator()(int64_t start, int64_t end) {
     start = _normalize(start);
