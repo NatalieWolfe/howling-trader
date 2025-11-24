@@ -16,6 +16,7 @@
 #include "cli/colorize.h"
 #include "cli/printing.h"
 #include "data/analyzer.h"
+#include "data/analyzers/bollinger.h"
 #include "data/analyzers/noop.h"
 #include "data/analyzers/zig_zag.h"
 #include "data/candle.pb.h"
@@ -79,6 +80,9 @@ std::unique_ptr<analyzer> load_analyzer(const stock::History& history) {
   if (anal_name.empty() || anal_name == "noop") {
     return std::make_unique<noop_analyzer>();
   }
+  if (anal_name == "bollinger") {
+    return std::make_unique<bollinger_analyzer>();
+  }
   if (anal_name == "zig_zag" || anal_name == "optimal") {
     return std::make_unique<zig_zag_analyzer>(
         history, zig_zag_analyzer::options{.threshold = 0.5});
@@ -116,6 +120,7 @@ void run() {
   }
 
   trading_state state{
+      .available_stocks = vector<stock::Symbol>{{symbol}},
       .initial_funds = absl::GetFlag(FLAGS_initial_funds),
       .available_funds = absl::GetFlag(FLAGS_initial_funds)};
   vector<Candle> observed;
