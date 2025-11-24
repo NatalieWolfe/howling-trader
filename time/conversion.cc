@@ -9,6 +9,8 @@
 
 namespace howling {
 
+using ::google::protobuf::Duration;
+using ::google::protobuf::Timestamp;
 using ::google::protobuf::util::TimeUtil;
 using ::std::chrono::microseconds;
 using ::std::chrono::system_clock;
@@ -17,22 +19,26 @@ system_clock::time_point to_std_chrono(absl::Time time) {
   return absl::ToChronoTime(time);
 }
 
-system_clock::time_point to_std_chrono(google::protobuf::Timestamp time) {
+system_clock::time_point to_std_chrono(const Timestamp& time) {
   return system_clock::time_point{
       microseconds{TimeUtil::TimestampToMicroseconds(time)}};
 }
 
-std::chrono::microseconds to_std_chrono(absl::Duration duration) {
+microseconds to_std_chrono(absl::Duration duration) {
   return absl::ToChronoMicroseconds(duration);
 }
 
-google::protobuf::Timestamp to_proto(system_clock::time_point time) {
+microseconds to_std_chrono(const Duration& duration) {
+  return microseconds{TimeUtil::DurationToMicroseconds(duration)};
+}
+
+Timestamp to_proto(system_clock::time_point time) {
   using namespace ::std::chrono;
   return TimeUtil::MicrosecondsToTimestamp(
       duration_cast<microseconds>(time.time_since_epoch()).count());
 }
 
-google::protobuf::Duration to_proto(absl::Duration duration) {
+Duration to_proto(absl::Duration duration) {
   return TimeUtil::MicrosecondsToDuration(absl::ToInt64Microseconds(duration));
 }
 

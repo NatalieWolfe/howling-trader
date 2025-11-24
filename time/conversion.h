@@ -10,8 +10,11 @@ namespace howling {
 
 std::chrono::system_clock::time_point to_std_chrono(absl::Time time);
 std::chrono::system_clock::time_point
-to_std_chrono(google::protobuf::Timestamp time);
+to_std_chrono(const google::protobuf::Timestamp& time);
+
 std::chrono::microseconds to_std_chrono(absl::Duration duration);
+std::chrono::microseconds
+to_std_chrono(const google::protobuf::Duration& duration);
 
 google::protobuf::Timestamp
 to_proto(std::chrono::system_clock::time_point time);
