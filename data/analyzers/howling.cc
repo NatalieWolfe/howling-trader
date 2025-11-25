@@ -1,6 +1,5 @@
 #include "data/analyzers/howling.h"
 
-#include "absl/log/log.h"
 #include "data/analyzer.h"
 #include "data/stock.pb.h"
 #include "data/trading_state.h"
@@ -24,9 +23,13 @@ void add(
     deciders& sell,
     deciders& hold,
     const decision& new_decision) {
-  if (new_decision.act == action::BUY) add(buy, new_decision);
-  if (new_decision.act == action::SELL) add(sell, new_decision);
-  if (new_decision.act == action::HOLD) add(hold, new_decision);
+  if (new_decision.act == action::BUY) {
+    add(buy, new_decision);
+  } else if (new_decision.act == action::SELL) {
+    add(sell, new_decision);
+  } else if (new_decision.act == action::HOLD) {
+    add(hold, new_decision);
+  }
 }
 
 } // namespace
@@ -43,10 +46,12 @@ howling_analyzer::analyze(stock::Symbol symbol, const trading_state& data) {
   add(buy, sell, hold, market_hours);
   add(buy, sell, hold, _bollinger(symbol, data));
   add(buy, sell, hold, _macd1(symbol, data));
-  // add(buy, sell, hold, _macd5(symbol, data));
 
-  LOG(INFO) << buy.confidence() << " : " << sell.confidence() << " : "
-            << hold.confidence();
+  // TODO: Determine how best to incorporate time-shifted signals. MACD1 cross
+  // happens before MACD5, so the current pattern would issue 2 buys. Looking
+  // at one or the other gives decent results, but is risky because a combined
+  // signal is a stronger signal.
+  // add(buy, sell, hold, _macd5(symbol, data));
 
   if (buy.confidence() > (sell.confidence() + hold.confidence())) {
     return {.act = action::BUY, .confidence = buy.confidence()};

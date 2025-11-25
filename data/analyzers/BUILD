@@ -24,7 +24,6 @@ cc_library(
         "//data:analyzer",
         "//data:stock_cc_proto",
         "//data:trading_state",
-        "@abseil-cpp//absl/log",
     ],
 )
 
