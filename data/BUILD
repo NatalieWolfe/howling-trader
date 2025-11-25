@@ -16,6 +16,7 @@ cc_library(
     deps = [
         ":candle_cc_proto",
         "//containers:vector",
+        "@abseil-cpp//absl/flags:flag",
     ],
 )
 

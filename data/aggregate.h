@@ -21,8 +21,12 @@ struct window {
   double wick_body_ratio;
 
   double moving_average;
-  double stddev;
+  double fast_exponential_average;
+  double slow_exponential_average;
+  double macd_fast_line;
+  double macd_signal_line;
 
+  double stddev;
   double upper_bollinger_band;
   double lower_bollinger_band;
 
