@@ -1,0 +1,21 @@
+#pragma once
+
+#include "data/aggregate.h"
+#include "data/analyzer.h"
+#include "data/stock.pb.h"
+#include "data/trading_state.h"
+
+namespace howling {
+
+class macd_crossover_analyzer : public analyzer {
+public:
+  macd_crossover_analyzer(vector<window> aggregations::* period)
+      : _period{period} {}
+
+  decision analyze(stock::Symbol symbol, const trading_state& data) override;
+
+private:
+  vector<window> aggregations::* _period;
+};
+
+} // namespace howling

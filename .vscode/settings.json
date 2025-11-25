@@ -3,7 +3,8 @@
     "absl",
     "aggr",
     "Bollinger",
-    "jsoncpp"
+    "jsoncpp",
+    "MACD"
   ],
   "files.associations": {
     "string_view": "cpp",

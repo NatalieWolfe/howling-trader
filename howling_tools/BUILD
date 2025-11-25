@@ -62,6 +62,7 @@ cc_binary(
         "//data:candle_cc_proto",
         "//data:stock_cc_proto",
         "//data/analyzers:bollinger",
+        "//data/analyzers:macd",
         "//data/analyzers:market_hours",
         "//data/analyzers:noop",
         "//data/analyzers:zig_zag",

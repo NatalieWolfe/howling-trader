@@ -26,6 +26,20 @@ cc_library(
 )
 
 cc_library(
+    name = "macd",
+    srcs = ["macd.cc"],
+    hdrs = ["macd.h"],
+    deps = [
+        "//containers:vector",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:stock_cc_proto",
+        "//data:trading_state",
+        "@abseil-cpp//absl/flags:flag",
+    ],
+)
+
+cc_library(
     name = "noop",
     hdrs = ["noop.h"],
     deps = [
