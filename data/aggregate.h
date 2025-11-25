@@ -44,6 +44,6 @@ struct aggregations {
 
 aggregations aggregate(const vector<Candle>& one_minute_candles);
 
-// TODO: Add an accumulating aggregation method.
+void add_next_minute(aggregations& aggr, const Candle& candle);
 
 } // namespace howling

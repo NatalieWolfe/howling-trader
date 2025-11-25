@@ -127,7 +127,6 @@ void run() {
       .available_stocks = vector<stock::Symbol>{{symbol}},
       .initial_funds = absl::GetFlag(FLAGS_initial_funds),
       .available_funds = absl::GetFlag(FLAGS_initial_funds)};
-  vector<Candle> observed;
   int buy_counter = 0;
   int sell_counter = 0;
   double last_buy = std::numeric_limits<double>::max();
@@ -144,10 +143,9 @@ void run() {
     }
     std::cout << print_candle(candle, extents) << " | ";
 
-    observed.push_back(candle);
     state.time_now =
         to_std_chrono(candle.opened_at()) + to_std_chrono(candle.duration());
-    state.market[symbol] = aggregate(observed);
+    add_next_minute(state.market[symbol], candle);
     decision d = anal->analyze(symbol, state);
     // TODO: Support quantities and target prices in buy and sell decisions.
     if (d.act == action::BUY) {

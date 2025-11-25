@@ -76,15 +76,15 @@ void add_next_window(window& a, const window& b) {
   a.moving_average += b.candle.close();
 }
 
-window do_aggregate(std::span<const Candle> one_minute_candles) {
+window do_aggregate(std::span<const window> one_minute_windows) {
   window w = blank_window();
-  for (const Candle& candle : one_minute_candles) {
-    add_next_window(w, to_window(candle));
+  for (const window& new_window : one_minute_windows) {
+    add_next_window(w, new_window);
   }
-  w.moving_average /= one_minute_candles.size();
+  w.moving_average /= one_minute_windows.size();
   double sq_diff_sum = 0;
-  for (const Candle& candle : one_minute_candles) {
-    double diff = candle.close() - w.moving_average;
+  for (const window& new_window : one_minute_windows) {
+    double diff = new_window.candle.close() - w.moving_average;
     sq_diff_sum += diff * diff;
   }
   w.stddev = std::sqrt(sq_diff_sum);
@@ -98,16 +98,17 @@ window do_aggregate(std::span<const Candle> one_minute_candles) {
 
 aggregations aggregate(const vector<Candle>& one_minute_candles) {
   aggregations aggr;
-
-  for (size_t i = 0; i < one_minute_candles.size(); ++i) {
-    const Candle& candle = one_minute_candles.at(i);
-    aggr.one_minute.push_back(to_window(candle));
-    aggr.five_minute.push_back(do_aggregate(one_minute_candles.last_n(5)));
-    aggr.twenty_minute.push_back(do_aggregate(one_minute_candles.last_n(20)));
-
-    // TODO: Calculate sequence counters.
+  for (const Candle& candle : one_minute_candles) {
+    add_next_minute(aggr, candle);
   }
   return aggr;
+}
+
+void add_next_minute(aggregations& aggr, const Candle& candle) {
+  // TODO: Calculate sequence counters.
+  aggr.one_minute.push_back(to_window(candle));
+  aggr.five_minute.push_back(do_aggregate(aggr.one_minute.last_n(5)));
+  aggr.twenty_minute.push_back(do_aggregate(aggr.one_minute.last_n(20)));
 }
 
 } // namespace howling
