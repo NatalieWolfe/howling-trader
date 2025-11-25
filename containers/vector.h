@@ -56,7 +56,7 @@ public:
 private:
   std::size_t _normalize(int64_t i) const {
     if (i >= 0) return i;
-    if (-i > this->size()) return 0;
+    if (static_cast<size_t>(-i) > this->size()) return 0;
     return this->size() + i;
   }
 };
