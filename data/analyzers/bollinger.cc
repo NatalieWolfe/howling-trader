@@ -26,7 +26,7 @@ bollinger_analyzer::analyze(stock::Symbol symbol, const trading_state& data) {
       can_buy(symbol, data)) {
     return {.act = action::BUY, .confidence = 1.0};
   }
-  return {.act = action::HOLD, .confidence = 1.0};
+  return {.act = action::NO_ACTION, .confidence = 0.0};
 }
 
 } // namespace howling
