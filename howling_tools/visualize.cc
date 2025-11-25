@@ -16,13 +16,8 @@
 #include "cli/colorize.h"
 #include "cli/printing.h"
 #include "data/analyzer.h"
-#include "data/analyzers/bollinger.h"
-#include "data/analyzers/howling.h"
-#include "data/analyzers/macd.h"
-#include "data/analyzers/market_hours.h"
-#include "data/analyzers/noop.h"
-#include "data/analyzers/zig_zag.h"
 #include "data/candle.pb.h"
+#include "data/load_analyzer.h"
 #include "data/stock.pb.h"
 #include "data/trading_state.h"
 #include "google/protobuf/text_format.h"
@@ -78,36 +73,6 @@ stock::Symbol get_stock_symbol() {
   return symbol;
 }
 
-std::unique_ptr<analyzer> load_analyzer(const stock::History& history) {
-  std::string anal_name = absl::GetFlag(FLAGS_analyzer);
-  if (anal_name.empty() || anal_name == "noop") {
-    return std::make_unique<noop_analyzer>();
-  }
-  if (anal_name == "bollinger") {
-    return std::make_unique<bollinger_analyzer>();
-  }
-  if (anal_name == "howling") return std::make_unique<howling_analyzer>();
-  if (anal_name == "macd" || anal_name == "macd1") {
-    return std::make_unique<macd_crossover_analyzer>(&aggregations::one_minute);
-  }
-  if (anal_name == "macd5") {
-    return std::make_unique<macd_crossover_analyzer>(
-        &aggregations::five_minute);
-  }
-  if (anal_name == "macd20") {
-    return std::make_unique<macd_crossover_analyzer>(
-        &aggregations::twenty_minute);
-  }
-  if (anal_name == "market_hours") {
-    return std::make_unique<market_hours_analyzer>();
-  }
-  if (anal_name == "zig_zag" || anal_name == "optimal") {
-    return std::make_unique<zig_zag_analyzer>(
-        history, zig_zag_analyzer::options{.threshold = 0.5});
-  }
-  throw std::runtime_error(absl::StrCat("Unknown analyzer: ", anal_name));
-}
-
 std::string print_price(double price) { return std::format("{:.2f}", price); }
 
 void run() {
@@ -122,7 +87,7 @@ void run() {
   }
 
   stock::History history = read_history(data_path);
-  auto anal = load_analyzer(history);
+  auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer), history);
 
   print_extents extents{
       .min = std::numeric_limits<double>::max(),

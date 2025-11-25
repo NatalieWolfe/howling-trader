@@ -46,6 +46,24 @@ cc_proto_library(
     deps = [":candle_proto"],
 )
 
+cc_library(
+    name = "load_analyzer",
+    srcs = ["load_analyzer.cc"],
+    hdrs = ["load_analyzer.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":aggregate",
+        ":analyzer",
+        ":stock_cc_proto",
+        "//data/analyzers:bollinger",
+        "//data/analyzers:howling",
+        "//data/analyzers:macd",
+        "//data/analyzers:market_hours",
+        "//data/analyzers:noop",
+        "//data/analyzers:zig_zag",
+    ],
+)
+
 proto_library(
     name = "stock_proto",
     srcs = ["stock.proto"],
