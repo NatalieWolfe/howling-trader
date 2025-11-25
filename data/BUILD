@@ -91,3 +91,16 @@ cc_library(
         "//containers:vector",
     ],
 )
+
+cc_library(
+    name = "utilities",
+    srcs = ["utilities.cc"],
+    hdrs = ["utilities.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":stock_cc_proto",
+        "//strings:format",
+        "@abseil-cpp//absl/strings",
+        "@protobuf",
+    ],
+)

@@ -1,18 +1,12 @@
 #include <algorithm>
 #include <chrono>
 #include <exception>
-#include <filesystem>
 #include <format>
-#include <fstream>
 #include <iostream>
 #include <limits>
-#include <ranges>
-#include <sstream>
 #include <string>
 
 #include "absl/flags/flag.h"
-#include "absl/strings/str_cat.h"
-#include "absl/time/time.h"
 #include "cli/colorize.h"
 #include "cli/printing.h"
 #include "data/analyzer.h"
@@ -20,10 +14,9 @@
 #include "data/load_analyzer.h"
 #include "data/stock.pb.h"
 #include "data/trading_state.h"
-#include "google/protobuf/text_format.h"
+#include "data/utilities.h"
 #include "howling_tools/init.h"
 #include "howling_tools/runfiles.h"
-#include "strings/format.h"
 #include "time/conversion.h"
 
 ABSL_FLAG(std::string, stock, "", "Stock symbol to visualize.");
@@ -38,55 +31,15 @@ ABSL_FLAG(
 namespace howling {
 namespace {
 
-namespace fs = ::std::filesystem;
-
-using ::google::protobuf::TextFormat;
 using ::std::chrono::hh_mm_ss;
 using ::std::chrono::system_clock;
-
-const fs::path HISTORY_DIR = "howling-trader/data/history";
-
-stock::History read_history(const fs::path& path) {
-  std::ifstream stream(path);
-  std::stringstream data;
-  data << stream.rdbuf();
-
-  stock::History history;
-  if (!TextFormat::ParseFromString(data.str(), &history)) {
-    throw std::runtime_error(
-        absl::StrCat("Failed to parse contents of ", path.string()));
-  }
-  return history;
-}
-
-stock::Symbol get_stock_symbol() {
-  std::string stock_name = absl::GetFlag(FLAGS_stock) |
-      std::views::transform(to_upper) | std::ranges::to<std::string>();
-  if (stock_name.empty()) {
-    throw std::runtime_error("Must specify --stock flag.");
-  }
-  stock::Symbol symbol;
-  if (!stock::Symbol_Parse(stock_name, &symbol)) {
-    throw std::runtime_error(
-        absl::StrCat("Unknown stock symbol: ", stock_name, "."));
-  }
-  return symbol;
-}
 
 std::string print_price(double price) { return std::format("{:.2f}", price); }
 
 void run() {
-  stock::Symbol symbol = get_stock_symbol();
-  std::string filename = absl::StrCat(absl::GetFlag(FLAGS_date), ".textproto");
-
-  fs::path data_path =
-      runfile((HISTORY_DIR / stock::Symbol_Name(symbol) / filename).string());
-  if (!fs::exists(data_path)) {
-    throw std::runtime_error(
-        absl::StrCat("No data found at ", data_path.string()));
-  }
-
-  stock::History history = read_history(data_path);
+  stock::Symbol symbol = get_stock_symbol(absl::GetFlag(FLAGS_stock));
+  stock::History history = read_history(runfile(
+      get_history_file_path(symbol, absl::GetFlag(FLAGS_date)).string()));
   auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer), history);
 
   print_extents extents{

@@ -4,6 +4,7 @@ cc_library(
     name = "colorize",
     srcs = ["colorize.cc"],
     hdrs = ["colorize.h"],
+    visibility = ["//visibility:public"],
     deps = ["@abseil-cpp//absl/strings"],
 )
 
