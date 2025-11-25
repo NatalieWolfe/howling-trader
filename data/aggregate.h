@@ -9,6 +9,7 @@ namespace howling {
 
 struct window {
   Candle candle;
+  int count;
 
   bool green_body;
   double body_high;

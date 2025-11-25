@@ -26,6 +26,7 @@ namespace {
 window blank_window() {
   return {
       .candle = Candle::default_instance(),
+      .count = 0,
       .green_body = false,
       .body_high = 0.0,
       .body_low = 0.0,
@@ -82,6 +83,7 @@ window to_window(const Candle& candle, const window* previous) {
   double body_low = std::min(candle.open(), candle.close());
   window w{
       .candle = candle,
+      .count = 1,
       .green_body = candle.close() > candle.open(),
       .body_high = body_high,
       .body_low = body_low,
@@ -105,6 +107,7 @@ window to_window(const Candle& candle, const window* previous) {
 }
 
 void add_next_window(window& a, const window& b) {
+  a.count += b.count;
   a.candle.set_close(b.candle.close());
   a.candle.set_high(std::max(a.candle.high(), b.candle.high()));
   a.candle.set_low(std::min(a.candle.low(), b.candle.low()));
