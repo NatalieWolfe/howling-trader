@@ -6,6 +6,9 @@
 
 namespace howling {
 
+/**
+ * Watches for movements outside of the Bollinger bands.
+ */
 class bollinger_analyzer : public analyzer {
 public:
   decision analyze(stock::Symbol symbol, const trading_state& data) override;

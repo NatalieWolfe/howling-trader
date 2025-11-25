@@ -9,6 +9,9 @@
 
 namespace howling {
 
+/**
+ * Combination analyzer bringing in different signals.
+ */
 class howling_analyzer : public analyzer {
 public:
   howling_analyzer();

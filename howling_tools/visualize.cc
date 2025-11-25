@@ -188,11 +188,8 @@ void run() {
     std::cout << '\n';
   }
   if (buy_counter > 0) {
-    double profit = state.available_funds - state.initial_funds;
-    for (const trading_state::position& p : state.positions[symbol]) {
-      profit +=
-          history.candles(history.candles().size() - 1).close() * p.quantity;
-    }
+    double profit = state.available_funds + state.total_positions_cost() -
+        state.initial_funds;
     std::cout << "\n"
               << "Buys:    " << buy_counter << "\n"
               << "Sells:   " << sell_counter << "\n"

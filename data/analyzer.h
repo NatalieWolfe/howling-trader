@@ -5,7 +5,16 @@
 
 namespace howling {
 
-enum class action { NO_ACTION = 0, HOLD = 1, BUY = 2, SELL = 3 };
+enum class action {
+  // Null action.
+  NO_ACTION = 0,
+  // Do not buy, do not sell.
+  HOLD = 1,
+  // Buy shares of the stock.
+  BUY = 2,
+  // Sell shares of the stock.
+  SELL = 3
+};
 
 struct decision {
   action act;

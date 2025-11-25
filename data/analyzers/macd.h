@@ -7,6 +7,9 @@
 
 namespace howling {
 
+/**
+ * Looks for the crossover points in the MACD momentum trend.
+ */
 class macd_crossover_analyzer : public analyzer {
 public:
   macd_crossover_analyzer(vector<window> aggregations::* period)

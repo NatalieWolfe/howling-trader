@@ -31,21 +31,25 @@ decision macd_crossover_analyzer::analyze(
   double previous_delta = previous.macd_fast_line - previous.macd_signal_line;
   double delta_slope = current_delta - previous_delta;
 
+  // Cross over.
   if (current_delta > 0.0 && previous_delta <= 0.0) {
     return {
         .act = can_buy(symbol, data) ? action::BUY : action::HOLD,
         .confidence = std::min(
             1.0, delta_slope * absl::GetFlag(FLAGS_macd_crossover_scaler))};
   }
+  // Cross under.
   if (current_delta < 0.0 && previous_delta >= 0.0) {
     return {
         .act = can_sell(symbol, data) ? action::SELL : action::HOLD,
         .confidence = std::min(
             1.0, -delta_slope * absl::GetFlag(FLAGS_macd_crossover_scaler))};
   }
+  // Building upward momentum.
   if (current_delta > 0 && previous_delta > 0 && delta_slope > 0) {
     return {.act = action::HOLD, .confidence = delta_slope / current.count};
   }
+  // Not enough signal to advise.
   return {.act = action::NO_ACTION, .confidence = 0.0};
 }
 
