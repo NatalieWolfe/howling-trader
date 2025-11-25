@@ -17,6 +17,7 @@
 #include "cli/printing.h"
 #include "data/analyzer.h"
 #include "data/analyzers/bollinger.h"
+#include "data/analyzers/howling.h"
 #include "data/analyzers/macd.h"
 #include "data/analyzers/market_hours.h"
 #include "data/analyzers/noop.h"
@@ -85,6 +86,7 @@ std::unique_ptr<analyzer> load_analyzer(const stock::History& history) {
   if (anal_name == "bollinger") {
     return std::make_unique<bollinger_analyzer>();
   }
+  if (anal_name == "howling") return std::make_unique<howling_analyzer>();
   if (anal_name == "macd" || anal_name == "macd1") {
     return std::make_unique<macd_crossover_analyzer>(&aggregations::one_minute);
   }

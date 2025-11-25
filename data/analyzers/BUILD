@@ -14,6 +14,21 @@ cc_library(
 )
 
 cc_library(
+    name = "howling",
+    srcs = ["howling.cc"],
+    hdrs = ["howling.h"],
+    deps = [
+        ":bollinger",
+        ":macd",
+        ":market_hours",
+        "//data:analyzer",
+        "//data:stock_cc_proto",
+        "//data:trading_state",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
+cc_library(
     name = "market_hours",
     srcs = ["market_hours.cc"],
     hdrs = ["market_hours.h"],
