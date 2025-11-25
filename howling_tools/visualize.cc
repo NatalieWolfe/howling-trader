@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <chrono>
 #include <exception>
-#include <format>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -33,8 +32,6 @@ namespace {
 
 using ::std::chrono::hh_mm_ss;
 using ::std::chrono::system_clock;
-
-std::string print_price(double price) { return std::format("{:.2f}", price); }
 
 void run() {
   stock::Symbol symbol = get_stock_symbol(absl::GetFlag(FLAGS_stock));

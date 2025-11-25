@@ -1,5 +1,7 @@
 #pragma once
 
+#include <format>
+
 #include "data/candle.pb.h"
 
 namespace howling {
@@ -11,5 +13,9 @@ struct print_extents {
 };
 
 std::string print_candle(const Candle& candle, const print_extents& extents);
+
+inline std::string print_price(double price) {
+  return std::format("{:.2f}", price);
+}
 
 } // namespace howling
