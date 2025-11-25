@@ -21,8 +21,7 @@ public:
 
   explicit zig_zag_analyzer(const stock::History& full_history, options opts);
 
-  std::unordered_map<stock::Symbol, decision>
-  analyze(const trading_state& data) override;
+  decision analyze(stock::Symbol symbol, const trading_state& data) override;
 
 private:
   // TODO: Extend this analyzer to support multiple stocks at once.

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <unordered_map>
-
 #include "data/stock.pb.h"
 #include "data/trading_state.h"
 
@@ -18,12 +16,10 @@ class analyzer {
 public:
   virtual ~analyzer() = default;
 
-  virtual std::unordered_map<stock::Symbol, decision>
-  analyze(const trading_state& data) = 0;
+  virtual decision analyze(stock::Symbol symbol, const trading_state& data) = 0;
 
-  std::unordered_map<stock::Symbol, decision>
-  operator()(const trading_state& data) {
-    return analyze(data);
+  decision operator()(stock::Symbol symbol, const trading_state& data) {
+    return analyze(symbol, data);
   }
 
 protected:

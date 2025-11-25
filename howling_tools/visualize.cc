@@ -148,23 +148,19 @@ void run() {
     state.time_now =
         to_std_chrono(candle.opened_at()) + to_std_chrono(candle.duration());
     state.market[symbol] = aggregate(observed);
-    std::unordered_map<stock::Symbol, decision> decisions =
-        anal->analyze(state);
+    decision d = anal->analyze(symbol, state);
     // TODO: Support quantities and target prices in buy and sell decisions.
-    auto itr = decisions.find(symbol);
-    std::optional<decision> d =
-        itr == decisions.end() ? std::nullopt : std::make_optional(itr->second);
-    if (d && d->act == action::BUY) {
+    if (d.act == action::BUY) {
       ++buy_counter;
       last_buy = candle.low();
       state.available_funds -= last_buy;
       std::cout << colorize(print_price(candle.low()), color::RED) << " - Buy ("
-                << d->confidence << ")";
-    } else if (d && d->act == action::SELL) {
+                << d.confidence << ")";
+    } else if (d.act == action::SELL) {
       ++sell_counter;
       state.available_funds += candle.high();
       std::cout << colorize(print_price(candle.high()), color::GREEN)
-                << " - Sell (" << d->confidence << "; "
+                << " - Sell (" << d.confidence << "; "
                 << print_price(candle.high() - last_buy) << ")";
     } else if (candle.close() == min_close) {
       std::cout << colorize(print_price(candle.close()), color::RED);

@@ -78,23 +78,20 @@ zig_zag_analyzer::zig_zag_analyzer(
   }
 }
 
-std::unordered_map<stock::Symbol, decision>
-zig_zag_analyzer::analyze(const trading_state& data) {
+decision
+zig_zag_analyzer::analyze(stock::Symbol symbol, const trading_state& data) {
   const Candle& candle = data.market.at(_symbol).one_minute(-1).candle;
   for (const Candle& buy : _buy_points) {
     if (candle.opened_at().seconds() == buy.opened_at().seconds()) {
-      return std::unordered_map<stock::Symbol, decision>{
-          {_symbol, {.act = action::BUY, .confidence = 1.0}}};
+      return {.act = action::BUY, .confidence = 1.0};
     }
   }
   for (const Candle& sell : _sell_points) {
     if (candle.opened_at().seconds() == sell.opened_at().seconds()) {
-      return std::unordered_map<stock::Symbol, decision>{
-          {_symbol, {.act = action::SELL, .confidence = 1.0}}};
+      return {.act = action::SELL, .confidence = 1.0};
     }
   }
-  return std::unordered_map<stock::Symbol, decision>{
-      {_symbol, {.act = action::HOLD, .confidence = 1.0}}};
+  return {.act = action::HOLD, .confidence = 1.0};
 }
 
 } // namespace howling
