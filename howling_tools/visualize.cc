@@ -129,7 +129,7 @@ void run() {
       .available_funds = absl::GetFlag(FLAGS_initial_funds)};
   int buy_counter = 0;
   int sell_counter = 0;
-  double last_buy = std::numeric_limits<double>::max();
+  int profitable_trades = 0;
   for (const Candle& candle : history.candles()) {
     using namespace ::std::chrono;
     zoned_time opened_at{current_zone(), to_std_chrono(candle.opened_at())};
@@ -150,15 +150,19 @@ void run() {
     // TODO: Support quantities and target prices in buy and sell decisions.
     if (d.act == action::BUY) {
       ++buy_counter;
-      last_buy = candle.low();
-      state.available_funds -= last_buy;
+      state.available_funds -= candle.low();
+      state.positions[symbol].push_back(
+          {.symbol = symbol, .price = candle.low(), .quantity = 1});
       std::cout << colorize(print_price(candle.low()), color::RED) << " - Buy ("
                 << d.confidence << ")";
-    } else if (d.act == action::SELL) {
+    } else if (d.act == action::SELL && !state.positions[symbol].empty()) {
       ++sell_counter;
       state.available_funds += candle.high();
+      double last_buy = state.positions[symbol].back().price;
+      if (last_buy < candle.high()) ++profitable_trades;
+      state.positions[symbol].pop_back();
       std::cout << colorize(print_price(candle.high()), color::GREEN)
-                << " - Sell (" << d.confidence << "; "
+                << " - Sell (" << std::setprecision(2) << d.confidence << "; "
                 << print_price(candle.high() - last_buy) << ")";
     } else if (candle.close() == min_close) {
       std::cout << colorize(print_price(candle.close()), color::RED);
@@ -171,10 +175,15 @@ void run() {
   }
   if (buy_counter > 0) {
     double profit = state.available_funds - state.initial_funds;
+    for (const trading_state::position& p : state.positions[symbol]) {
+      profit +=
+          history.candles(history.candles().size() - 1).close() * p.quantity;
+    }
     std::cout << "\n"
-              << "Buys:   " << buy_counter << "\n"
-              << "Sells:  " << sell_counter << "\n"
-              << "Profit: "
+              << "Buys:    " << buy_counter << "\n"
+              << "Sells:   " << sell_counter << "\n"
+              << "+Trades: " << profitable_trades << "\n"
+              << "Profit:  "
               << colorize(
                      print_price(profit),
                      profit > 0 ? color::GREEN : color::RED)
