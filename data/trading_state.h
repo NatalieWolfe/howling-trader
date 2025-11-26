@@ -33,6 +33,7 @@ struct trading_state {
   double available_funds;
   // Total value of all held positions.
   double total_positions_cost() const;
+  double total_positions_value() const;
 
   // UTC time as of most recent data added.
   std::chrono::system_clock::time_point time_now;

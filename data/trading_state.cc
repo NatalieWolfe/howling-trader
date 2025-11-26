@@ -35,6 +35,14 @@ double trading_state::total_positions_cost() const {
   return total;
 }
 
+double trading_state::total_positions_value() const {
+  double total = 0;
+  for (const position p : positions | std::views::values | std::views::join) {
+    total += p.quantity * market.at(p.symbol).one_minute(-1).candle.close();
+  }
+  return total;
+}
+
 int trading_state::market_hour() const {
   return to_market_hms(time_now).hours().count();
 }

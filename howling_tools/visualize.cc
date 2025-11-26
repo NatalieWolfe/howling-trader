@@ -103,7 +103,7 @@ void run() {
     std::cout << '\n';
   }
   if (buy_counter > 0) {
-    double profit = state.available_funds + state.total_positions_cost() -
+    double profit = state.available_funds + state.total_positions_value() -
         state.initial_funds;
     std::cout << "\n"
               << "Buys:    " << buy_counter << "\n"
