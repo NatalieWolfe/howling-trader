@@ -1,6 +1,26 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 
 cc_binary(
+    name = "evaluate",
+    srcs = ["evaluate.cc"],
+    data = ["//data:history"],
+    deps = [
+        ":init",
+        ":runfiles",
+        "//cli:colorize",
+        "//cli:printing",
+        "//containers:vector",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:load_analyzer",
+        "//data:stock_cc_proto",
+        "//data:utilities",
+        "//time:conversion",
+        "@abseil-cpp//absl/flags:flag",
+    ],
+)
+
+cc_binary(
     name = "fetch",
     srcs = ["fetch.cc"],
     deps = [

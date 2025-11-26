@@ -4,7 +4,8 @@
     "aggr",
     "Bollinger",
     "jsoncpp",
-    "MACD"
+    "MACD",
+    "runfiles"
   ],
   "files.associations": {
     "string_view": "cpp",
