@@ -45,7 +45,7 @@ howling_analyzer::analyze(stock::Symbol symbol, const trading_state& data) {
   deciders buy, sell, hold;
   add(buy, sell, hold, market_hours);
   add(buy, sell, hold, _bollinger(symbol, data));
-  add(buy, sell, hold, _macd1(symbol, data));
+  // add(buy, sell, hold, _macd1(symbol, data));
 
   // TODO: Determine how best to incorporate time-shifted signals. MACD1 cross
   // happens before MACD5, so the current pattern would issue 2 buys. Looking
@@ -63,7 +63,19 @@ howling_analyzer::analyze(stock::Symbol symbol, const trading_state& data) {
     return {.act = action::HOLD, .confidence = hold.confidence()};
   }
 
-  return {.act = action::NO_ACTION, .confidence = 0.0};
+  decision macd5 = _macd5(symbol, data);
+  decision macd1 = _macd1(symbol, data);
+  if (macd1.act == action::SELL) {
+    if (can_sell(symbol, data) && _profit(symbol, data).act == action::SELL) {
+      return macd1;
+    }
+    return NO_ACTION;
+  }
+  if (macd5.act == action::BUY) {
+    return can_buy(symbol, data) ? macd5 : NO_ACTION;
+  }
+
+  return NO_ACTION;
 }
 
 } // namespace howling

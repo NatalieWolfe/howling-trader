@@ -4,6 +4,7 @@
 #include "data/analyzers/bollinger.h"
 #include "data/analyzers/macd.h"
 #include "data/analyzers/market_hours.h"
+#include "data/analyzers/profit.h"
 #include "data/stock.pb.h"
 #include "data/trading_state.h"
 
@@ -23,6 +24,7 @@ private:
   bollinger_analyzer _bollinger;
   macd_crossover_analyzer _macd1;
   macd_crossover_analyzer _macd5;
+  profit_analyzer _profit;
 };
 
 } // namespace howling

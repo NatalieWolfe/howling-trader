@@ -79,20 +79,20 @@ void run() {
     // TODO: Support quantities and target prices in buy and sell decisions.
     if (d.act == action::BUY) {
       ++buy_counter;
-      state.available_funds -= candle.low();
+      state.available_funds -= candle.close();
       state.positions[symbol].push_back(
-          {.symbol = symbol, .price = candle.low(), .quantity = 1});
-      std::cout << colorize(print_price(candle.low()), color::RED) << " - Buy ("
-                << d.confidence << ")";
+          {.symbol = symbol, .price = candle.close(), .quantity = 1});
+      std::cout << colorize(print_price(candle.close()), color::RED)
+                << " - Buy (" << d.confidence << ")";
     } else if (d.act == action::SELL && !state.positions[symbol].empty()) {
       ++sell_counter;
-      state.available_funds += candle.high();
+      state.available_funds += candle.close();
       double last_buy = state.positions[symbol].back().price;
-      if (last_buy < candle.high()) ++profitable_trades;
+      if (last_buy < candle.close()) ++profitable_trades;
       state.positions[symbol].pop_back();
-      std::cout << colorize(print_price(candle.high()), color::GREEN)
+      std::cout << colorize(print_price(candle.close()), color::GREEN)
                 << " - Sell (" << std::setprecision(2) << d.confidence << "; "
-                << print_price(candle.high() - last_buy) << ")";
+                << print_price(candle.close() - last_buy) << ")";
     } else if (candle.close() == min_close) {
       std::cout << colorize(print_price(candle.close()), color::RED);
     } else if (candle.close() == max_close) {

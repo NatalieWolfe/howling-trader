@@ -21,6 +21,7 @@ cc_library(
         ":bollinger",
         ":macd",
         ":market_hours",
+        ":profit",
         "//data:analyzer",
         "//data:stock_cc_proto",
         "//data:trading_state",
