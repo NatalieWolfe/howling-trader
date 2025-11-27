@@ -60,6 +60,7 @@ cc_library(
         "//data/analyzers:macd",
         "//data/analyzers:market_hours",
         "//data/analyzers:noop",
+        "//data/analyzers:profit",
         "//data/analyzers:zig_zag",
     ],
 )

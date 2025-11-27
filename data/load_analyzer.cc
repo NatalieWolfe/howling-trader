@@ -10,6 +10,7 @@
 #include "data/analyzers/macd.h"
 #include "data/analyzers/market_hours.h"
 #include "data/analyzers/noop.h"
+#include "data/analyzers/profit.h"
 #include "data/analyzers/zig_zag.h"
 #include "data/stock.pb.h"
 
@@ -36,6 +37,7 @@ load_analyzer(std::string_view name, const stock::History& history) {
   if (name == "market_hours") {
     return std::make_unique<market_hours_analyzer>();
   }
+  if (name == "profit") return std::make_unique<profit_analyzer>();
   if (name == "zig_zag" || name == "optimal") {
     if (history.candles().empty()) {
       throw std::runtime_error(

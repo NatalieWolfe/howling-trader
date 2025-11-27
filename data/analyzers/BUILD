@@ -64,6 +64,19 @@ cc_library(
 )
 
 cc_library(
+    name = "profit",
+    srcs = ["profit.cc"],
+    hdrs = ["profit.h"],
+    deps = [
+        "//data:analyzer",
+        "//data:stock_cc_proto",
+        "//data:trading_state",
+        "//trading:pricing",
+        "@abseil-cpp//absl/flags:flag",
+    ],
+)
+
+cc_library(
     name = "zig_zag",
     srcs = ["zig_zag.cc"],
     hdrs = ["zig_zag.h"],
