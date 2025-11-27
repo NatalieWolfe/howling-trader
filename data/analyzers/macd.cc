@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "containers/vector.h"
 #include "data/aggregate.h"
 #include "data/analyzer.h"
@@ -35,6 +36,11 @@ decision macd_crossover_analyzer::analyze(
 
   // Cross over.
   if (current_delta > 0.0 && previous_delta <= 0.0) {
+    // LOG(INFO) << data.market_hour() << ":" << data.market_minute() << " ["
+    //           << window_size << "]"
+    //           << " BUY: " << current_delta << " : " << previous_delta << " :
+    //           "
+    //           << delta_slope;
     return {
         .act = can_buy(symbol, data) ? action::BUY : action::HOLD,
         .confidence = std::min(
@@ -42,6 +48,11 @@ decision macd_crossover_analyzer::analyze(
   }
   // Cross under.
   if (current_delta < 0.0 && previous_delta >= 0.0) {
+    // LOG(INFO) << data.market_hour() << ":" << data.market_minute() << " ["
+    //           << window_size << "]"
+    //           << " SELL: " << current_delta << " : " << previous_delta << " :
+    //           "
+    //           << delta_slope;
     return {
         .act = can_sell(symbol, data) ? action::SELL : action::HOLD,
         .confidence = std::min(
@@ -49,7 +60,14 @@ decision macd_crossover_analyzer::analyze(
   }
   // Building upward momentum.
   if (current_delta > 0 && previous_delta > 0 && delta_slope > 0) {
-    return {.act = action::HOLD, .confidence = delta_slope / current.count};
+    // LOG(INFO) << data.market_hour() << ":" << data.market_minute() << " ["
+    //           << window_size << "]"
+    //           << " HOLD: " << current_delta << " : " << previous_delta << " :
+    //           "
+    //           << delta_slope;
+    return {
+        .act = action::HOLD,
+        .confidence = delta_slope * absl::GetFlag(FLAGS_macd_crossover_scaler)};
   }
   // Not enough signal to advise.
   return NO_ACTION;

@@ -60,10 +60,10 @@ howling_analyzer::analyze(stock::Symbol symbol, const trading_state& data) {
   decision macd5 = _macd5(symbol, data);
   decision macd1 = _macd1(symbol, data);
   if (macd1.act == action::SELL) {
-    if (can_sell(symbol, data) && _profit(symbol, data).act == action::SELL) {
-      return macd1;
+    if (macd5.act == action::HOLD && macd5.confidence > macd1.confidence) {
+      return macd5;
     }
-    return NO_ACTION;
+    return can_sell(symbol, data) ? macd1 : NO_ACTION;
   }
   if (macd5.act == action::BUY) {
     return can_buy(symbol, data) ? macd5 : NO_ACTION;

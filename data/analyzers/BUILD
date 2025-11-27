@@ -51,6 +51,7 @@ cc_library(
         "//data:stock_cc_proto",
         "//data:trading_state",
         "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/log",
     ],
 )
 
