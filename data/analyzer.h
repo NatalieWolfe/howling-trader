@@ -21,6 +21,8 @@ struct decision {
   double confidence;
 };
 
+constexpr decision NO_ACTION = {.act = action::NO_ACTION, .confidence = 0.0};
+
 class analyzer {
 public:
   virtual ~analyzer() = default;
