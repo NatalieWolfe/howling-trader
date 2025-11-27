@@ -12,7 +12,7 @@
 ABSL_FLAG(
     double,
     macd_crossover_scaler,
-    5.0, // 5x scaler means 20c shift is 1.0 confidence.
+    5.0, // 5x scaler means 0.20 shift is 1.0 confidence.
     "Multiplier on crossover slope to calculate confidence.");
 
 namespace howling {
@@ -20,12 +20,14 @@ namespace howling {
 decision macd_crossover_analyzer::analyze(
     stock::Symbol symbol, const trading_state& data) {
   const vector<window>& period = data.market.at(symbol).*_period;
-  if (period.size() < 2) {
-    return {.act = action::NO_ACTION, .confidence = 0.0};
+  const int window_size = period(-1).count;
+  if (period.size() < window_size * 2 ||
+      data.market_minute() % window_size != 0) {
+    return NO_ACTION;
   }
 
   const window& current = period(-1);
-  const window& previous = period(-2);
+  const window& previous = period(-window_size - 1);
 
   double current_delta = current.macd_fast_line - current.macd_signal_line;
   double previous_delta = previous.macd_fast_line - previous.macd_signal_line;
@@ -50,7 +52,7 @@ decision macd_crossover_analyzer::analyze(
     return {.act = action::HOLD, .confidence = delta_slope / current.count};
   }
   // Not enough signal to advise.
-  return {.act = action::NO_ACTION, .confidence = 0.0};
+  return NO_ACTION;
 }
 
 } // namespace howling

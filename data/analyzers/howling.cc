@@ -44,14 +44,8 @@ howling_analyzer::analyze(stock::Symbol symbol, const trading_state& data) {
 
   deciders buy, sell, hold;
   add(buy, sell, hold, market_hours);
-  add(buy, sell, hold, _bollinger(symbol, data));
-  // add(buy, sell, hold, _macd1(symbol, data));
-
-  // TODO: Determine how best to incorporate time-shifted signals. MACD1 cross
-  // happens before MACD5, so the current pattern would issue 2 buys. Looking
-  // at one or the other gives decent results, but is risky because a combined
-  // signal is a stronger signal.
-  // add(buy, sell, hold, _macd5(symbol, data));
+  // TODO: Consider how to incorporate confidence level better. For now, the
+  // manual evaluation below is doing better.
 
   if (buy.confidence() > (sell.confidence() + hold.confidence())) {
     return {.act = action::BUY, .confidence = buy.confidence()};
