@@ -45,8 +45,8 @@ window blank_window() {
   };
 }
 
-const window* maybe_get_last(const vector<window>& windows) {
-  return windows.empty() ? nullptr : &windows(-1);
+const window* maybe_get_previous(const vector<window>& windows, int offset) {
+  return windows.size() < offset ? nullptr : &windows(-offset);
 }
 
 double
@@ -58,11 +58,11 @@ exponential_moving_average(double price, double previous_ema, int period) {
 void calculate_macd(window& w, const window* previous) {
   if (previous) {
     w.fast_exponential_average = exponential_moving_average(
-        w.moving_average,
+        w.candle.close(),
         previous->fast_exponential_average,
         absl::GetFlag(FLAGS_fast_exponential_average_period));
     w.slow_exponential_average = exponential_moving_average(
-        w.moving_average,
+        w.candle.close(),
         previous->slow_exponential_average,
         absl::GetFlag(FLAGS_slow_exponential_average_period));
     w.macd_fast_line = w.fast_exponential_average - w.slow_exponential_average;
@@ -161,11 +161,12 @@ aggregations aggregate(const vector<Candle>& one_minute_candles) {
 
 void add_next_minute(aggregations& aggr, const Candle& candle) {
   // TODO: Calculate sequence counters.
-  aggr.one_minute.push_back(to_window(candle, maybe_get_last(aggr.one_minute)));
+  aggr.one_minute.push_back(
+      to_window(candle, maybe_get_previous(aggr.one_minute, 1)));
   aggr.five_minute.push_back(do_aggregate(
-      aggr.one_minute.last_n(5), maybe_get_last(aggr.five_minute)));
+      aggr.one_minute.last_n(5), maybe_get_previous(aggr.five_minute, 5)));
   aggr.twenty_minute.push_back(do_aggregate(
-      aggr.one_minute.last_n(20), maybe_get_last(aggr.twenty_minute)));
+      aggr.one_minute.last_n(20), maybe_get_previous(aggr.twenty_minute, 20)));
 }
 
 } // namespace howling
