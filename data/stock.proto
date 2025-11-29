@@ -6,11 +6,17 @@ import "data/candle.proto";
 
 package howling.stock;
 
+// Available symbols for trading.
+//
+// Next tag: 6
 enum Symbol {
   SYMBOL_UNSPECIFIED = 0;
-  NVDA = 1;
   AAPL = 2;
+  AMD = 4;
+  // Intel is too low of a share price.
+  // INTC = 5;
   MU = 3;
+  NVDA = 1;
 }
 
 message History {
