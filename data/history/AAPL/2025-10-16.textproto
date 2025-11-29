@@ -1,0 +1,7769 @@
+symbol: AAPL
+started_at {
+  seconds: 1760621400
+}
+duration {
+  seconds: 43200
+}
+candles {
+  open: 250.14
+  close: 250.16
+  high: 250.36
+  low: 250.12
+  volume: 1474
+  opened_at {
+    seconds: 1760612400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.18
+  close: 250.18
+  high: 250.18
+  low: 250.18
+  volume: 113
+  opened_at {
+    seconds: 1760612580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.2
+  close: 250.25
+  high: 250.25
+  low: 250.2
+  volume: 3918
+  opened_at {
+    seconds: 1760612700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.22
+  close: 250.15
+  high: 250.23
+  low: 250.15
+  volume: 1192
+  opened_at {
+    seconds: 1760612760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.16
+  close: 250.16
+  high: 250.16
+  low: 250.16
+  volume: 245
+  opened_at {
+    seconds: 1760612940
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.15
+  close: 250.15
+  high: 250.15
+  low: 250.15
+  volume: 242
+  opened_at {
+    seconds: 1760613060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.1
+  close: 250.07
+  high: 250.1
+  low: 250.07
+  volume: 551
+  opened_at {
+    seconds: 1760613180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.07
+  close: 250.1
+  high: 250.15
+  low: 250.07
+  volume: 1703
+  opened_at {
+    seconds: 1760613240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.14
+  close: 250.14
+  high: 250.14
+  low: 250.14
+  volume: 100
+  opened_at {
+    seconds: 1760613360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.06
+  close: 250.08
+  high: 250.08
+  low: 250.05
+  volume: 311
+  opened_at {
+    seconds: 1760613480
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.1
+  close: 250.05
+  high: 250.1
+  low: 250.05
+  volume: 2385
+  opened_at {
+    seconds: 1760613600
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.13
+  close: 250.13
+  high: 250.13
+  low: 250.13
+  volume: 100
+  opened_at {
+    seconds: 1760613900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.05
+  close: 250
+  high: 250.05
+  low: 250
+  volume: 836
+  opened_at {
+    seconds: 1760614140
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250
+  close: 250
+  high: 250
+  low: 250
+  volume: 845
+  opened_at {
+    seconds: 1760614200
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.98
+  close: 249.98
+  high: 249.98
+  low: 249.98
+  volume: 311
+  opened_at {
+    seconds: 1760614500
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.9
+  close: 249.9
+  high: 249.9
+  low: 249.9
+  volume: 100
+  opened_at {
+    seconds: 1760614680
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.94
+  close: 249.94
+  high: 249.94
+  low: 249.94
+  volume: 100
+  opened_at {
+    seconds: 1760614860
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.94
+  close: 249.96
+  high: 249.96
+  low: 249.94
+  volume: 400
+  opened_at {
+    seconds: 1760614980
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.95
+  close: 249.95
+  high: 249.95
+  low: 249.95
+  volume: 100
+  opened_at {
+    seconds: 1760615100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.88
+  close: 249.89
+  high: 249.89
+  low: 249.88
+  volume: 410
+  opened_at {
+    seconds: 1760615400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.87
+  close: 249.87
+  high: 249.87
+  low: 249.87
+  volume: 440
+  opened_at {
+    seconds: 1760615580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.92
+  close: 249.92
+  high: 249.93
+  low: 249.92
+  volume: 600
+  opened_at {
+    seconds: 1760615640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.93
+  close: 249.93
+  high: 249.93
+  low: 249.93
+  volume: 116
+  opened_at {
+    seconds: 1760615700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250
+  close: 250.03
+  high: 250.03
+  low: 250
+  volume: 350
+  opened_at {
+    seconds: 1760615760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.02
+  close: 250.02
+  high: 250.02
+  low: 250.02
+  volume: 100
+  opened_at {
+    seconds: 1760615940
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250
+  close: 250
+  high: 250
+  low: 249.94
+  volume: 400
+  opened_at {
+    seconds: 1760616000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.04
+  close: 250.03
+  high: 250.04
+  low: 250.03
+  volume: 400
+  opened_at {
+    seconds: 1760616180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.1
+  close: 250.05
+  high: 250.1
+  low: 250.05
+  volume: 334
+  opened_at {
+    seconds: 1760616240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.08
+  close: 250.08
+  high: 250.08
+  low: 250.08
+  volume: 109
+  opened_at {
+    seconds: 1760616360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.03
+  close: 250.13
+  high: 250.13
+  low: 250
+  volume: 1371
+  opened_at {
+    seconds: 1760616540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.86
+  close: 249.86
+  high: 249.86
+  low: 249.86
+  volume: 107
+  opened_at {
+    seconds: 1760616600
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.9
+  close: 249.73
+  high: 249.9
+  low: 249.73
+  volume: 550
+  opened_at {
+    seconds: 1760616660
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.87
+  close: 249.85
+  high: 249.87
+  low: 249.85
+  volume: 231
+  opened_at {
+    seconds: 1760616900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.7726
+  close: 249.76
+  high: 249.7726
+  low: 249.76
+  volume: 900
+  opened_at {
+    seconds: 1760617020
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.81
+  close: 249.81
+  high: 249.82
+  low: 249.81
+  volume: 1085
+  opened_at {
+    seconds: 1760617080
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.7566
+  close: 249.87
+  high: 249.87
+  low: 249.7566
+  volume: 800
+  opened_at {
+    seconds: 1760617140
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.87
+  close: 249.96
+  high: 249.96
+  low: 249.84
+  volume: 2228
+  opened_at {
+    seconds: 1760617260
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.7619
+  close: 250.0001
+  high: 250.14
+  low: 249.7619
+  volume: 4425
+  opened_at {
+    seconds: 1760617320
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.14
+  close: 250.0175
+  high: 250.14
+  low: 250.0175
+  volume: 700
+  opened_at {
+    seconds: 1760617380
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.0077
+  close: 250.0172
+  high: 250.0172
+  low: 250.0077
+  volume: 250
+  opened_at {
+    seconds: 1760617440
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.14
+  close: 250.14
+  high: 250.14
+  low: 250.14
+  volume: 100
+  opened_at {
+    seconds: 1760617500
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.0758
+  close: 250
+  high: 250.0758
+  low: 250
+  volume: 794
+  opened_at {
+    seconds: 1760617560
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250
+  close: 250
+  high: 250
+  low: 250
+  volume: 144
+  opened_at {
+    seconds: 1760617620
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.08
+  close: 250.07
+  high: 250.09
+  low: 250.07
+  volume: 604
+  opened_at {
+    seconds: 1760617680
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.0519
+  close: 250.1
+  high: 250.1
+  low: 250.05
+  volume: 1640
+  opened_at {
+    seconds: 1760617740
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.1
+  close: 250.1
+  high: 250.25
+  low: 250.05
+  volume: 1679
+  opened_at {
+    seconds: 1760617800
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.15
+  close: 250.15
+  high: 250.15
+  low: 250.15
+  volume: 200
+  opened_at {
+    seconds: 1760617980
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.1733
+  close: 250.1733
+  high: 250.1733
+  low: 250.1733
+  volume: 200
+  opened_at {
+    seconds: 1760618040
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.15
+  close: 250.15
+  high: 250.15
+  low: 250.15
+  volume: 300
+  opened_at {
+    seconds: 1760618100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.2
+  close: 250.2
+  high: 250.2
+  low: 250.2
+  volume: 300
+  opened_at {
+    seconds: 1760618160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.2
+  close: 250.2
+  high: 250.2
+  low: 250.2
+  volume: 300
+  opened_at {
+    seconds: 1760618220
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.31
+  close: 250.31
+  high: 250.31
+  low: 250.3
+  volume: 1919
+  opened_at {
+    seconds: 1760618340
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.32
+  close: 250.295
+  high: 250.32
+  low: 250.295
+  volume: 552
+  opened_at {
+    seconds: 1760618400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.37
+  close: 250.3783
+  high: 250.3783
+  low: 250.37
+  volume: 357
+  opened_at {
+    seconds: 1760618460
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.3
+  close: 250.3
+  high: 250.3
+  low: 250.3
+  volume: 100
+  opened_at {
+    seconds: 1760618520
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.36
+  close: 250.36
+  high: 250.37
+  low: 250.36
+  volume: 360
+  opened_at {
+    seconds: 1760618580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.44
+  close: 250.46
+  high: 250.46
+  low: 250.44
+  volume: 346
+  opened_at {
+    seconds: 1760618640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.4544
+  close: 250.45
+  high: 250.4544
+  low: 250.38
+  volume: 1503
+  opened_at {
+    seconds: 1760618700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.44
+  close: 250.44
+  high: 250.46
+  low: 250.44
+  volume: 1594
+  opened_at {
+    seconds: 1760618760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.43
+  close: 250.39
+  high: 250.43
+  low: 250.39
+  volume: 341
+  opened_at {
+    seconds: 1760618820
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.45
+  close: 250.5
+  high: 250.5
+  low: 250.45
+  volume: 2502
+  opened_at {
+    seconds: 1760618880
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.5
+  close: 250.5
+  high: 250.5
+  low: 250.48
+  volume: 402
+  opened_at {
+    seconds: 1760619000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.51
+  close: 250.5754
+  high: 250.5754
+  low: 250.5
+  volume: 650
+  opened_at {
+    seconds: 1760619060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.4882
+  close: 250.4882
+  high: 250.4882
+  low: 250.4882
+  volume: 100
+  opened_at {
+    seconds: 1760619120
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.475
+  close: 250.475
+  high: 250.475
+  low: 250.475
+  volume: 200
+  opened_at {
+    seconds: 1760619180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.5
+  close: 250.54
+  high: 250.55
+  low: 250.49
+  volume: 2240
+  opened_at {
+    seconds: 1760619240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.48
+  close: 250.42
+  high: 250.48
+  low: 250.42
+  volume: 300
+  opened_at {
+    seconds: 1760619360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.49
+  close: 250.49
+  high: 250.56
+  low: 250.49
+  volume: 450
+  opened_at {
+    seconds: 1760619420
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.49
+  close: 250.49
+  high: 250.49
+  low: 250.49
+  volume: 100
+  opened_at {
+    seconds: 1760619480
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.46
+  close: 250.43
+  high: 250.49
+  low: 250.43
+  volume: 800
+  opened_at {
+    seconds: 1760619540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.44
+  close: 250.35
+  high: 250.44
+  low: 250.35
+  volume: 1750
+  opened_at {
+    seconds: 1760619600
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.15
+  close: 250.3863
+  high: 250.3863
+  low: 250.15
+  volume: 1400
+  opened_at {
+    seconds: 1760619720
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.2
+  close: 250.2
+  high: 250.2
+  low: 250.2
+  volume: 928
+  opened_at {
+    seconds: 1760619780
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.1501
+  close: 250.1501
+  high: 250.1501
+  low: 250.1501
+  volume: 248
+  opened_at {
+    seconds: 1760620020
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.2901
+  close: 250.2901
+  high: 250.2901
+  low: 250.2901
+  volume: 1000
+  opened_at {
+    seconds: 1760620320
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.37
+  close: 250.38
+  high: 250.38
+  low: 250.37
+  volume: 300
+  opened_at {
+    seconds: 1760620380
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.32
+  close: 250.49
+  high: 250.49
+  low: 250.31
+  volume: 2225
+  opened_at {
+    seconds: 1760620440
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.45
+  close: 250.48
+  high: 250.48
+  low: 250.45
+  volume: 1000
+  opened_at {
+    seconds: 1760620500
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.45
+  close: 250.46
+  high: 250.4995
+  low: 250.44
+  volume: 2301
+  opened_at {
+    seconds: 1760620560
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.41
+  close: 250.41
+  high: 250.41
+  low: 250.41
+  volume: 200
+  opened_at {
+    seconds: 1760620620
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.45
+  close: 250.45
+  high: 250.45
+  low: 250.45
+  volume: 374
+  opened_at {
+    seconds: 1760620680
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.3
+  close: 250.33
+  high: 250.33
+  low: 250.3
+  volume: 655
+  opened_at {
+    seconds: 1760620740
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.22
+  close: 250.2
+  high: 250.25
+  low: 250.2
+  volume: 944
+  opened_at {
+    seconds: 1760620800
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.3262
+  close: 250.19
+  high: 250.3262
+  low: 250.03
+  volume: 10481
+  opened_at {
+    seconds: 1760620860
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.09
+  close: 250.05
+  high: 250.1
+  low: 250.05
+  volume: 901
+  opened_at {
+    seconds: 1760620920
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.08
+  close: 250.05
+  high: 250.08
+  low: 250.05
+  volume: 947
+  opened_at {
+    seconds: 1760620980
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 250.099
+  close: 250
+  high: 250.099
+  low: 250
+  volume: 6308
+  opened_at {
+    seconds: 1760621040
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 249.02
+  close: 248.78
+  high: 249.81
+  low: 248.17
+  volume: 51918
+  opened_at {
+    seconds: 1760621100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.78
+  close: 248.51
+  high: 249.01
+  low: 248.51
+  volume: 36053
+  opened_at {
+    seconds: 1760621160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.51
+  close: 248.3
+  high: 248.93
+  low: 248.23
+  volume: 40176
+  opened_at {
+    seconds: 1760621220
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.3
+  close: 248.24
+  high: 248.3
+  low: 247.45
+  volume: 122067
+  opened_at {
+    seconds: 1760621280
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.21
+  close: 248.31
+  high: 248.35
+  low: 248.08
+  volume: 16386
+  opened_at {
+    seconds: 1760621340
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.28
+  close: 247.85
+  high: 248.38
+  low: 247.3
+  volume: 1201188
+  opened_at {
+    seconds: 1760621400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.82
+  close: 247.39
+  high: 247.88
+  low: 246.65
+  volume: 303257
+  opened_at {
+    seconds: 1760621460
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.35
+  close: 246.545
+  high: 247.505
+  low: 246.23
+  volume: 253193
+  opened_at {
+    seconds: 1760621520
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.64
+  close: 247.12
+  high: 247.24
+  low: 246.18
+  volume: 220847
+  opened_at {
+    seconds: 1760621580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.13
+  close: 247.4701
+  high: 247.66
+  low: 247.02
+  volume: 183953
+  opened_at {
+    seconds: 1760621640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.51
+  close: 248.13
+  high: 248.15
+  low: 247.49
+  volume: 195873
+  opened_at {
+    seconds: 1760621700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.125
+  close: 247.64
+  high: 248.15
+  low: 247.58
+  volume: 150637
+  opened_at {
+    seconds: 1760621760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.635
+  close: 247.785
+  high: 247.9
+  low: 247.5
+  volume: 143535
+  opened_at {
+    seconds: 1760621820
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.79
+  close: 247.77
+  high: 248
+  low: 247.54
+  volume: 111412
+  opened_at {
+    seconds: 1760621880
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.75
+  close: 248.07
+  high: 248.22
+  low: 247.75
+  volume: 135398
+  opened_at {
+    seconds: 1760621940
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.06
+  close: 247.89
+  high: 248.28
+  low: 247.71
+  volume: 125465
+  opened_at {
+    seconds: 1760622000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.89
+  close: 247.665
+  high: 248.2
+  low: 247.56
+  volume: 120456
+  opened_at {
+    seconds: 1760622060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.64
+  close: 247.81
+  high: 247.93
+  low: 247.5
+  volume: 101441
+  opened_at {
+    seconds: 1760622120
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.82
+  close: 247.965
+  high: 248.15
+  low: 247.81
+  volume: 92710
+  opened_at {
+    seconds: 1760622180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.965
+  close: 248.111
+  high: 248.1799
+  low: 247.81
+  volume: 61046
+  opened_at {
+    seconds: 1760622240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.09
+  close: 248.0899
+  high: 248.34
+  low: 248.04
+  volume: 156739
+  opened_at {
+    seconds: 1760622300
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.06
+  close: 248.08
+  high: 248.3
+  low: 248.0001
+  volume: 104511
+  opened_at {
+    seconds: 1760622360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.085
+  close: 247.863
+  high: 248.21
+  low: 247.85
+  volume: 130944
+  opened_at {
+    seconds: 1760622420
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.875
+  close: 247.74
+  high: 248.23
+  low: 247.74
+  volume: 87773
+  opened_at {
+    seconds: 1760622480
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.715
+  close: 247.605
+  high: 247.77
+  low: 247.5
+  volume: 140055
+  opened_at {
+    seconds: 1760622540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.625
+  close: 247.72
+  high: 247.725
+  low: 247.31
+  volume: 284807
+  opened_at {
+    seconds: 1760622600
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.74
+  close: 247.61
+  high: 247.75
+  low: 247.47
+  volume: 85223
+  opened_at {
+    seconds: 1760622660
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.61
+  close: 247.785
+  high: 247.92
+  low: 247.57
+  volume: 131189
+  opened_at {
+    seconds: 1760622720
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.785
+  close: 247.755
+  high: 247.7933
+  low: 247.66
+  volume: 59713
+  opened_at {
+    seconds: 1760622780
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.7542
+  close: 247.53
+  high: 247.76
+  low: 247.5
+  volume: 62316
+  opened_at {
+    seconds: 1760622840
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.54
+  close: 247.61
+  high: 247.72
+  low: 247.5
+  volume: 69339
+  opened_at {
+    seconds: 1760622900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.61
+  close: 247.4564
+  high: 247.6714
+  low: 247.35
+  volume: 118202
+  opened_at {
+    seconds: 1760622960
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.42
+  close: 247.6866
+  high: 247.81
+  low: 247.41
+  volume: 84923
+  opened_at {
+    seconds: 1760623020
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.68
+  close: 247.7486
+  high: 247.8
+  low: 247.5
+  volume: 51971
+  opened_at {
+    seconds: 1760623080
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.7468
+  close: 247.51
+  high: 247.83
+  low: 247.5
+  volume: 67148
+  opened_at {
+    seconds: 1760623140
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.56
+  close: 247.53
+  high: 247.68
+  low: 247.5
+  volume: 97987
+  opened_at {
+    seconds: 1760623200
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.5418
+  close: 247.45
+  high: 247.58
+  low: 247.1001
+  volume: 131291
+  opened_at {
+    seconds: 1760623260
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.47
+  close: 247.2709
+  high: 247.47
+  low: 247.17
+  volume: 88585
+  opened_at {
+    seconds: 1760623320
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.26
+  close: 247.13
+  high: 247.395
+  low: 247.07
+  volume: 71000
+  opened_at {
+    seconds: 1760623380
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.1561
+  close: 247.19
+  high: 247.24
+  low: 247.07
+  volume: 83644
+  opened_at {
+    seconds: 1760623440
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.18
+  close: 247.415
+  high: 247.415
+  low: 247.04
+  volume: 87571
+  opened_at {
+    seconds: 1760623500
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.42
+  close: 247.34
+  high: 247.48
+  low: 247.25
+  volume: 101392
+  opened_at {
+    seconds: 1760623560
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.355
+  close: 247.37
+  high: 247.435
+  low: 247.24
+  volume: 69845
+  opened_at {
+    seconds: 1760623620
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.36
+  close: 247.38
+  high: 247.41
+  low: 247.23
+  volume: 82061
+  opened_at {
+    seconds: 1760623680
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.385
+  close: 247.215
+  high: 247.43
+  low: 247.19
+  volume: 83133
+  opened_at {
+    seconds: 1760623740
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.23
+  close: 247.245
+  high: 247.29
+  low: 247.17
+  volume: 76357
+  opened_at {
+    seconds: 1760623800
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.25
+  close: 246.99
+  high: 247.2847
+  low: 246.92
+  volume: 147026
+  opened_at {
+    seconds: 1760623860
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.02
+  close: 247.145
+  high: 247.21
+  low: 247.02
+  volume: 66430
+  opened_at {
+    seconds: 1760623920
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.145
+  close: 247.0268
+  high: 247.24
+  low: 246.99
+  volume: 64656
+  opened_at {
+    seconds: 1760623980
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.05
+  close: 247.15
+  high: 247.23
+  low: 246.99
+  volume: 80905
+  opened_at {
+    seconds: 1760624040
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.145
+  close: 247.1
+  high: 247.16
+  low: 246.86
+  volume: 112364
+  opened_at {
+    seconds: 1760624100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.13
+  close: 247.3917
+  high: 247.42
+  low: 247.02
+  volume: 114465
+  opened_at {
+    seconds: 1760624160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.37
+  close: 247.43
+  high: 247.47
+  low: 247.25
+  volume: 62533
+  opened_at {
+    seconds: 1760624220
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.4273
+  close: 247.4642
+  high: 247.65
+  low: 247.38
+  volume: 63991
+  opened_at {
+    seconds: 1760624280
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.49
+  close: 247.18
+  high: 247.52
+  low: 247.15
+  volume: 37433
+  opened_at {
+    seconds: 1760624340
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.18
+  close: 247.2896
+  high: 247.32
+  low: 247.18
+  volume: 37115
+  opened_at {
+    seconds: 1760624400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.2801
+  close: 247.51
+  high: 247.517
+  low: 247.26
+  volume: 50472
+  opened_at {
+    seconds: 1760624460
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.51
+  close: 247.55
+  high: 247.58
+  low: 247.45
+  volume: 42707
+  opened_at {
+    seconds: 1760624520
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.54
+  close: 247.435
+  high: 247.5599
+  low: 247.41
+  volume: 44437
+  opened_at {
+    seconds: 1760624580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.46
+  close: 247.28
+  high: 247.55
+  low: 247.27
+  volume: 57153
+  opened_at {
+    seconds: 1760624640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.28
+  close: 247.52
+  high: 247.52
+  low: 247.28
+  volume: 34482
+  opened_at {
+    seconds: 1760624700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.52
+  close: 247.3
+  high: 247.73
+  low: 247.29
+  volume: 64093
+  opened_at {
+    seconds: 1760624760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.2615
+  close: 247.195
+  high: 247.3499
+  low: 247.115
+  volume: 54476
+  opened_at {
+    seconds: 1760624820
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.18
+  close: 247.1916
+  high: 247.316
+  low: 247.0101
+  volume: 52176
+  opened_at {
+    seconds: 1760624880
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.22
+  close: 247.51
+  high: 247.53
+  low: 247.22
+  volume: 38838
+  opened_at {
+    seconds: 1760624940
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.49
+  close: 247.58
+  high: 247.6
+  low: 247.4817
+  volume: 52882
+  opened_at {
+    seconds: 1760625000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.575
+  close: 248
+  high: 248.07
+  low: 247.575
+  volume: 149429
+  opened_at {
+    seconds: 1760625060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.01
+  close: 247.855
+  high: 248.03
+  low: 247.61
+  volume: 67871
+  opened_at {
+    seconds: 1760625120
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.88
+  close: 247.79
+  high: 247.905
+  low: 247.74
+  volume: 53986
+  opened_at {
+    seconds: 1760625180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.771
+  close: 247.964
+  high: 248.02
+  low: 247.771
+  volume: 99205
+  opened_at {
+    seconds: 1760625240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.97
+  close: 248.17
+  high: 248.2
+  low: 247.93
+  volume: 72833
+  opened_at {
+    seconds: 1760625300
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.165
+  close: 248.22
+  high: 248.3638
+  low: 248.13
+  volume: 65123
+  opened_at {
+    seconds: 1760625360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.2
+  close: 248.365
+  high: 248.39
+  low: 248.06
+  volume: 70905
+  opened_at {
+    seconds: 1760625420
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.355
+  close: 248.45
+  high: 248.68
+  low: 248.27
+  volume: 105759
+  opened_at {
+    seconds: 1760625480
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.42
+  close: 248.3801
+  high: 248.5
+  low: 248.37
+  volume: 65343
+  opened_at {
+    seconds: 1760625540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.38
+  close: 248.455
+  high: 248.51
+  low: 248.3
+  volume: 73751
+  opened_at {
+    seconds: 1760625600
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.4357
+  close: 248.56
+  high: 248.58
+  low: 248.41
+  volume: 42569
+  opened_at {
+    seconds: 1760625660
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.56
+  close: 248.67
+  high: 248.69
+  low: 248.5434
+  volume: 54450
+  opened_at {
+    seconds: 1760625720
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.65
+  close: 248.69
+  high: 248.78
+  low: 248.62
+  volume: 76875
+  opened_at {
+    seconds: 1760625780
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.68
+  close: 248.545
+  high: 248.79
+  low: 248.54
+  volume: 53153
+  opened_at {
+    seconds: 1760625840
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.57
+  close: 248.735
+  high: 248.91
+  low: 248.5514
+  volume: 91573
+  opened_at {
+    seconds: 1760625900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.7473
+  close: 248.315
+  high: 248.7473
+  low: 248.23
+  volume: 89912
+  opened_at {
+    seconds: 1760625960
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.315
+  close: 248.41
+  high: 248.5353
+  low: 248.315
+  volume: 48148
+  opened_at {
+    seconds: 1760626020
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.4093
+  close: 248.27
+  high: 248.41
+  low: 248.1901
+  volume: 56032
+  opened_at {
+    seconds: 1760626080
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.27
+  close: 248.22
+  high: 248.34
+  low: 248.125
+  volume: 69457
+  opened_at {
+    seconds: 1760626140
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.16
+  close: 248.03
+  high: 248.21
+  low: 247.9698
+  volume: 57269
+  opened_at {
+    seconds: 1760626200
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.01
+  close: 248.31
+  high: 248.31
+  low: 248.005
+  volume: 66455
+  opened_at {
+    seconds: 1760626260
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.31
+  close: 248.32
+  high: 248.45
+  low: 248.21
+  volume: 76879
+  opened_at {
+    seconds: 1760626320
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.3
+  close: 248.515
+  high: 248.52
+  low: 248.26
+  volume: 101122
+  opened_at {
+    seconds: 1760626380
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.5
+  close: 248.57
+  high: 248.6554
+  low: 248.46
+  volume: 83599
+  opened_at {
+    seconds: 1760626440
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.584
+  close: 248.64
+  high: 248.65
+  low: 248.53
+  volume: 48666
+  opened_at {
+    seconds: 1760626500
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.63
+  close: 248.7
+  high: 248.72
+  low: 248.6
+  volume: 42290
+  opened_at {
+    seconds: 1760626560
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.7
+  close: 248.6
+  high: 248.76
+  low: 248.52
+  volume: 64073
+  opened_at {
+    seconds: 1760626620
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.6
+  close: 248.7
+  high: 248.8
+  low: 248.6
+  volume: 41269
+  opened_at {
+    seconds: 1760626680
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.67
+  close: 248.6
+  high: 248.75
+  low: 248.54
+  volume: 42631
+  opened_at {
+    seconds: 1760626740
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.62
+  close: 248.675
+  high: 248.69
+  low: 248.4693
+  volume: 38214
+  opened_at {
+    seconds: 1760626800
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.675
+  close: 248.59
+  high: 248.775
+  low: 248.585
+  volume: 74639
+  opened_at {
+    seconds: 1760626860
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.59
+  close: 248.47
+  high: 248.69
+  low: 248.43
+  volume: 33050
+  opened_at {
+    seconds: 1760626920
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.479
+  close: 248.425
+  high: 248.5301
+  low: 248.405
+  volume: 33852
+  opened_at {
+    seconds: 1760626980
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.4184
+  close: 248.14
+  high: 248.4184
+  low: 248.09
+  volume: 58846
+  opened_at {
+    seconds: 1760627040
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.14
+  close: 248.08
+  high: 248.42
+  low: 248.08
+  volume: 55090
+  opened_at {
+    seconds: 1760627100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.07
+  close: 248.415
+  high: 248.43
+  low: 248.01
+  volume: 95415
+  opened_at {
+    seconds: 1760627160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.4001
+  close: 248.642
+  high: 248.655
+  low: 248.4
+  volume: 69452
+  opened_at {
+    seconds: 1760627220
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.66
+  close: 248.77
+  high: 248.785
+  low: 248.58
+  volume: 61216
+  opened_at {
+    seconds: 1760627280
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.7562
+  close: 248.73
+  high: 248.79
+  low: 248.66
+  volume: 51818
+  opened_at {
+    seconds: 1760627340
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.7353
+  close: 248.695
+  high: 248.84
+  low: 248.6504
+  volume: 45316
+  opened_at {
+    seconds: 1760627400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.7
+  close: 248.6
+  high: 248.71
+  low: 248.52
+  volume: 38172
+  opened_at {
+    seconds: 1760627460
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.58
+  close: 248.53
+  high: 248.64
+  low: 248.5111
+  volume: 43300
+  opened_at {
+    seconds: 1760627520
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.525
+  close: 248.575
+  high: 248.65
+  low: 248.5
+  volume: 40070
+  opened_at {
+    seconds: 1760627580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.58
+  close: 248.95
+  high: 248.95
+  low: 248.57
+  volume: 61499
+  opened_at {
+    seconds: 1760627640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.92
+  close: 248.711
+  high: 248.935
+  low: 248.62
+  volume: 61076
+  opened_at {
+    seconds: 1760627700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.7
+  close: 248.8
+  high: 248.85
+  low: 248.665
+  volume: 48182
+  opened_at {
+    seconds: 1760627760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.8
+  close: 248.615
+  high: 248.835
+  low: 248.6
+  volume: 37025
+  opened_at {
+    seconds: 1760627820
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.615
+  close: 248.75
+  high: 248.78
+  low: 248.57
+  volume: 52409
+  opened_at {
+    seconds: 1760627880
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.73
+  close: 248.8
+  high: 248.845
+  low: 248.45
+  volume: 42845
+  opened_at {
+    seconds: 1760627940
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.8
+  close: 248.91
+  high: 248.93
+  low: 248.77
+  volume: 30750
+  opened_at {
+    seconds: 1760628000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.9
+  close: 248.865
+  high: 249
+  low: 248.8365
+  volume: 56987
+  opened_at {
+    seconds: 1760628060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.875
+  close: 248.9269
+  high: 248.97
+  low: 248.73
+  volume: 33533
+  opened_at {
+    seconds: 1760628120
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.915
+  close: 248.66
+  high: 249.04
+  low: 248.605
+  volume: 96364
+  opened_at {
+    seconds: 1760628180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.66
+  close: 248.49
+  high: 248.69
+  low: 248.45
+  volume: 63672
+  opened_at {
+    seconds: 1760628240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.52
+  close: 248.34
+  high: 248.52
+  low: 248.2501
+  volume: 43615
+  opened_at {
+    seconds: 1760628300
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.34
+  close: 248.24
+  high: 248.34
+  low: 248.1802
+  volume: 51408
+  opened_at {
+    seconds: 1760628360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.24
+  close: 248.215
+  high: 248.29
+  low: 248.1
+  volume: 44384
+  opened_at {
+    seconds: 1760628420
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.2
+  close: 248.085
+  high: 248.2399
+  low: 247.89
+  volume: 53589
+  opened_at {
+    seconds: 1760628480
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.11
+  close: 248.19
+  high: 248.235
+  low: 248
+  volume: 54314
+  opened_at {
+    seconds: 1760628540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.17
+  close: 247.9378
+  high: 248.17
+  low: 247.88
+  volume: 43407
+  opened_at {
+    seconds: 1760628600
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.9367
+  close: 248.05
+  high: 248.14
+  low: 247.7901
+  volume: 48624
+  opened_at {
+    seconds: 1760628660
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.06
+  close: 248.205
+  high: 248.2292
+  low: 247.945
+  volume: 34842
+  opened_at {
+    seconds: 1760628720
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.205
+  close: 248.09
+  high: 248.26
+  low: 248.07
+  volume: 35472
+  opened_at {
+    seconds: 1760628780
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.095
+  close: 248.295
+  high: 248.32
+  low: 248.04
+  volume: 30822
+  opened_at {
+    seconds: 1760628840
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.299
+  close: 248.3
+  high: 248.43
+  low: 248.2601
+  volume: 32103
+  opened_at {
+    seconds: 1760628900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.3173
+  close: 248.36
+  high: 248.4199
+  low: 248.2615
+  volume: 29134
+  opened_at {
+    seconds: 1760628960
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.36
+  close: 248.53
+  high: 248.58
+  low: 248.35
+  volume: 38669
+  opened_at {
+    seconds: 1760629020
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.5213
+  close: 248.365
+  high: 248.663056
+  low: 248.36
+  volume: 50846
+  opened_at {
+    seconds: 1760629080
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.37
+  close: 248.44
+  high: 248.4661
+  low: 248.35
+  volume: 26520
+  opened_at {
+    seconds: 1760629140
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.43
+  close: 248.12
+  high: 248.4575
+  low: 248.0201
+  volume: 26104
+  opened_at {
+    seconds: 1760629200
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.12
+  close: 247.99
+  high: 248.12
+  low: 247.95
+  volume: 38587
+  opened_at {
+    seconds: 1760629260
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.9704
+  close: 247.89
+  high: 248
+  low: 247.85
+  volume: 32140
+  opened_at {
+    seconds: 1760629320
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.865
+  close: 248.05
+  high: 248.0526
+  low: 247.81
+  volume: 39549
+  opened_at {
+    seconds: 1760629380
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.01
+  close: 247.99
+  high: 248.28
+  low: 247.99
+  volume: 29618
+  opened_at {
+    seconds: 1760629440
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248
+  close: 247.81
+  high: 248.0113
+  low: 247.71
+  volume: 29712
+  opened_at {
+    seconds: 1760629500
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.8168
+  close: 247.7102
+  high: 247.93
+  low: 247.7102
+  volume: 26597
+  opened_at {
+    seconds: 1760629560
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.76
+  close: 248.02
+  high: 248.09
+  low: 247.75
+  volume: 37858
+  opened_at {
+    seconds: 1760629620
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.06
+  close: 248.13
+  high: 248.19
+  low: 247.96
+  volume: 23830
+  opened_at {
+    seconds: 1760629680
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.12
+  close: 248.07
+  high: 248.14
+  low: 247.89
+  volume: 23725
+  opened_at {
+    seconds: 1760629740
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.07
+  close: 248.2281
+  high: 248.32
+  low: 248.06
+  volume: 31899
+  opened_at {
+    seconds: 1760629800
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.2
+  close: 248.23
+  high: 248.34
+  low: 248.085
+  volume: 24000
+  opened_at {
+    seconds: 1760629860
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.24
+  close: 248.201
+  high: 248.3153
+  low: 248.16
+  volume: 21200
+  opened_at {
+    seconds: 1760629920
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.2
+  close: 247.955
+  high: 248.2
+  low: 247.9
+  volume: 28899
+  opened_at {
+    seconds: 1760629980
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.98
+  close: 247.9168
+  high: 247.99
+  low: 247.87
+  volume: 15359
+  opened_at {
+    seconds: 1760630040
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.915
+  close: 247.92
+  high: 247.98
+  low: 247.79
+  volume: 27082
+  opened_at {
+    seconds: 1760630100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.92
+  close: 247.64
+  high: 248.05
+  low: 247.6
+  volume: 40968
+  opened_at {
+    seconds: 1760630160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.64
+  close: 247.79
+  high: 247.83
+  low: 247.5017
+  volume: 80354
+  opened_at {
+    seconds: 1760630220
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.814
+  close: 247.77
+  high: 247.82
+  low: 247.6604
+  volume: 79412
+  opened_at {
+    seconds: 1760630280
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.81
+  close: 247.97
+  high: 247.98
+  low: 247.7394
+  volume: 36345
+  opened_at {
+    seconds: 1760630340
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.96
+  close: 247.8
+  high: 247.99
+  low: 247.7
+  volume: 34113
+  opened_at {
+    seconds: 1760630400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.82
+  close: 247.7375
+  high: 247.9
+  low: 247.66
+  volume: 40036
+  opened_at {
+    seconds: 1760630460
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.82
+  close: 247.81
+  high: 247.93
+  low: 247.7492
+  volume: 30189
+  opened_at {
+    seconds: 1760630520
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.84
+  close: 247.81
+  high: 247.92
+  low: 247.7405
+  volume: 20423
+  opened_at {
+    seconds: 1760630580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.8
+  close: 247.93
+  high: 247.96
+  low: 247.71
+  volume: 23930
+  opened_at {
+    seconds: 1760630640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.96
+  close: 247.91
+  high: 248.1
+  low: 247.91
+  volume: 31719
+  opened_at {
+    seconds: 1760630700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.935
+  close: 248.2
+  high: 248.2
+  low: 247.8702
+  volume: 23164
+  opened_at {
+    seconds: 1760630760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.18
+  close: 247.98
+  high: 248.1955
+  low: 247.9
+  volume: 22079
+  opened_at {
+    seconds: 1760630820
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.985
+  close: 248
+  high: 248.1
+  low: 247.91
+  volume: 15809
+  opened_at {
+    seconds: 1760630880
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248
+  close: 247.9726
+  high: 248.05
+  low: 247.9422
+  volume: 17822
+  opened_at {
+    seconds: 1760630940
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.98
+  close: 247.82
+  high: 248
+  low: 247.82
+  volume: 26967
+  opened_at {
+    seconds: 1760631000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.8341
+  close: 247.91
+  high: 247.93
+  low: 247.75
+  volume: 18486
+  opened_at {
+    seconds: 1760631060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.9299
+  close: 248.0735
+  high: 248.14
+  low: 247.9299
+  volume: 28189
+  opened_at {
+    seconds: 1760631120
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 248.07
+  close: 247.8885
+  high: 248.075
+  low: 247.8436
+  volume: 23955
+  opened_at {
+    seconds: 1760631180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.895
+  close: 247.99
+  high: 248.05
+  low: 247.82
+  volume: 21175
+  opened_at {
+    seconds: 1760631240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.97
+  close: 247.84
+  high: 247.99
+  low: 247.825
+  volume: 22845
+  opened_at {
+    seconds: 1760631300
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.85
+  close: 247.61
+  high: 247.85
+  low: 247.61
+  volume: 26309
+  opened_at {
+    seconds: 1760631360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.59
+  close: 247.3
+  high: 247.64
+  low: 247.3
+  volume: 102621
+  opened_at {
+    seconds: 1760631420
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.34
+  close: 247.24
+  high: 247.445
+  low: 247.23
+  volume: 59395
+  opened_at {
+    seconds: 1760631480
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.2492
+  close: 247.2
+  high: 247.3099
+  low: 247.13
+  volume: 31728
+  opened_at {
+    seconds: 1760631540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.21
+  close: 247.165
+  high: 247.23
+  low: 247.03
+  volume: 42647
+  opened_at {
+    seconds: 1760631600
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.19
+  close: 247.4
+  high: 247.4975
+  low: 247.18
+  volume: 90037
+  opened_at {
+    seconds: 1760631660
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.395
+  close: 247.43
+  high: 247.52
+  low: 247.3501
+  volume: 20794
+  opened_at {
+    seconds: 1760631720
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.43
+  close: 247.405
+  high: 247.52
+  low: 247.36
+  volume: 35373
+  opened_at {
+    seconds: 1760631780
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.42
+  close: 247.4907
+  high: 247.505
+  low: 247.34
+  volume: 35380
+  opened_at {
+    seconds: 1760631840
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.515
+  close: 247.63
+  high: 247.635
+  low: 247.44
+  volume: 124751
+  opened_at {
+    seconds: 1760631900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.635
+  close: 247.6042
+  high: 247.67
+  low: 247.5
+  volume: 127341
+  opened_at {
+    seconds: 1760631960
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.63
+  close: 247.78
+  high: 247.79
+  low: 247.52
+  volume: 101106
+  opened_at {
+    seconds: 1760632020
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.78
+  close: 247.83
+  high: 247.94
+  low: 247.7604
+  volume: 63266
+  opened_at {
+    seconds: 1760632080
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.825
+  close: 247.72
+  high: 247.87
+  low: 247.67
+  volume: 60505
+  opened_at {
+    seconds: 1760632140
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.72
+  close: 247.0301
+  high: 247.72
+  low: 246.8
+  volume: 180663
+  opened_at {
+    seconds: 1760632200
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.04
+  close: 247.03
+  high: 247.172
+  low: 247
+  volume: 38897
+  opened_at {
+    seconds: 1760632260
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.98
+  close: 246.455
+  high: 246.98
+  low: 246.4324
+  volume: 89585
+  opened_at {
+    seconds: 1760632320
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.48
+  close: 246.744
+  high: 246.86
+  low: 246.4101
+  volume: 65049
+  opened_at {
+    seconds: 1760632380
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.765
+  close: 246.55
+  high: 246.765
+  low: 246.5
+  volume: 78631
+  opened_at {
+    seconds: 1760632440
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.53
+  close: 246.51
+  high: 246.9299
+  low: 246.48
+  volume: 55491
+  opened_at {
+    seconds: 1760632500
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.49
+  close: 246.96
+  high: 246.97
+  low: 246.49
+  volume: 41507
+  opened_at {
+    seconds: 1760632560
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.95
+  close: 246.665
+  high: 246.95
+  low: 246.58
+  volume: 35410
+  opened_at {
+    seconds: 1760632620
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.64
+  close: 246.83
+  high: 246.88
+  low: 246.52
+  volume: 35192
+  opened_at {
+    seconds: 1760632680
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.8
+  close: 246.74
+  high: 246.9
+  low: 246.69
+  volume: 29015
+  opened_at {
+    seconds: 1760632740
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.755
+  close: 246.732
+  high: 246.78
+  low: 246.56
+  volume: 42128
+  opened_at {
+    seconds: 1760632800
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.745
+  close: 247.0001
+  high: 247.18
+  low: 246.745
+  volume: 52947
+  opened_at {
+    seconds: 1760632860
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.03
+  close: 246.85
+  high: 247.03
+  low: 246.7598
+  volume: 30193
+  opened_at {
+    seconds: 1760632920
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.86
+  close: 246.94
+  high: 247.02
+  low: 246.82
+  volume: 31454
+  opened_at {
+    seconds: 1760632980
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.93
+  close: 246.7941
+  high: 246.96
+  low: 246.71
+  volume: 19351
+  opened_at {
+    seconds: 1760633040
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.775
+  close: 246.4
+  high: 246.775
+  low: 246.375
+  volume: 48987
+  opened_at {
+    seconds: 1760633100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.395
+  close: 246.1038
+  high: 246.4
+  low: 246.04
+  volume: 56807
+  opened_at {
+    seconds: 1760633160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.13
+  close: 246.275
+  high: 246.63
+  low: 246.12
+  volume: 60734
+  opened_at {
+    seconds: 1760633220
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.25
+  close: 246.435
+  high: 246.48
+  low: 246.15
+  volume: 66890
+  opened_at {
+    seconds: 1760633280
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.43
+  close: 246.721
+  high: 246.74
+  low: 246.43
+  volume: 38153
+  opened_at {
+    seconds: 1760633340
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.7
+  close: 247.23
+  high: 247.26
+  low: 246.68
+  volume: 167404
+  opened_at {
+    seconds: 1760633400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.23
+  close: 246.961
+  high: 247.293
+  low: 246.91
+  volume: 61885
+  opened_at {
+    seconds: 1760633460
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.96
+  close: 246.95
+  high: 247.07
+  low: 246.86
+  volume: 26125
+  opened_at {
+    seconds: 1760633520
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.95
+  close: 247.255
+  high: 247.27
+  low: 246.9
+  volume: 23738
+  opened_at {
+    seconds: 1760633580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.25
+  close: 247.225
+  high: 247.275
+  low: 247.06
+  volume: 36105
+  opened_at {
+    seconds: 1760633640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.2101
+  close: 247.44
+  high: 247.46
+  low: 247.21
+  volume: 37440
+  opened_at {
+    seconds: 1760633700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.445
+  close: 247.4301
+  high: 247.55
+  low: 247.325
+  volume: 40680
+  opened_at {
+    seconds: 1760633760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.44
+  close: 247.47
+  high: 247.515
+  low: 247.335
+  volume: 32654
+  opened_at {
+    seconds: 1760633820
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.41
+  close: 247.58
+  high: 247.66
+  low: 247.38
+  volume: 41620
+  opened_at {
+    seconds: 1760633880
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.5875
+  close: 247.65
+  high: 247.695
+  low: 247.5201
+  volume: 36502
+  opened_at {
+    seconds: 1760633940
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.65
+  close: 247.56
+  high: 247.7721
+  low: 247.48
+  volume: 52935
+  opened_at {
+    seconds: 1760634000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.59
+  close: 247.3
+  high: 247.6
+  low: 247.27
+  volume: 29404
+  opened_at {
+    seconds: 1760634060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.3
+  close: 247.1247
+  high: 247.31
+  low: 247.0488
+  volume: 27773
+  opened_at {
+    seconds: 1760634120
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.0876
+  close: 246.9701
+  high: 247.11
+  low: 246.9401
+  volume: 34287
+  opened_at {
+    seconds: 1760634180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.98
+  close: 247.13
+  high: 247.22
+  low: 246.91
+  volume: 33735
+  opened_at {
+    seconds: 1760634240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.15
+  close: 247.05
+  high: 247.16
+  low: 246.97
+  volume: 26351
+  opened_at {
+    seconds: 1760634300
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.05
+  close: 246.87
+  high: 247.12
+  low: 246.87
+  volume: 33767
+  opened_at {
+    seconds: 1760634360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.91
+  close: 247.1003
+  high: 247.37
+  low: 246.88
+  volume: 53464
+  opened_at {
+    seconds: 1760634420
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.15
+  close: 247.13
+  high: 247.24
+  low: 246.9201
+  volume: 49007
+  opened_at {
+    seconds: 1760634480
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.08
+  close: 247.0945
+  high: 247.255
+  low: 246.96
+  volume: 44470
+  opened_at {
+    seconds: 1760634540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.0839
+  close: 247.125
+  high: 247.18
+  low: 246.96
+  volume: 22721
+  opened_at {
+    seconds: 1760634600
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.125
+  close: 247.26
+  high: 247.33
+  low: 247.08
+  volume: 23376
+  opened_at {
+    seconds: 1760634660
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.27
+  close: 247.225
+  high: 247.41
+  low: 247.15
+  volume: 38749
+  opened_at {
+    seconds: 1760634720
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.26
+  close: 247.205
+  high: 247.3799
+  low: 247.1501
+  volume: 23232
+  opened_at {
+    seconds: 1760634780
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.185
+  close: 247.03
+  high: 247.243
+  low: 247.03
+  volume: 19055
+  opened_at {
+    seconds: 1760634840
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.02
+  close: 247.03
+  high: 247.07
+  low: 246.9
+  volume: 50565
+  opened_at {
+    seconds: 1760634900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.04
+  close: 247.1501
+  high: 247.175
+  low: 246.98
+  volume: 19777
+  opened_at {
+    seconds: 1760634960
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.175
+  close: 247.26
+  high: 247.38
+  low: 247.15
+  volume: 21347
+  opened_at {
+    seconds: 1760635020
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.26
+  close: 247.37
+  high: 247.5
+  low: 247.19
+  volume: 30640
+  opened_at {
+    seconds: 1760635080
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.355
+  close: 247.25
+  high: 247.49
+  low: 247.17
+  volume: 31243
+  opened_at {
+    seconds: 1760635140
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.22
+  close: 247.15
+  high: 247.29
+  low: 247.07
+  volume: 33028
+  opened_at {
+    seconds: 1760635200
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.1
+  close: 246.85
+  high: 247.1
+  low: 246.72
+  volume: 34049
+  opened_at {
+    seconds: 1760635260
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.87
+  close: 246.8
+  high: 246.98
+  low: 246.77
+  volume: 37673
+  opened_at {
+    seconds: 1760635320
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.76
+  close: 246.65
+  high: 246.8179
+  low: 246.59
+  volume: 30871
+  opened_at {
+    seconds: 1760635380
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.65
+  close: 246.7126
+  high: 246.8105
+  low: 246.58
+  volume: 58781
+  opened_at {
+    seconds: 1760635440
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.72
+  close: 246.807
+  high: 246.807
+  low: 246.63
+  volume: 26941
+  opened_at {
+    seconds: 1760635500
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.8
+  close: 246.8701
+  high: 246.91
+  low: 246.74
+  volume: 21302
+  opened_at {
+    seconds: 1760635560
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.92
+  close: 247.135
+  high: 247.15
+  low: 246.8515
+  volume: 20293
+  opened_at {
+    seconds: 1760635620
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.15
+  close: 247.16
+  high: 247.23
+  low: 247.06
+  volume: 37043
+  opened_at {
+    seconds: 1760635680
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.1701
+  close: 247.22
+  high: 247.3499
+  low: 247.1552
+  volume: 28535
+  opened_at {
+    seconds: 1760635740
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.22
+  close: 247.25
+  high: 247.45
+  low: 247.2
+  volume: 30114
+  opened_at {
+    seconds: 1760635800
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.255
+  close: 247.105
+  high: 247.34
+  low: 247.0751
+  volume: 32923
+  opened_at {
+    seconds: 1760635860
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.1
+  close: 247.11
+  high: 247.21
+  low: 247
+  volume: 29856
+  opened_at {
+    seconds: 1760635920
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.155
+  close: 247.1225
+  high: 247.202
+  low: 247.048
+  volume: 20975
+  opened_at {
+    seconds: 1760635980
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.1285
+  close: 246.98
+  high: 247.2
+  low: 246.98
+  volume: 17894
+  opened_at {
+    seconds: 1760636040
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.96
+  close: 247.0501
+  high: 247.125
+  low: 246.9
+  volume: 34521
+  opened_at {
+    seconds: 1760636100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.1
+  close: 247.04
+  high: 247.1
+  low: 247
+  volume: 21371
+  opened_at {
+    seconds: 1760636160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.03
+  close: 247.045
+  high: 247.112
+  low: 247
+  volume: 19722
+  opened_at {
+    seconds: 1760636220
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.045
+  close: 247.1
+  high: 247.13
+  low: 247.01
+  volume: 36859
+  opened_at {
+    seconds: 1760636280
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.1
+  close: 246.775
+  high: 247.13
+  low: 246.74
+  volume: 36168
+  opened_at {
+    seconds: 1760636340
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.7913
+  close: 246.62
+  high: 246.85
+  low: 246.56
+  volume: 31255
+  opened_at {
+    seconds: 1760636400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.66
+  close: 246.54
+  high: 246.71
+  low: 246.4
+  volume: 41148
+  opened_at {
+    seconds: 1760636460
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.52
+  close: 246.475
+  high: 246.61
+  low: 246.45
+  volume: 30651
+  opened_at {
+    seconds: 1760636520
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.5078
+  close: 246.35
+  high: 246.5078
+  low: 246.32
+  volume: 28207
+  opened_at {
+    seconds: 1760636580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.36
+  close: 246.4686
+  high: 246.475
+  low: 246.31
+  volume: 23632
+  opened_at {
+    seconds: 1760636640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.47
+  close: 246.2352
+  high: 246.47
+  low: 246.235
+  volume: 42178
+  opened_at {
+    seconds: 1760636700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.27
+  close: 246.349965
+  high: 246.505
+  low: 246.25
+  volume: 45791
+  opened_at {
+    seconds: 1760636760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.345
+  close: 246.59
+  high: 246.605
+  low: 246.32
+  volume: 37817
+  opened_at {
+    seconds: 1760636820
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.56
+  close: 246.54
+  high: 246.5977
+  low: 246.42
+  volume: 27685
+  opened_at {
+    seconds: 1760636880
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.53
+  close: 246.595
+  high: 246.68
+  low: 246.45
+  volume: 21237
+  opened_at {
+    seconds: 1760636940
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.62
+  close: 246.32
+  high: 246.6405
+  low: 246.2475
+  volume: 26827
+  opened_at {
+    seconds: 1760637000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.3222
+  close: 246.325
+  high: 246.415
+  low: 246.29
+  volume: 23794
+  opened_at {
+    seconds: 1760637060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.31
+  close: 246.37
+  high: 246.41
+  low: 246.29
+  volume: 32227
+  opened_at {
+    seconds: 1760637120
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.36
+  close: 246.2852
+  high: 246.39
+  low: 246.22
+  volume: 35945
+  opened_at {
+    seconds: 1760637180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.29
+  close: 246.24
+  high: 246.3194
+  low: 246.2
+  volume: 34002
+  opened_at {
+    seconds: 1760637240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.3155
+  close: 246.55
+  high: 246.64
+  low: 246.3155
+  volume: 47994
+  opened_at {
+    seconds: 1760637300
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.56
+  close: 246.57
+  high: 246.65
+  low: 246.5
+  volume: 34778
+  opened_at {
+    seconds: 1760637360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.57
+  close: 246.51
+  high: 246.62
+  low: 246.5
+  volume: 37403
+  opened_at {
+    seconds: 1760637420
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.505
+  close: 246.6
+  high: 246.6263
+  low: 246.48
+  volume: 30268
+  opened_at {
+    seconds: 1760637480
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.6126
+  close: 246.565
+  high: 246.62
+  low: 246.511
+  volume: 16731
+  opened_at {
+    seconds: 1760637540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.55
+  close: 246.3937
+  high: 246.67
+  low: 246.35
+  volume: 40514
+  opened_at {
+    seconds: 1760637600
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.42
+  close: 246.35
+  high: 246.47
+  low: 246.31
+  volume: 30737
+  opened_at {
+    seconds: 1760637660
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.3457
+  close: 246.32
+  high: 246.41
+  low: 246.32
+  volume: 19771
+  opened_at {
+    seconds: 1760637720
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.335
+  close: 246.185
+  high: 246.3699
+  low: 246.16
+  volume: 38801
+  opened_at {
+    seconds: 1760637780
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.21
+  close: 245.89
+  high: 246.22
+  low: 245.86
+  volume: 83920
+  opened_at {
+    seconds: 1760637840
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.8737
+  close: 245.9
+  high: 246.07
+  low: 245.8
+  volume: 73481
+  opened_at {
+    seconds: 1760637900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.92
+  close: 245.74
+  high: 245.9516
+  low: 245.72
+  volume: 46690
+  opened_at {
+    seconds: 1760637960
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.735
+  close: 245.59
+  high: 245.76
+  low: 245.59
+  volume: 35729
+  opened_at {
+    seconds: 1760638020
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.59
+  close: 245.785
+  high: 245.81
+  low: 245.55
+  volume: 59611
+  opened_at {
+    seconds: 1760638080
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.78
+  close: 245.82
+  high: 245.875
+  low: 245.74
+  volume: 47384
+  opened_at {
+    seconds: 1760638140
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.84
+  close: 245.8373
+  high: 245.9561
+  low: 245.75
+  volume: 33072
+  opened_at {
+    seconds: 1760638200
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.87
+  close: 245.91
+  high: 245.98
+  low: 245.78
+  volume: 39627
+  opened_at {
+    seconds: 1760638260
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.895
+  close: 245.3905
+  high: 245.895
+  low: 245.385
+  volume: 82264
+  opened_at {
+    seconds: 1760638320
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.38
+  close: 245.56
+  high: 245.585
+  low: 245.368
+  volume: 26036
+  opened_at {
+    seconds: 1760638380
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.5387
+  close: 245.59
+  high: 245.625
+  low: 245.44
+  volume: 37799
+  opened_at {
+    seconds: 1760638440
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.56
+  close: 245.47
+  high: 245.58
+  low: 245.37
+  volume: 32437
+  opened_at {
+    seconds: 1760638500
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.48
+  close: 245.62
+  high: 245.63
+  low: 245.26
+  volume: 79127
+  opened_at {
+    seconds: 1760638560
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.62
+  close: 245.77
+  high: 245.8
+  low: 245.5
+  volume: 68270
+  opened_at {
+    seconds: 1760638620
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.775
+  close: 245.775
+  high: 245.9062
+  low: 245.73
+  volume: 37145
+  opened_at {
+    seconds: 1760638680
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.7816
+  close: 245.4035
+  high: 245.84
+  low: 245.38
+  volume: 81600
+  opened_at {
+    seconds: 1760638740
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.38
+  close: 245.48
+  high: 245.55
+  low: 245.29
+  volume: 41187
+  opened_at {
+    seconds: 1760638800
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.47
+  close: 245.64
+  high: 245.6599
+  low: 245.31
+  volume: 33463
+  opened_at {
+    seconds: 1760638860
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.62
+  close: 245.62
+  high: 245.8
+  low: 245.54
+  volume: 50038
+  opened_at {
+    seconds: 1760638920
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.63
+  close: 245.8
+  high: 245.83
+  low: 245.5701
+  volume: 32611
+  opened_at {
+    seconds: 1760638980
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.8
+  close: 245.68
+  high: 245.81
+  low: 245.51
+  volume: 26255
+  opened_at {
+    seconds: 1760639040
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.71
+  close: 245.5499
+  high: 245.86
+  low: 245.5
+  volume: 54831
+  opened_at {
+    seconds: 1760639100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.55
+  close: 245.43
+  high: 245.57
+  low: 245.34
+  volume: 22718
+  opened_at {
+    seconds: 1760639160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.43
+  close: 245.43
+  high: 245.64
+  low: 245.295
+  volume: 45525
+  opened_at {
+    seconds: 1760639220
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.435
+  close: 245.4568
+  high: 245.5
+  low: 245.38
+  volume: 29025
+  opened_at {
+    seconds: 1760639280
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.4626
+  close: 245.66
+  high: 245.7319
+  low: 245.435
+  volume: 31145
+  opened_at {
+    seconds: 1760639340
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.64
+  close: 245.78
+  high: 245.83
+  low: 245.5857
+  volume: 31643
+  opened_at {
+    seconds: 1760639400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.77
+  close: 245.53
+  high: 245.7702
+  low: 245.53
+  volume: 30109
+  opened_at {
+    seconds: 1760639460
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.51
+  close: 245.46
+  high: 245.542
+  low: 245.375
+  volume: 50830
+  opened_at {
+    seconds: 1760639520
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.475
+  close: 245.385
+  high: 245.58
+  low: 245.37
+  volume: 40021
+  opened_at {
+    seconds: 1760639580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.375
+  close: 245.205
+  high: 245.3999
+  low: 245.13
+  volume: 41012
+  opened_at {
+    seconds: 1760639640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.22
+  close: 245.6
+  high: 245.63
+  low: 245.14
+  volume: 56257
+  opened_at {
+    seconds: 1760639700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.6
+  close: 245.66
+  high: 245.72
+  low: 245.54
+  volume: 39655
+  opened_at {
+    seconds: 1760639760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.67
+  close: 245.73
+  high: 245.81
+  low: 245.58
+  volume: 45432
+  opened_at {
+    seconds: 1760639820
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.72
+  close: 245.81
+  high: 245.89
+  low: 245.67
+  volume: 43438
+  opened_at {
+    seconds: 1760639880
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.82
+  close: 245.72
+  high: 245.93
+  low: 245.69
+  volume: 37348
+  opened_at {
+    seconds: 1760639940
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.74
+  close: 245.715
+  high: 245.81
+  low: 245.7
+  volume: 13301
+  opened_at {
+    seconds: 1760640000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.715
+  close: 245.815
+  high: 245.94
+  low: 245.64
+  volume: 30390
+  opened_at {
+    seconds: 1760640060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.815
+  close: 245.86
+  high: 245.86
+  low: 245.68
+  volume: 33580
+  opened_at {
+    seconds: 1760640120
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 245.85
+  close: 246.26
+  high: 246.335
+  low: 245.82
+  volume: 86066
+  opened_at {
+    seconds: 1760640180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.25
+  close: 246.32
+  high: 246.96
+  low: 246.1
+  volume: 209625
+  opened_at {
+    seconds: 1760640240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.36
+  close: 246.41
+  high: 246.59
+  low: 246.31
+  volume: 48589
+  opened_at {
+    seconds: 1760640300
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.43
+  close: 246.41
+  high: 246.52
+  low: 246.36
+  volume: 57669
+  opened_at {
+    seconds: 1760640360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.442
+  close: 246.64
+  high: 246.7099
+  low: 246.4
+  volume: 66361
+  opened_at {
+    seconds: 1760640420
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.59
+  close: 246.45
+  high: 246.6106
+  low: 246.4
+  volume: 36049
+  opened_at {
+    seconds: 1760640480
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.47
+  close: 246.35
+  high: 246.495
+  low: 246.27
+  volume: 32351
+  opened_at {
+    seconds: 1760640540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.38
+  close: 246.41
+  high: 246.43
+  low: 246.225
+  volume: 47464
+  opened_at {
+    seconds: 1760640600
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.41
+  close: 246.323
+  high: 246.422
+  low: 246.18
+  volume: 26089
+  opened_at {
+    seconds: 1760640660
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.33
+  close: 246.38
+  high: 246.404
+  low: 246.26
+  volume: 28582
+  opened_at {
+    seconds: 1760640720
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.39
+  close: 246.295
+  high: 246.43
+  low: 246.21
+  volume: 36405
+  opened_at {
+    seconds: 1760640780
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.295
+  close: 246.4001
+  high: 246.44
+  low: 246.295
+  volume: 30783
+  opened_at {
+    seconds: 1760640840
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.45
+  close: 246.42
+  high: 246.5699
+  low: 246.37
+  volume: 70492
+  opened_at {
+    seconds: 1760640900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.45
+  close: 246.475
+  high: 246.5332
+  low: 246.39
+  volume: 22934
+  opened_at {
+    seconds: 1760640960
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.4732
+  close: 246.3707
+  high: 246.51
+  low: 246.33
+  volume: 24889
+  opened_at {
+    seconds: 1760641020
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.35
+  close: 246.44
+  high: 246.5
+  low: 246.35
+  volume: 24414
+  opened_at {
+    seconds: 1760641080
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.49
+  close: 246.605
+  high: 246.64
+  low: 246.4594
+  volume: 32327
+  opened_at {
+    seconds: 1760641140
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.6
+  close: 246.56
+  high: 246.68
+  low: 246.46
+  volume: 33040
+  opened_at {
+    seconds: 1760641200
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.54
+  close: 246.6716
+  high: 246.76
+  low: 246.5397
+  volume: 45102
+  opened_at {
+    seconds: 1760641260
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.71
+  close: 246.48
+  high: 246.71
+  low: 246.4105
+  volume: 27569
+  opened_at {
+    seconds: 1760641320
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.53
+  close: 246.613495
+  high: 246.63
+  low: 246.51
+  volume: 34956
+  opened_at {
+    seconds: 1760641380
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.62
+  close: 246.73
+  high: 246.755
+  low: 246.55
+  volume: 24635
+  opened_at {
+    seconds: 1760641440
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.73
+  close: 246.6
+  high: 246.79
+  low: 246.58
+  volume: 27587
+  opened_at {
+    seconds: 1760641500
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.595
+  close: 246.8285
+  high: 246.85
+  low: 246.57
+  volume: 36325
+  opened_at {
+    seconds: 1760641560
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.78
+  close: 246.715
+  high: 246.8
+  low: 246.65
+  volume: 28062
+  opened_at {
+    seconds: 1760641620
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.7
+  close: 246.73
+  high: 246.81
+  low: 246.69
+  volume: 27709
+  opened_at {
+    seconds: 1760641680
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.72
+  close: 246.8
+  high: 246.8299
+  low: 246.69
+  volume: 25471
+  opened_at {
+    seconds: 1760641740
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.78
+  close: 247.01
+  high: 247.02
+  low: 246.71
+  volume: 57025
+  opened_at {
+    seconds: 1760641800
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.01
+  close: 246.75
+  high: 247.01
+  low: 246.701
+  volume: 39454
+  opened_at {
+    seconds: 1760641860
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.73
+  close: 246.81
+  high: 246.835
+  low: 246.67
+  volume: 29092
+  opened_at {
+    seconds: 1760641920
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.79
+  close: 246.645
+  high: 246.8
+  low: 246.56
+  volume: 57759
+  opened_at {
+    seconds: 1760641980
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.67
+  close: 246.67
+  high: 246.8
+  low: 246.645
+  volume: 31981
+  opened_at {
+    seconds: 1760642040
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.68
+  close: 246.66
+  high: 246.7799
+  low: 246.57
+  volume: 40931
+  opened_at {
+    seconds: 1760642100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.67
+  close: 246.64
+  high: 246.72
+  low: 246.5716
+  volume: 33232
+  opened_at {
+    seconds: 1760642160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.66
+  close: 246.56
+  high: 246.67
+  low: 246.485
+  volume: 37033
+  opened_at {
+    seconds: 1760642220
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.555
+  close: 246.6438
+  high: 246.7599
+  low: 246.54
+  volume: 43257
+  opened_at {
+    seconds: 1760642280
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.655
+  close: 246.54
+  high: 246.675
+  low: 246.53
+  volume: 31316
+  opened_at {
+    seconds: 1760642340
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.55
+  close: 246.44
+  high: 246.648
+  low: 246.43
+  volume: 44125
+  opened_at {
+    seconds: 1760642400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.446
+  close: 246.32
+  high: 246.455
+  low: 246.3003
+  volume: 123408
+  opened_at {
+    seconds: 1760642460
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.32
+  close: 246.47
+  high: 246.475
+  low: 246.29
+  volume: 38512
+  opened_at {
+    seconds: 1760642520
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.47
+  close: 246.599
+  high: 246.66
+  low: 246.43
+  volume: 40749
+  opened_at {
+    seconds: 1760642580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.62
+  close: 246.915
+  high: 246.96
+  low: 246.62
+  volume: 53002
+  opened_at {
+    seconds: 1760642640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.915
+  close: 246.825
+  high: 246.95
+  low: 246.79
+  volume: 111320
+  opened_at {
+    seconds: 1760642700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.8
+  close: 246.61
+  high: 246.835
+  low: 246.61
+  volume: 36565
+  opened_at {
+    seconds: 1760642760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.62
+  close: 246.56
+  high: 246.66
+  low: 246.5501
+  volume: 31825
+  opened_at {
+    seconds: 1760642820
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.6
+  close: 246.6
+  high: 246.6799
+  low: 246.59
+  volume: 23775
+  opened_at {
+    seconds: 1760642880
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.62
+  close: 246.55
+  high: 246.62
+  low: 246.515
+  volume: 39608
+  opened_at {
+    seconds: 1760642940
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.56
+  close: 246.4118
+  high: 246.685
+  low: 246.3701
+  volume: 47295
+  opened_at {
+    seconds: 1760643000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.43
+  close: 246.37
+  high: 246.53
+  low: 246.36
+  volume: 33202
+  opened_at {
+    seconds: 1760643060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.384
+  close: 246.42
+  high: 246.46
+  low: 246.35
+  volume: 25207
+  opened_at {
+    seconds: 1760643120
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.41
+  close: 246.515
+  high: 246.53
+  low: 246.4024
+  volume: 33329
+  opened_at {
+    seconds: 1760643180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.51
+  close: 246.66
+  high: 246.7
+  low: 246.48
+  volume: 37426
+  opened_at {
+    seconds: 1760643240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.675
+  close: 246.74
+  high: 246.78
+  low: 246.515
+  volume: 38567
+  opened_at {
+    seconds: 1760643300
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.73
+  close: 246.96
+  high: 247.045
+  low: 246.7162
+  volume: 57577
+  opened_at {
+    seconds: 1760643360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.95
+  close: 246.875
+  high: 246.98
+  low: 246.8
+  volume: 32838
+  opened_at {
+    seconds: 1760643420
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.88
+  close: 246.85
+  high: 246.88
+  low: 246.7984
+  volume: 24958
+  opened_at {
+    seconds: 1760643480
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.84
+  close: 246.7
+  high: 246.84
+  low: 246.618
+  volume: 37482
+  opened_at {
+    seconds: 1760643540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.71
+  close: 246.88
+  high: 246.89
+  low: 246.7
+  volume: 40716
+  opened_at {
+    seconds: 1760643600
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.88
+  close: 246.948
+  high: 246.96
+  low: 246.825
+  volume: 40531
+  opened_at {
+    seconds: 1760643660
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.945
+  close: 247.03
+  high: 247.04
+  low: 246.9101
+  volume: 30407
+  opened_at {
+    seconds: 1760643720
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.03
+  close: 246.8099
+  high: 247.05
+  low: 246.77
+  volume: 46028
+  opened_at {
+    seconds: 1760643780
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.785
+  close: 247.005
+  high: 247.01
+  low: 246.785
+  volume: 40060
+  opened_at {
+    seconds: 1760643840
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.99
+  close: 247.015
+  high: 247.13
+  low: 246.9852
+  volume: 69674
+  opened_at {
+    seconds: 1760643900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247
+  close: 246.825
+  high: 247.01
+  low: 246.73
+  volume: 56398
+  opened_at {
+    seconds: 1760643960
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.83
+  close: 246.88
+  high: 246.9308
+  low: 246.81
+  volume: 47007
+  opened_at {
+    seconds: 1760644020
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.88
+  close: 246.8
+  high: 246.88
+  low: 246.71
+  volume: 31895
+  opened_at {
+    seconds: 1760644080
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.8
+  close: 247.19
+  high: 247.19
+  low: 246.8
+  volume: 57261
+  opened_at {
+    seconds: 1760644140
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.18
+  close: 247.404
+  high: 247.71
+  low: 247.06
+  volume: 157903
+  opened_at {
+    seconds: 1760644200
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.38
+  close: 247.545
+  high: 247.55
+  low: 247.2907
+  volume: 60544
+  opened_at {
+    seconds: 1760644260
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.55
+  close: 247.59
+  high: 247.62
+  low: 247.41
+  volume: 81155
+  opened_at {
+    seconds: 1760644320
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.585
+  close: 247.52
+  high: 247.74
+  low: 247.4901
+  volume: 77350
+  opened_at {
+    seconds: 1760644380
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.53
+  close: 247.68
+  high: 247.79
+  low: 247.47
+  volume: 98836
+  opened_at {
+    seconds: 1760644440
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.7
+  close: 247.66
+  high: 247.97
+  low: 247.55
+  volume: 192274
+  opened_at {
+    seconds: 1760644500
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.66
+  close: 247.535
+  high: 247.76
+  low: 247.535
+  volume: 146426
+  opened_at {
+    seconds: 1760644560
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.535
+  close: 247.27
+  high: 247.643
+  low: 247.25
+  volume: 194174
+  opened_at {
+    seconds: 1760644620
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.27
+  close: 247.325
+  high: 247.38
+  low: 247.27
+  volume: 275813
+  opened_at {
+    seconds: 1760644680
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.325
+  close: 247.519
+  high: 247.56
+  low: 247.21
+  volume: 546345
+  opened_at {
+    seconds: 1760644740
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.45
+  close: 247.5
+  high: 247.5
+  low: 246.95
+  volume: 5694002
+  opened_at {
+    seconds: 1760644800
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.45
+  close: 247.45
+  high: 247.46
+  low: 245.7861
+  volume: 20626
+  opened_at {
+    seconds: 1760644860
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.45
+  close: 247.45
+  high: 247.55
+  low: 247.45
+  volume: 58199
+  opened_at {
+    seconds: 1760644920
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.45
+  close: 247.5001
+  high: 247.55
+  low: 247.1527
+  volume: 253978
+  opened_at {
+    seconds: 1760644980
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.54
+  close: 247.55
+  high: 247.55
+  low: 247.45
+  volume: 10305
+  opened_at {
+    seconds: 1760645040
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.45
+  close: 247.54
+  high: 247.8
+  low: 247.44
+  volume: 4398
+  opened_at {
+    seconds: 1760645100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.45
+  close: 247.45
+  high: 247.45
+  low: 247.45
+  volume: 545
+  opened_at {
+    seconds: 1760645160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.45
+  close: 247.45
+  high: 247.45
+  low: 247.45
+  volume: 5507
+  opened_at {
+    seconds: 1760645280
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.34
+  close: 247.34
+  high: 247.34
+  low: 247.34
+  volume: 111
+  opened_at {
+    seconds: 1760645340
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.34
+  close: 247.34
+  high: 247.34
+  low: 247.34
+  volume: 135
+  opened_at {
+    seconds: 1760645400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.05
+  close: 247.05
+  high: 247.05
+  low: 247.05
+  volume: 100
+  opened_at {
+    seconds: 1760645460
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.0799
+  close: 247.1
+  high: 247.1
+  low: 247.0799
+  volume: 376
+  opened_at {
+    seconds: 1760645520
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247
+  close: 247.15
+  high: 247.15
+  low: 247
+  volume: 1458
+  opened_at {
+    seconds: 1760645580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.07
+  close: 247.03
+  high: 247.07
+  low: 247.0001
+  volume: 1181
+  opened_at {
+    seconds: 1760645640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.92
+  close: 246.92
+  high: 246.95
+  low: 246.92
+  volume: 557
+  opened_at {
+    seconds: 1760645700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247
+  close: 247
+  high: 247
+  low: 247
+  volume: 122
+  opened_at {
+    seconds: 1760645760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.11
+  close: 247.11
+  high: 247.11
+  low: 247.1
+  volume: 1299
+  opened_at {
+    seconds: 1760645820
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.49
+  close: 247.11
+  high: 247.49
+  low: 247.11
+  volume: 422
+  opened_at {
+    seconds: 1760645880
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.15
+  close: 247.15
+  high: 247.15
+  low: 247.15
+  volume: 100
+  opened_at {
+    seconds: 1760645940
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.45
+  close: 247.2
+  high: 247.45
+  low: 247.0103
+  volume: 37259
+  opened_at {
+    seconds: 1760646000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.25
+  close: 247.14
+  high: 247.45
+  low: 247.14
+  volume: 6206
+  opened_at {
+    seconds: 1760646060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.18
+  close: 247.18
+  high: 247.18
+  low: 247.18
+  volume: 100
+  opened_at {
+    seconds: 1760646240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.17
+  close: 247.2
+  high: 247.2
+  low: 247.17
+  volume: 340
+  opened_at {
+    seconds: 1760646300
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.2
+  close: 247.05
+  high: 247.2001
+  low: 247.05
+  volume: 3521
+  opened_at {
+    seconds: 1760646840
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.02
+  close: 247.45
+  high: 247.45
+  low: 247.02
+  volume: 2032
+  opened_at {
+    seconds: 1760646900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.05
+  close: 247.08
+  high: 247.08
+  low: 247.05
+  volume: 1871
+  opened_at {
+    seconds: 1760646960
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.06
+  close: 247.06
+  high: 247.06
+  low: 247.06
+  volume: 100
+  opened_at {
+    seconds: 1760647080
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.15
+  close: 247.15
+  high: 247.15
+  low: 247.15
+  volume: 200
+  opened_at {
+    seconds: 1760647140
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.0801
+  close: 247.0801
+  high: 247.0801
+  low: 247.0801
+  volume: 100
+  opened_at {
+    seconds: 1760647200
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.146
+  close: 247.45
+  high: 247.45
+  low: 247.146
+  volume: 500
+  opened_at {
+    seconds: 1760647260
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.45
+  close: 247.45
+  high: 247.45
+  low: 247.45
+  volume: 7636
+  opened_at {
+    seconds: 1760647320
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.07
+  close: 247.07
+  high: 247.07
+  low: 247.07
+  volume: 100
+  opened_at {
+    seconds: 1760647380
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.08
+  close: 247.08
+  high: 247.08
+  low: 247.08
+  volume: 119
+  opened_at {
+    seconds: 1760647440
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.08
+  close: 247.08
+  high: 247.08
+  low: 247.08
+  volume: 300
+  opened_at {
+    seconds: 1760647500
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.0617
+  close: 247.0617
+  high: 247.0617
+  low: 247.0617
+  volume: 605
+  opened_at {
+    seconds: 1760647560
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.0649
+  close: 247.0649
+  high: 247.0649
+  low: 247.0649
+  volume: 470
+  opened_at {
+    seconds: 1760647620
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.33
+  close: 247.4
+  high: 247.4
+  low: 247.3
+  volume: 1001
+  opened_at {
+    seconds: 1760648040
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.1003
+  close: 247.13
+  high: 247.13
+  low: 247.1003
+  volume: 600
+  opened_at {
+    seconds: 1760648100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.1
+  close: 247.1
+  high: 247.1
+  low: 247.1
+  volume: 456
+  opened_at {
+    seconds: 1760648160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.19
+  close: 247.2
+  high: 247.2
+  low: 247.19
+  volume: 200
+  opened_at {
+    seconds: 1760648280
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.45
+  close: 247.45
+  high: 247.45
+  low: 247.45
+  volume: 24132
+  opened_at {
+    seconds: 1760648580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.3
+  close: 247.3
+  high: 247.3
+  low: 247.3
+  volume: 300
+  opened_at {
+    seconds: 1760648640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.3
+  close: 247.3
+  high: 247.3
+  low: 247.3
+  volume: 937
+  opened_at {
+    seconds: 1760648700
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.3
+  close: 247.3
+  high: 247.3
+  low: 247.3
+  volume: 100
+  opened_at {
+    seconds: 1760648820
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.3
+  close: 247.3
+  high: 247.3
+  low: 247.3
+  volume: 447
+  opened_at {
+    seconds: 1760649060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.17
+  close: 247.17
+  high: 247.17
+  low: 247.17
+  volume: 100
+  opened_at {
+    seconds: 1760649240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.24
+  close: 247.24
+  high: 247.24
+  low: 247.24
+  volume: 100
+  opened_at {
+    seconds: 1760649300
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.0135
+  close: 247.0135
+  high: 247.0135
+  low: 247.0135
+  volume: 500
+  opened_at {
+    seconds: 1760649360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.0647
+  close: 247.0647
+  high: 247.0647
+  low: 247.0647
+  volume: 100
+  opened_at {
+    seconds: 1760649540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.01
+  close: 247.01
+  high: 247.01
+  low: 247.01
+  volume: 100
+  opened_at {
+    seconds: 1760649840
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.01
+  close: 247.06
+  high: 247.07
+  low: 247.01
+  volume: 400
+  opened_at {
+    seconds: 1760650020
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.0462
+  close: 247.0462
+  high: 247.0462
+  low: 247.0462
+  volume: 500
+  opened_at {
+    seconds: 1760650080
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.15
+  close: 247.15
+  high: 247.15
+  low: 247.15
+  volume: 200
+  opened_at {
+    seconds: 1760650380
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.15
+  close: 247.15
+  high: 247.15
+  low: 247.15
+  volume: 260
+  opened_at {
+    seconds: 1760650560
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.08
+  close: 247.08
+  high: 247.08
+  low: 247.08
+  volume: 100
+  opened_at {
+    seconds: 1760650980
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.0234
+  close: 247.0234
+  high: 247.0234
+  low: 247.0234
+  volume: 100
+  opened_at {
+    seconds: 1760651100
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.0588
+  close: 247.15
+  high: 247.15
+  low: 247.0588
+  volume: 532
+  opened_at {
+    seconds: 1760651220
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.2
+  close: 247.1973
+  high: 247.2
+  low: 247.1973
+  volume: 400
+  opened_at {
+    seconds: 1760651580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.2
+  close: 247.2
+  high: 247.2
+  low: 247.2
+  volume: 400
+  opened_at {
+    seconds: 1760651640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.15
+  close: 247.15
+  high: 247.15
+  low: 247.15
+  volume: 800
+  opened_at {
+    seconds: 1760651880
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.2
+  close: 247.37
+  high: 247.37
+  low: 247.2
+  volume: 754
+  opened_at {
+    seconds: 1760652000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.38
+  close: 247.38
+  high: 247.4
+  low: 247.38
+  volume: 920
+  opened_at {
+    seconds: 1760652060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.42
+  close: 247.4
+  high: 247.42
+  low: 247.38
+  volume: 1518
+  opened_at {
+    seconds: 1760652120
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.43
+  close: 247.41
+  high: 247.43
+  low: 247.4
+  volume: 1200
+  opened_at {
+    seconds: 1760652180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.4
+  close: 247.4
+  high: 247.4
+  low: 247.4
+  volume: 555
+  opened_at {
+    seconds: 1760652240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.21
+  close: 247.37
+  high: 247.37
+  low: 247.21
+  volume: 1603
+  opened_at {
+    seconds: 1760652360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.38
+  close: 247.4
+  high: 247.4
+  low: 247.38
+  volume: 1079
+  opened_at {
+    seconds: 1760652420
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.39
+  close: 247.49
+  high: 247.49
+  low: 247.39
+  volume: 2398
+  opened_at {
+    seconds: 1760652480
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.5
+  close: 247.5
+  high: 247.5
+  low: 247.5
+  volume: 174
+  opened_at {
+    seconds: 1760652540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.5
+  close: 247.6
+  high: 247.6
+  low: 247.5
+  volume: 1210
+  opened_at {
+    seconds: 1760652600
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.58
+  close: 247.53
+  high: 247.58
+  low: 247.53
+  volume: 200
+  opened_at {
+    seconds: 1760652660
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.44
+  close: 247.44
+  high: 247.44
+  low: 247.44
+  volume: 100
+  opened_at {
+    seconds: 1760652840
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.45
+  close: 247.45
+  high: 247.45
+  low: 247.45
+  volume: 381
+  opened_at {
+    seconds: 1760652900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.01
+  close: 247.01
+  high: 247.01
+  low: 247.01
+  volume: 100
+  opened_at {
+    seconds: 1760653020
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.06
+  close: 247.06
+  high: 247.06
+  low: 247.06
+  volume: 100
+  opened_at {
+    seconds: 1760653440
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.1001
+  close: 247.1001
+  high: 247.1001
+  low: 247.1001
+  volume: 100
+  opened_at {
+    seconds: 1760653680
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.45
+  close: 247.45
+  high: 247.45
+  low: 247.45
+  volume: 47086
+  opened_at {
+    seconds: 1760654160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.1637
+  close: 247.1637
+  high: 247.1637
+  low: 247.1637
+  volume: 100
+  opened_at {
+    seconds: 1760654280
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.15
+  close: 247.15
+  high: 247.15
+  low: 247.15
+  volume: 100
+  opened_at {
+    seconds: 1760654580
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.18
+  close: 247.18
+  high: 247.18
+  low: 247.18
+  volume: 140
+  opened_at {
+    seconds: 1760654760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.03
+  close: 247.03
+  high: 247.03
+  low: 247.01
+  volume: 1698
+  opened_at {
+    seconds: 1760654820
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.03
+  close: 247.03
+  high: 247.03
+  low: 247.03
+  volume: 100
+  opened_at {
+    seconds: 1760655000
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247.03
+  close: 247.03
+  high: 247.03
+  low: 247.03
+  volume: 700
+  opened_at {
+    seconds: 1760655060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 247
+  close: 247
+  high: 247
+  low: 247
+  volume: 449
+  opened_at {
+    seconds: 1760655240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.79
+  close: 246.52
+  high: 246.81
+  low: 246.4
+  volume: 600
+  opened_at {
+    seconds: 1760655300
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.28
+  close: 246.5
+  high: 246.56
+  low: 246.27
+  volume: 2000
+  opened_at {
+    seconds: 1760655360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.35
+  close: 246.5
+  high: 246.5
+  low: 246.3
+  volume: 1098
+  opened_at {
+    seconds: 1760655420
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.36
+  close: 246.33
+  high: 246.36
+  low: 246.33
+  volume: 236
+  opened_at {
+    seconds: 1760655540
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.53
+  close: 246.53
+  high: 246.53
+  low: 246.53
+  volume: 100
+  opened_at {
+    seconds: 1760655720
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.5
+  close: 246.5
+  high: 246.5
+  low: 246.5
+  volume: 1185
+  opened_at {
+    seconds: 1760656140
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.5
+  close: 246.5
+  high: 246.5
+  low: 246.4
+  volume: 500
+  opened_at {
+    seconds: 1760656260
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.7
+  close: 246.7
+  high: 246.7
+  low: 246.7
+  volume: 806
+  opened_at {
+    seconds: 1760656740
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.75
+  close: 246.75
+  high: 246.75
+  low: 246.75
+  volume: 100
+  opened_at {
+    seconds: 1760656800
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.69
+  close: 246.69
+  high: 246.69
+  low: 246.69
+  volume: 400
+  opened_at {
+    seconds: 1760656860
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.51
+  close: 246.5
+  high: 246.51
+  low: 246.5
+  volume: 466
+  opened_at {
+    seconds: 1760657160
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.4007
+  close: 246.4007
+  high: 246.4007
+  low: 246.4007
+  volume: 150
+  opened_at {
+    seconds: 1760657280
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.42
+  close: 246.4
+  high: 246.42
+  low: 246.4
+  volume: 440
+  opened_at {
+    seconds: 1760657340
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.35
+  close: 246.35
+  high: 246.35
+  low: 246.35
+  volume: 100
+  opened_at {
+    seconds: 1760657400
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.45
+  close: 246.45
+  high: 246.45
+  low: 246.45
+  volume: 216
+  opened_at {
+    seconds: 1760657460
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.33
+  close: 246.33
+  high: 246.33
+  low: 246.33
+  volume: 807
+  opened_at {
+    seconds: 1760657640
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.3
+  close: 246.3
+  high: 246.3
+  low: 246.3
+  volume: 100
+  opened_at {
+    seconds: 1760657760
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.27
+  close: 246.4
+  high: 246.4
+  low: 246.26
+  volume: 1200
+  opened_at {
+    seconds: 1760657880
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.4
+  close: 246.4
+  high: 246.4
+  low: 246.4
+  volume: 150
+  opened_at {
+    seconds: 1760657940
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.41
+  close: 246.41
+  high: 246.41
+  low: 246.41
+  volume: 100
+  opened_at {
+    seconds: 1760658060
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.3
+  close: 246.3
+  high: 246.3
+  low: 246.3
+  volume: 100
+  opened_at {
+    seconds: 1760658120
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.26
+  close: 246.26
+  high: 246.26
+  low: 246.26
+  volume: 200
+  opened_at {
+    seconds: 1760658180
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.26
+  close: 246.26
+  high: 246.26
+  low: 246.26
+  volume: 119
+  opened_at {
+    seconds: 1760658240
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.54
+  close: 246.56
+  high: 246.57
+  low: 246.54
+  volume: 1076
+  opened_at {
+    seconds: 1760658360
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.69
+  close: 246.69
+  high: 246.69
+  low: 246.69
+  volume: 400
+  opened_at {
+    seconds: 1760658420
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.318
+  close: 246.42
+  high: 246.42
+  low: 246.318
+  volume: 220
+  opened_at {
+    seconds: 1760658720
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.3
+  close: 246.3
+  high: 246.3
+  low: 246.3
+  volume: 304
+  opened_at {
+    seconds: 1760658840
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.53
+  close: 246.52
+  high: 246.53
+  low: 246.52
+  volume: 434
+  opened_at {
+    seconds: 1760658900
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.53
+  close: 246.85
+  high: 246.85
+  low: 246.3001
+  volume: 1087
+  opened_at {
+    seconds: 1760658960
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.9429
+  close: 246.9429
+  high: 246.9429
+  low: 246.9429
+  volume: 200
+  opened_at {
+    seconds: 1760659080
+  }
+  duration {
+    seconds: 60
+  }
+}
+candles {
+  open: 246.3422
+  close: 246.61
+  high: 246.61
+  low: 246.3422
+  volume: 527
+  opened_at {
+    seconds: 1760659140
+  }
+  duration {
+    seconds: 60
+  }
+}
+

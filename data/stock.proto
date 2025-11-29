@@ -9,6 +9,8 @@ package howling.stock;
 enum Symbol {
   SYMBOL_UNSPECIFIED = 0;
   NVDA = 1;
+  AAPL = 2;
+  MU = 3;
 }
 
 message History {
