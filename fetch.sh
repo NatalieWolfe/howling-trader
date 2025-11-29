@@ -1,11 +1,17 @@
-for i in {1..31}; do
-  file="data/history/NVDA/2025-10-$(printf "%02d" $i).textproto"
+#! /bin/bash
+
+mkdir -p data/history/$1
+
+for i in $(seq $4 $5); do
+  file="data/history/$1/$2-$(printf "%02d" $3)-$(printf "%02d" $i).textproto"
+  echo $1 $2-$3-$i
   bazel-bin/howling_tools/fetch \
     --flagfile=secrets.txt \
-    --stock=NVDA \
+    --stock=$1 \
     --duration=12h \
-    --start=2025-10-${i}T08:30:00-05:00 \
+    --start=$2-$3-${i}T08:30:00-05:00 \
     --minloglevel=3 \
     > $file
-  wc -l $file
 done
+
+wc -l data/history/$1/*.textproto
