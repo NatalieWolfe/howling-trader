@@ -22,6 +22,7 @@ cc_library(
         ":macd",
         ":market_hours",
         ":profit",
+        "//containers:circular_buffer",
         "//data:analyzer",
         "//data:stock_cc_proto",
         "//data:trading_state",

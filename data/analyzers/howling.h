@@ -1,5 +1,6 @@
 #pragma once
 
+#include "containers/circular_buffer.h"
 #include "data/analyzer.h"
 #include "data/analyzers/bollinger.h"
 #include "data/analyzers/macd.h"
@@ -25,6 +26,9 @@ private:
   macd_crossover_analyzer _macd1;
   macd_crossover_analyzer _macd5;
   profit_analyzer _profit;
+
+  circular_buffer<decision> _macd1_decisions;
+  circular_buffer<decision> _macd5_decisions;
 };
 
 } // namespace howling
