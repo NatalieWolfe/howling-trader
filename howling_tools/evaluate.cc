@@ -75,7 +75,11 @@ std::string print_metrics(const metrics& m) {
       "\n  +Sales:  ",
       m.profitable_sales,
       "\n  $ Delta: ",
-      colorize(print_price(profit), profit > 0 ? color::GREEN : color::RED));
+      colorize(
+          print_price(profit),
+          profit > 0.0       ? color::GREEN
+              : profit < 0.0 ? color::RED
+                             : color::GRAY));
 }
 
 void run() {
