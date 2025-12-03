@@ -34,18 +34,6 @@ decision macd_crossover_analyzer::analyze(
   double previous_delta = previous.macd_fast_line - previous.macd_signal_line;
   double delta_slope = current_delta - previous_delta;
 
-  // Cross over.
-  if (current_delta > 0.0 && previous_delta <= 0.0) {
-    // LOG(INFO) << data.market_hour() << ":" << data.market_minute() << " ["
-    //           << window_size << "]"
-    //           << " BUY: " << current_delta << " : " << previous_delta << " :
-    //           "
-    //           << delta_slope;
-    return {
-        .act = can_buy(symbol, data) ? action::BUY : action::HOLD,
-        .confidence = std::min(
-            1.0, delta_slope * absl::GetFlag(FLAGS_macd_crossover_scaler))};
-  }
   // Cross under.
   if (current_delta < 0.0 && previous_delta >= 0.0) {
     // LOG(INFO) << data.market_hour() << ":" << data.market_minute() << " ["
@@ -58,8 +46,20 @@ decision macd_crossover_analyzer::analyze(
         .confidence = std::min(
             1.0, -delta_slope * absl::GetFlag(FLAGS_macd_crossover_scaler))};
   }
+  // Cross over.
+  if (current_delta > 0.0 && previous_delta <= 0.0) {
+    // LOG(INFO) << data.market_hour() << ":" << data.market_minute() << " ["
+    //           << window_size << "]"
+    //           << " BUY: " << current_delta << " : " << previous_delta << " :
+    //           "
+    //           << delta_slope;
+    return {
+        .act = can_buy(symbol, data) ? action::BUY : action::HOLD,
+        .confidence = std::min(
+            1.0, delta_slope * absl::GetFlag(FLAGS_macd_crossover_scaler))};
+  }
   // Building upward momentum.
-  if (current_delta > 0 && previous_delta > 0 && delta_slope > 0) {
+  if (current_delta > 0.0 && previous_delta > 0.0 && delta_slope > 0.0) {
     // LOG(INFO) << data.market_hour() << ":" << data.market_minute() << " ["
     //           << window_size << "]"
     //           << " HOLD: " << current_delta << " : " << previous_delta << " :
