@@ -5,8 +5,8 @@
 #include "absl/flags/flag.h"
 #include "data/analyzer.h"
 #include "data/stock.pb.h"
-#include "data/trading_state.h"
 #include "trading/pricing.h"
+#include "trading/trading_state.h"
 
 ABSL_FLAG(double, profit_minimum, 0.1, "Minimum profit potential to look for.");
 ABSL_FLAG(double, profit_confidence_scaler, 1.0, "");

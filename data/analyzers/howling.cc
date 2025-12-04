@@ -2,7 +2,7 @@
 
 #include "data/analyzer.h"
 #include "data/stock.pb.h"
-#include "data/trading_state.h"
+#include "trading/trading_state.h"
 
 namespace howling {
 namespace {
@@ -34,9 +34,7 @@ void add(
 
 decision get_top_decision(const circular_buffer<decision>& decisions) {
   deciders buy, sell, hold;
-  for (const decision& d : decisions) {
-    add(buy, sell, hold, d);
-  }
+  for (const decision& d : decisions) add(buy, sell, hold, d);
 
   if (buy.confidence() > sell.confidence() &&
       buy.confidence() > hold.confidence()) {

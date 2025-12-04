@@ -7,7 +7,7 @@
 #include "data/analyzers/market_hours.h"
 #include "data/analyzers/profit.h"
 #include "data/stock.pb.h"
-#include "data/trading_state.h"
+#include "trading/trading_state.h"
 
 namespace howling {
 

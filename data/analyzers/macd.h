@@ -3,7 +3,7 @@
 #include "data/aggregate.h"
 #include "data/analyzer.h"
 #include "data/stock.pb.h"
-#include "data/trading_state.h"
+#include "trading/trading_state.h"
 
 namespace howling {
 

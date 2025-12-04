@@ -12,11 +12,11 @@
 #include "data/candle.pb.h"
 #include "data/load_analyzer.h"
 #include "data/stock.pb.h"
-#include "data/trading_state.h"
 #include "data/utilities.h"
 #include "howling_tools/init.h"
 #include "howling_tools/runfiles.h"
 #include "time/conversion.h"
+#include "trading/trading_state.h"
 
 ABSL_FLAG(std::string, stock, "", "Stock symbol to visualize.");
 ABSL_FLAG(std::string, date, "", "Day to visualize.");

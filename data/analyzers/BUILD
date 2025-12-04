@@ -9,7 +9,7 @@ cc_library(
     deps = [
         "//data:analyzer",
         "//data:stock_cc_proto",
-        "//data:trading_state",
+        "//trading:trading_state",
     ],
 )
 
@@ -25,7 +25,7 @@ cc_library(
         "//containers:circular_buffer",
         "//data:analyzer",
         "//data:stock_cc_proto",
-        "//data:trading_state",
+        "//trading:trading_state",
     ],
 )
 
@@ -36,7 +36,7 @@ cc_library(
     deps = [
         "//data:analyzer",
         "//data:stock_cc_proto",
-        "//data:trading_state",
+        "//trading:trading_state",
         "@abseil-cpp//absl/flags:flag",
     ],
 )
@@ -50,7 +50,7 @@ cc_library(
         "//data:aggregate",
         "//data:analyzer",
         "//data:stock_cc_proto",
-        "//data:trading_state",
+        "//trading:trading_state",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
     ],
@@ -62,7 +62,7 @@ cc_library(
     deps = [
         "//data:analyzer",
         "//data:stock_cc_proto",
-        "//data:trading_state",
+        "//trading:trading_state",
     ],
 )
 
@@ -73,8 +73,8 @@ cc_library(
     deps = [
         "//data:analyzer",
         "//data:stock_cc_proto",
-        "//data:trading_state",
         "//trading:pricing",
+        "//trading:trading_state",
         "@abseil-cpp//absl/flags:flag",
     ],
 )
@@ -88,6 +88,6 @@ cc_library(
         "//data:analyzer",
         "//data:candle_cc_proto",
         "//data:stock_cc_proto",
-        "//data:trading_state",
+        "//trading:trading_state",
     ],
 )

@@ -18,7 +18,9 @@ BinPackParameters: false
 Language: Cpp
 
 AllowShortBlocksOnASingleLine: Always
+AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLoopsOnASingleLine: true
 IndentCaseLabels: true
 BreakInheritanceList: AfterColon
 BreakTemplateDeclarations: Yes

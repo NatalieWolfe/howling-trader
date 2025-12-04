@@ -19,6 +19,7 @@
 #include "howling_tools/init.h"
 #include "howling_tools/runfiles.h"
 #include "time/conversion.h"
+#include "trading/trading_state.h"
 
 ABSL_FLAG(std::string, stock, "", "Stock symbol to evaluate against.");
 ABSL_FLAG(std::string, analyzer, "", "Name of an analyzer to evaluate.");

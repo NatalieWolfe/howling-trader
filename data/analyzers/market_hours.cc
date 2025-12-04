@@ -5,7 +5,7 @@
 #include "absl/flags/flag.h"
 #include "data/analyzer.h"
 #include "data/stock.pb.h"
-#include "data/trading_state.h"
+#include "trading/trading_state.h"
 
 ABSL_FLAG(int, market_hours_exit, 14, "Hour of day to call it quits and dump.");
 

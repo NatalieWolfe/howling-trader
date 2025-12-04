@@ -16,7 +16,20 @@ cc_binary(
         "//data:stock_cc_proto",
         "//data:utilities",
         "//time:conversion",
+        "//trading:trading_state",
         "@abseil-cpp//absl/flags:flag",
+    ],
+)
+
+cc_binary(
+    name = "execute",
+    srcs = ["execute.cc"],
+    deps = [
+        ":init",
+        "//api:schwab",
+        "//data:candle_cc_proto",
+        "//data:stock_cc_proto",
+        "//time:conversion",
     ],
 )
 
@@ -82,9 +95,9 @@ cc_binary(
         "//data:candle_cc_proto",
         "//data:load_analyzer",
         "//data:stock_cc_proto",
-        "//data:trading_state",
         "//data:utilities",
         "//time:conversion",
+        "//trading:trading_state",
         "@abseil-cpp//absl/flags:flag",
     ],
 )
