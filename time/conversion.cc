@@ -12,6 +12,7 @@ namespace howling {
 using ::google::protobuf::Duration;
 using ::google::protobuf::Timestamp;
 using ::google::protobuf::util::TimeUtil;
+using ::std::chrono::duration_cast;
 using ::std::chrono::microseconds;
 using ::std::chrono::system_clock;
 
@@ -40,6 +41,11 @@ Timestamp to_proto(system_clock::time_point time) {
 
 Duration to_proto(absl::Duration duration) {
   return TimeUtil::MicrosecondsToDuration(absl::ToInt64Microseconds(duration));
+}
+
+Duration to_proto(system_clock::duration duration) {
+  return TimeUtil::MicrosecondsToDuration(
+      duration_cast<microseconds>(duration).count());
 }
 
 } // namespace howling

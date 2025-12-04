@@ -20,5 +20,7 @@ google::protobuf::Timestamp
 to_proto(std::chrono::system_clock::time_point time);
 
 google::protobuf::Duration to_proto(absl::Duration duration);
+google::protobuf::Duration
+to_proto(std::chrono::system_clock::duration duration);
 
 } // namespace howling
