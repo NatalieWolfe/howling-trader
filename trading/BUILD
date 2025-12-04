@@ -1,6 +1,18 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
+    name = "metrics",
+    srcs = ["metrics.cc"],
+    hdrs = ["metrics.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//cli:colorize",
+        "//cli:printing",
+        "@abseil-cpp//absl/strings",
+    ],
+)
+
+cc_library(
     name = "pricing",
     srcs = ["pricing.cc"],
     hdrs = ["pricing.h"],

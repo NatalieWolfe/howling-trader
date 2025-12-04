@@ -8,8 +8,6 @@
 #include <string_view>
 
 #include "absl/flags/flag.h"
-#include "cli/colorize.h"
-#include "cli/printing.h"
 #include "containers/vector.h"
 #include "data/aggregate.h"
 #include "data/analyzer.h"
@@ -19,6 +17,7 @@
 #include "howling_tools/init.h"
 #include "howling_tools/runfiles.h"
 #include "time/conversion.h"
+#include "trading/metrics.h"
 #include "trading/trading_state.h"
 
 ABSL_FLAG(std::string, stock, "", "Stock symbol to evaluate against.");
@@ -37,15 +36,6 @@ namespace fs = ::std::filesystem;
 using ::std::chrono::system_clock;
 using ::std::chrono::year_month_day;
 
-struct metrics {
-  std::string name;
-  double initial_funds;
-  double available_funds = initial_funds;
-  double assets_value = 0;
-  int sales = 0;
-  int profitable_sales = 0;
-};
-
 year_month_day parse_date(std::string date) {
   year_month_day ymd;
   std::stringstream stream{std::move(date)};
@@ -59,28 +49,6 @@ year_month_day get_date(system_clock::time_point time) {
 
 std::string print_date(year_month_day ymd) {
   return std::format("{:%B %Y}", ymd);
-}
-
-void add_metrics(metrics& lhs, const metrics& rhs) {
-  lhs.available_funds = rhs.available_funds;
-  lhs.sales += rhs.sales;
-  lhs.profitable_sales += rhs.profitable_sales;
-}
-
-std::string print_metrics(const metrics& m) {
-  double profit = m.available_funds + m.assets_value - m.initial_funds;
-  return absl::StrCat(
-      m.name,
-      "\n  Sales:   ",
-      m.sales,
-      "\n  +Sales:  ",
-      m.profitable_sales,
-      "\n  $ Delta: ",
-      colorize(
-          print_price(profit),
-          profit > 0.0       ? color::GREEN
-              : profit < 0.0 ? color::RED
-                             : color::GRAY));
 }
 
 void run() {

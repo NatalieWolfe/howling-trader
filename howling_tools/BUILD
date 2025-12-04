@@ -7,8 +7,6 @@ cc_binary(
     deps = [
         ":init",
         ":runfiles",
-        "//cli:colorize",
-        "//cli:printing",
         "//containers:vector",
         "//data:aggregate",
         "//data:analyzer",
@@ -16,6 +14,7 @@ cc_binary(
         "//data:stock_cc_proto",
         "//data:utilities",
         "//time:conversion",
+        "//trading:metrics",
         "//trading:trading_state",
         "@abseil-cpp//absl/flags:flag",
     ],
