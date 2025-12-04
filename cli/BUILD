@@ -15,7 +15,10 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":colorize",
+        "//data:analyzer",
         "//data:candle_cc_proto",
+        "//time:conversion",
+        "//trading:metrics",
         "@abseil-cpp//absl/strings",
     ],
 )

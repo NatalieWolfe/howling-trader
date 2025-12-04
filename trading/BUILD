@@ -5,11 +5,6 @@ cc_library(
     srcs = ["metrics.cc"],
     hdrs = ["metrics.h"],
     visibility = ["//visibility:public"],
-    deps = [
-        "//cli:colorize",
-        "//cli:printing",
-        "@abseil-cpp//absl/strings",
-    ],
 )
 
 cc_library(

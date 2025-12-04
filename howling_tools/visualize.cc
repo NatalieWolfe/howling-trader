@@ -6,7 +6,6 @@
 #include <string>
 
 #include "absl/flags/flag.h"
-#include "cli/colorize.h"
 #include "cli/printing.h"
 #include "data/analyzer.h"
 #include "data/candle.pb.h"
@@ -57,48 +56,32 @@ void run() {
       .available_stocks = vector<stock::Symbol>{{symbol}},
       .initial_funds = absl::GetFlag(FLAGS_initial_funds),
       .available_funds = absl::GetFlag(FLAGS_initial_funds)};
-  metrics m{.name = "Summary", .initial_funds = state.initial_funds};
+  metrics m{
+      .name = "Summary",
+      .initial_funds = state.initial_funds,
+      .min = min_close,
+      .max = max_close};
   for (const Candle& candle : history.candles()) {
-    using namespace ::std::chrono;
-    zoned_time opened_at{current_zone(), to_std_chrono(candle.opened_at())};
-    hh_mm_ss time_of_day{floor<seconds>(
-        opened_at.get_local_time() - floor<days>(opened_at.get_local_time()))};
-    const bool is_ref_point = time_of_day.minutes().count() % 15 == 0;
-    if (is_ref_point) {
-      std::cout << ' ' << time_of_day << " | ";
-    } else {
-      std::cout << "          | ";
-    }
-    std::cout << print_candle(candle, extents) << " | ";
-
     state.time_now =
         to_std_chrono(candle.opened_at()) + to_std_chrono(candle.duration());
     add_next_minute(state.market[symbol], candle);
     decision d = anal->analyze(symbol, state);
+
+    std::cout << print_candle(d, m, candle, extents) << "\n";
+
     // TODO: Support quantities and target prices in buy and sell decisions.
     if (d.act == action::BUY) {
+      m.last_buy_price = candle.close();
       state.available_funds -= candle.close();
       state.positions[symbol].push_back(
           {.symbol = symbol, .price = candle.close(), .quantity = 1});
-      std::cout << colorize(print_price(candle.close()), color::RED)
-                << " - Buy (" << d.confidence << ")";
     } else if (d.act == action::SELL && !state.positions[symbol].empty()) {
       ++m.sales;
       state.available_funds += candle.close();
       double last_buy = state.positions[symbol].back().price;
       if (last_buy < candle.close()) ++m.profitable_sales;
       state.positions[symbol].pop_back();
-      std::cout << colorize(print_price(candle.close()), color::GREEN)
-                << " - Sell (" << std::setprecision(2) << d.confidence << "; "
-                << print_price(candle.close() - last_buy) << ")";
-    } else if (candle.close() == min_close) {
-      std::cout << colorize(print_price(candle.close()), color::RED);
-    } else if (candle.close() == max_close) {
-      std::cout << colorize(print_price(candle.close()), color::GREEN);
-    } else if (is_ref_point) {
-      std::cout << colorize(print_price(candle.close()), color::GRAY);
     }
-    std::cout << '\n';
   }
   m.available_funds = state.available_funds;
   m.assets_value = state.total_positions_value();

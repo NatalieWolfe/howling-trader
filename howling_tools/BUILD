@@ -88,7 +88,6 @@ cc_binary(
     deps = [
         ":init",
         ":runfiles",
-        "//cli:colorize",
         "//cli:printing",
         "//data:analyzer",
         "//data:candle_cc_proto",
