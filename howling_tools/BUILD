@@ -96,6 +96,7 @@ cc_binary(
         "//data:stock_cc_proto",
         "//data:utilities",
         "//time:conversion",
+        "//trading:metrics",
         "//trading:trading_state",
         "@abseil-cpp//absl/flags:flag",
     ],

@@ -16,6 +16,7 @@
 #include "howling_tools/init.h"
 #include "howling_tools/runfiles.h"
 #include "time/conversion.h"
+#include "trading/metrics.h"
 #include "trading/trading_state.h"
 
 ABSL_FLAG(std::string, stock, "", "Stock symbol to visualize.");
@@ -56,9 +57,7 @@ void run() {
       .available_stocks = vector<stock::Symbol>{{symbol}},
       .initial_funds = absl::GetFlag(FLAGS_initial_funds),
       .available_funds = absl::GetFlag(FLAGS_initial_funds)};
-  int buy_counter = 0;
-  int sell_counter = 0;
-  int profitable_trades = 0;
+  metrics m{.name = "Summary", .initial_funds = state.initial_funds};
   for (const Candle& candle : history.candles()) {
     using namespace ::std::chrono;
     zoned_time opened_at{current_zone(), to_std_chrono(candle.opened_at())};
@@ -78,17 +77,16 @@ void run() {
     decision d = anal->analyze(symbol, state);
     // TODO: Support quantities and target prices in buy and sell decisions.
     if (d.act == action::BUY) {
-      ++buy_counter;
       state.available_funds -= candle.close();
       state.positions[symbol].push_back(
           {.symbol = symbol, .price = candle.close(), .quantity = 1});
       std::cout << colorize(print_price(candle.close()), color::RED)
                 << " - Buy (" << d.confidence << ")";
     } else if (d.act == action::SELL && !state.positions[symbol].empty()) {
-      ++sell_counter;
+      ++m.sales;
       state.available_funds += candle.close();
       double last_buy = state.positions[symbol].back().price;
-      if (last_buy < candle.close()) ++profitable_trades;
+      if (last_buy < candle.close()) ++m.profitable_sales;
       state.positions[symbol].pop_back();
       std::cout << colorize(print_price(candle.close()), color::GREEN)
                 << " - Sell (" << std::setprecision(2) << d.confidence << "; "
@@ -102,18 +100,10 @@ void run() {
     }
     std::cout << '\n';
   }
-  if (buy_counter > 0) {
-    double profit = state.available_funds + state.total_positions_value() -
-        state.initial_funds;
-    std::cout << "\n"
-              << "Buys:    " << buy_counter << "\n"
-              << "Sells:   " << sell_counter << "\n"
-              << "+Trades: " << profitable_trades << "\n"
-              << "Profit:  "
-              << colorize(
-                     print_price(profit),
-                     profit > 0 ? color::GREEN : color::RED)
-              << "\n";
+  m.available_funds = state.available_funds;
+  m.assets_value = state.total_positions_value();
+  if (m.sales > 0 || m.assets_value > 0) {
+    std::cout << "\n" << print_metrics(m) << "\n";
   }
 }
 
