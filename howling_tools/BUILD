@@ -27,9 +27,16 @@ cc_binary(
     deps = [
         ":init",
         "//api:schwab",
+        "//cli:printing",
         "//data:candle_cc_proto",
+        "//data:load_analyzer",
+        "//data:market_cc_proto",
         "//data:stock_cc_proto",
+        "//data:utilities",
         "//time:conversion",
+        "//trading:executor",
+        "//trading:trading_state",
+        "@abseil-cpp//absl/flags:flag",
     ],
 )
 

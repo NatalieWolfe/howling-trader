@@ -1,6 +1,20 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
+    name = "executor",
+    srcs = ["executor.cc"],
+    hdrs = ["executor.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":metrics",
+        ":trading_state",
+        "//data:market_cc_proto",
+        "//data:stock_cc_proto",
+        "//net:connect",
+    ],
+)
+
+cc_library(
     name = "metrics",
     srcs = ["metrics.cc"],
     hdrs = ["metrics.h"],

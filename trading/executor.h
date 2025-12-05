@@ -1,0 +1,29 @@
+#pragma once
+
+#include <memory>
+#include <unordered_map>
+
+#include "data/market.pb.h"
+#include "data/stock.pb.h"
+#include "net/connect.h"
+#include "trading/metrics.h"
+#include "trading/trading_state.h"
+
+namespace howling {
+
+class executor {
+public:
+  explicit executor(trading_state& state);
+
+  void buy(stock::Symbol symbol, metrics& m);
+  void sell(stock::Symbol symbol, metrics& m);
+
+  void update_market(const Market& market);
+
+private:
+  trading_state& _state;
+  std::unique_ptr<net::connection> _conn;
+  std::unordered_map<stock::Symbol, Market> _market;
+};
+
+} // namespace howling
