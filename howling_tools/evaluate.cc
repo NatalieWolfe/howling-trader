@@ -8,6 +8,7 @@
 #include <string_view>
 
 #include "absl/flags/flag.h"
+#include "cli/printing.h"
 #include "containers/vector.h"
 #include "data/aggregate.h"
 #include "data/analyzer.h"

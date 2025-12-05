@@ -7,6 +7,7 @@ cc_binary(
     deps = [
         ":init",
         ":runfiles",
+        "//cli:printing",
         "//containers:vector",
         "//data:aggregate",
         "//data:analyzer",
