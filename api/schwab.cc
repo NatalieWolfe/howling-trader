@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <functional>
 #include <memory>
@@ -25,6 +26,7 @@
 #include "boost/url.hpp"
 #include "containers/vector.h"
 #include "data/candle.pb.h"
+#include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "google/protobuf/util/time_util.h"
 #include "howling_tools/runfiles.h"
@@ -602,7 +604,10 @@ get_history(stock::Symbol symbol, const get_history_parameters& params) {
 stream::stream() {
   check_schwab_flags();
   _data_cb = [](const Json::Value&) {
-    LOG(WARNING) << "Dropping data packet. No data callback registered.";
+    LOG(WARNING) << "Dropping data packet. No chart callback registered.";
+  };
+  _market_cb = [](const Json::Value&) {
+    LOG(WARNING) << "Dropping data packet. No market callback registered.";
   };
 }
 
@@ -645,9 +650,32 @@ void stream::stop() {
   }
 }
 
-// MARK: stream chart data
+// MARK: stream data
 
 void stream::add_symbol(stock::Symbol symbol) {
+  Json::Value parameters{Json::objectValue};
+  parameters["keys"] = stock::Symbol_Name(symbol);
+  auto callback = [symbol](const Json::Value& response) {
+    const Json::Value* content = response.find("content");
+    check_json(content && content->isObject());
+    const Json::Value* code = content->find("code");
+    check_json(code && code->isInt());
+    if (*code != stream_code::SUCCESS) {
+      const Json::Value* service = response.find("service");
+      const Json::Value* msg = content->find("msg");
+      throw std::runtime_error(
+          std::format(
+              "Failed to add {} ({}) to {} stream: [{}] {}",
+              stock::Symbol_Name(symbol),
+              static_cast<int>(symbol),
+              service ? service->asString() : "<unknown service>",
+              code->asInt(),
+              msg ? msg->asString() : "unknown"));
+    }
+  };
+
+  // Chart fields:
+  //
   // Field   | Name     | Type   | Description
   // --------|----------|--------|------------------------------------
   // 0 (key) | Symbol   | String | Ticker symbol in upper case
@@ -658,33 +686,27 @@ void stream::add_symbol(stock::Symbol symbol) {
   // 5       | Close    | double | Closing price for the minute
   // 6       | Volume   | double | Total volume for the minute
   // 7       | Time     | long   | Milliseconds since Epoch
-
-  Json::Value parameters{Json::objectValue};
-  parameters["keys"] = stock::Symbol_Name(symbol);
   parameters["fields"] = "0,1,2,3,4,5,6,7";
   _send_command(
-      {.service = "CHART_EQUITY",
+      {.service = "CHART_EQUITY", .command = "ADD", .parameters = parameters},
+      callback);
+
+  // Levelone fields:
+  //
+  // Field | Name   | Type   | Description
+  // 0     | Symbol | String | Ticker symbol in upper case
+  // 1     | Bid $  | double | Current Bid Price
+  // 2     | Ask $  | double | Current Ask Price
+  // 3     | Last $ | double | Price at which the last trade was matched
+  // 4     | Bid #  | int    | Number of shares for bid
+  // 5     | Ask #  | int    | Number of shares for ask
+  // 9     | Last # | long   | Number of shares traded with last trade
+  parameters["fields"] = "0,1,2,3,4,5,9";
+  _send_command(
+      {.service = "LEVELONE_EQUITIES",
        .command = "ADD",
        .parameters = std::move(parameters)},
-      [symbol](const Json::Value& response) {
-        const Json::Value* content = response.find("content");
-        check_json(content && content->isObject());
-        const Json::Value* code = content->find("code");
-        check_json(code && code->isInt());
-        if (*code != stream_code::SUCCESS) {
-          const Json::Value* msg = content->find("msg");
-          throw std::runtime_error(
-              absl::StrCat(
-                  "Failed to add ",
-                  stock::Symbol_Name(symbol),
-                  " (",
-                  symbol,
-                  ") to stream: [",
-                  code->asInt(),
-                  "] ",
-                  msg ? msg->asString() : "unknown"));
-        }
-      });
+      callback);
 }
 
 void stream::on_chart(chart_callback_type cb) {
@@ -720,6 +742,42 @@ void stream::on_chart(chart_callback_type cb) {
       }
 
       cb(symbol, std::move(candle));
+    }
+  };
+}
+
+void stream::on_market(market_callback_type cb) {
+  _market_cb = [cb = std::move(cb)](const Json::Value& data) {
+    const Json::Value* content = data.find("content");
+    const Json::Value* timestamp = data.find("timestamp");
+    check_json(content && content->isArray());
+    check_json(timestamp && timestamp->isInt64());
+    auto time = to_proto(
+        std::chrono::system_clock::time_point{
+            std::chrono::milliseconds{timestamp->asInt64()}});
+
+    for (const Json::Value& json_market : *content) {
+      Market market;
+
+      // See add_symbol for key reference table.
+      market.set_bid(json_market.get("1", 0).asDouble());
+      market.set_bid_lots(json_market.get("4", 0).asInt64());
+      market.set_ask(json_market.get("2", 0).asDouble());
+      market.set_ask_lots(json_market.get("5", 0).asInt64());
+      market.set_last(json_market.get("3", 0).asDouble());
+      market.set_last_lots(json_market.get("9", 0).asDouble());
+      *market.mutable_emitted_at() = time;
+
+      stock::Symbol symbol;
+      if (!stock::Symbol_Parse(json_market.find("key")->asString(), &symbol)) {
+        throw std::runtime_error(
+            absl::StrCat(
+                "Unknown stock symbol returned: ",
+                json_market.find("key")->asString()));
+      }
+      market.set_symbol(symbol);
+
+      cb(symbol, std::move(market));
     }
   };
 }
@@ -773,15 +831,14 @@ void stream::_process_message() {
   if (message.find("notify") != nullptr) return; // Heartbeat.
   const Json::Value* key = message.find("data");
   if (key != nullptr) {
-    // TODO: Support levelone equity data.
     check_json(key->isArray());
     for (const Json::Value& datum : *key) {
       const Json::Value* service = datum.find("service");
       check_json(service && service->isString());
       if (*service == "CHART_EQUITY") {
         _data_cb(datum);
-      } else if (*service == "LEVELONE_EQUITY") {
-        LOG(ERROR) << "Levelone equity data support unimplemented.";
+      } else if (*service == "LEVELONE_EQUITIES") {
+        _market_cb(datum);
       } else {
         LOG(ERROR) << "Unknown data service received: " << service->asString();
       }

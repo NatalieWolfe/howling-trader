@@ -66,6 +66,21 @@ cc_library(
 )
 
 proto_library(
+    name = "market_proto",
+    srcs = ["market.proto"],
+    deps = [
+        ":stock_proto",
+        "@protobuf//:timestamp_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "market_cc_proto",
+    visibility = ["//visibility:public"],
+    deps = [":market_proto"],
+)
+
+proto_library(
     name = "stock_proto",
     srcs = ["stock.proto"],
     deps = [

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package howling;
+
+import "data/stock.proto";
+import "google/protobuf/timestamp.proto";
+
+message Market {
+  stock.Symbol symbol = 1;
+  double bid = 2;
+  int64 bid_lots = 3;
+  double ask = 4;
+  int64 ask_lots = 5;
+  double last = 6;
+  int64 last_lots = 7;
+  // When this market data was written onto the wire.
+  google.protobuf.Timestamp emitted_at = 8;
+}

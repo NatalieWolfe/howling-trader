@@ -33,6 +33,7 @@ cc_library(
     deps = [
         "//containers:vector",
         "//data:candle_cc_proto",
+        "//data:market_cc_proto",
         "//data:stock_cc_proto",
         "//howling_tools:runfiles",
         "//net:connect",

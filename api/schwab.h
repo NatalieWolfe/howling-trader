@@ -10,6 +10,7 @@
 
 #include "containers/vector.h"
 #include "data/candle.pb.h"
+#include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "net/connect.h"
 #include "json/json.h"
@@ -33,6 +34,7 @@ get_history(stock::Symbol symbol, const get_history_parameters& params);
 class stream {
 public:
   using chart_callback_type = std::function<void(stock::Symbol, Candle)>;
+  using market_callback_type = std::function<void(stock::Symbol, Market)>;
 
   stream();
   ~stream();
@@ -43,6 +45,7 @@ public:
   void add_symbol(stock::Symbol symbol);
 
   void on_chart(chart_callback_type cb);
+  void on_market(market_callback_type cb);
 
   bool is_running() const { return _running; }
 
@@ -69,6 +72,7 @@ private:
   std::string _correlation_id;
   std::unordered_map<int, command_callback_type> _command_cbs;
   command_callback_type _data_cb;
+  command_callback_type _market_cb;
 };
 
 } // namespace howling::schwab
