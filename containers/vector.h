@@ -11,6 +11,7 @@ template <typename T>
 class vector : public std::vector<T> {
 public:
   using base = std::vector<T>;
+  using base::size;
   using base::vector;
 
   vector(base&& other) : base(std::move(other)) {}
@@ -24,7 +25,7 @@ public:
     return *this;
   }
 
-  T& operator()(int64_t i) { return (*this)[i]; }
+  T& operator()(int64_t i) { return (*this)[_normalize(i)]; }
   const T& operator()(int64_t i) const { return this->at(_normalize(i)); }
 
   std::span<T> operator()(int64_t start, int64_t end) {
@@ -56,7 +57,7 @@ public:
 private:
   std::size_t _normalize(int64_t i) const {
     if (i >= 0) return i;
-    if (static_cast<size_t>(-i) > this->size()) return 0;
+    if (static_cast<size_t>(-i) >= this->size()) return 0;
     return this->size() + i;
   }
 };
