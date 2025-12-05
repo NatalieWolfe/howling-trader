@@ -59,8 +59,8 @@ void run() {
   metrics m{
       .name = "Summary",
       .initial_funds = state.initial_funds,
-      .min = min_close,
-      .max = max_close};
+      .min = extents.min,
+      .max = extents.max};
   for (const Candle& candle : history.candles()) {
     state.time_now =
         to_std_chrono(candle.opened_at()) + to_std_chrono(candle.duration());

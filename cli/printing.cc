@@ -69,10 +69,10 @@ std::string print_candle(
         colorize(print_price(candle.close()), color::GREEN),
         d.confidence,
         candle.close() - m.last_buy_price);
-  } else if (candle.close() == m.min) {
-    suffix = colorize(print_price(candle.close()), color::RED);
-  } else if (candle.close() == m.max) {
-    suffix = colorize(print_price(candle.close()), color::GREEN);
+  } else if (candle.low() == m.min) {
+    suffix = colorize(print_price(candle.low()), color::RED);
+  } else if (candle.high() == m.max) {
+    suffix = colorize(print_price(candle.high()), color::GREEN);
   } else if (is_ref_point) {
     suffix = colorize(print_price(candle.close()), color::GRAY);
   }
