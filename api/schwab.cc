@@ -1,12 +1,14 @@
 #include "api/schwab.h"
 
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <functional>
 #include <memory>
 #include <optional>
+#include <source_location>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -28,7 +30,9 @@
 #include "howling_tools/runfiles.h"
 #include "net/connect.h"
 #include "net/url.h"
+#include "strings/parse.h"
 #include "strings/trim.h"
+#include "time/conversion.h"
 #include "json/json.h"
 
 ABSL_FLAG(std::string, schwab_api_key_id, "", "API key ID for Schwab.");
@@ -58,6 +62,12 @@ using ssl_socket = ::boost::asio::ssl::stream<::boost::asio::ip::tcp::socket>;
 constexpr std::string_view REDIRECT_URL =
     "https://local.wolfe.dev:15986/schwab/oauth-callback";
 const fs::path REFRESH_TOKEN_FILENAME{"refresh-token"};
+
+enum class stream_code : int { SUCCESS = 0 };
+
+bool operator==(const Json::Value& json, stream_code code) {
+  return json.isInt() && json == static_cast<int>(code);
+}
 
 class http_server_connection :
     public std::enable_shared_from_this<http_server_connection> {
@@ -189,6 +199,19 @@ void check_schwab_flags() {
   }
 }
 
+void check_json(
+    bool passed, std::source_location loc = std::source_location::current()) {
+  if (!passed) {
+    throw std::runtime_error(
+        absl::StrCat(
+            "[",
+            loc.file_name(),
+            ":",
+            loc.line(),
+            "] Invalid JSON schema received."));
+  }
+}
+
 http_response send_request(
     const std::unique_ptr<net::connection>& conn,
     std::string_view bearer_token,
@@ -227,11 +250,15 @@ http_response send_request(
   return res;
 }
 
-Json::Value to_json(const http_response& res) {
-  std::stringstream body_stream{beast::buffers_to_string(res.body().data())};
+Json::Value to_json(std::string str) {
+  std::stringstream body_stream{std::move(str)};
   Json::Value root;
   body_stream >> root;
   return root;
+}
+
+Json::Value to_json(const http_response& res) {
+  return to_json(beast::buffers_to_string(res.body().data()));
 }
 
 struct oauth_exchange_params {
@@ -457,6 +484,7 @@ std::string_view get_bearer_token(
     cache_expiration = steady_clock::time_point{};
   }
   if (!cached_token.empty()) return cached_token;
+  if (!conn) throw std::runtime_error("No cached bearer token available.");
 
   // Try to refresh the bearer token using a refresh token saved to disk. If
   // refresh fails, runs a new OAuth sequence.
@@ -508,7 +536,40 @@ net::url make_url(stock::Symbol symbol, const get_history_parameters& params) {
       .target = absl::StrCat(url.path(), "?", url.query())};
 }
 
+std::string to_string(const Json::Value& root) {
+  static const Json::StreamWriterBuilder builder = ([]() {
+    Json::StreamWriterBuilder builder;
+    builder["commentStyle"] = "None";
+    builder["indentation"] = "";
+    return builder;
+  })();
+  return Json::writeString(builder, root);
+}
+
+Json::Value get_streamer_info() {
+  net::url user_pref_url = {
+      .service = "https",
+      .host = absl::GetFlag(FLAGS_schwab_api_host),
+      .target = "/trader/v1/userPreference"};
+  std::unique_ptr<net::connection> api_conn =
+      net::make_connection(user_pref_url);
+  std::string_view bearer_token = get_bearer_token(api_conn);
+  Json::Value root =
+      to_json(send_request(api_conn, bearer_token, user_pref_url));
+  Json::Value streamer_info = Json::nullValue;
+
+  check_json(root.isObject());
+  const Json::Value* streamer = root.find("streamerInfo");
+  check_json(streamer && streamer->isArray());
+  streamer_info = streamer->front();
+  check_json(streamer_info.isObject());
+
+  return streamer_info;
+}
+
 } // namespace
+
+// MARK: get_history
 
 vector<Candle>
 get_history(stock::Symbol symbol, const get_history_parameters& params) {
@@ -534,6 +595,260 @@ get_history(stock::Symbol symbol, const get_history_parameters& params) {
   }
 
   return candles;
+}
+
+// MARK: stream
+
+stream::stream() {
+  check_schwab_flags();
+  _data_cb = [](const Json::Value&) {
+    LOG(WARNING) << "Dropping data packet. No data callback registered.";
+  };
+}
+
+stream::~stream() {
+  if (_conn && _running) stop();
+}
+
+void stream::start() {
+  _stopping = false;
+  _login();
+
+  _running = true;
+  while (!_stopping) _process_message();
+  _running = false;
+}
+
+void stream::stop() {
+  if (!_conn) {
+    throw std::runtime_error("Schwab API stream never started, cannot stop.");
+  }
+  _stopping = true;
+
+  _send_command(
+      {.service = "ADMIN",
+       .command = "LOGOUT",
+       .parameters = Json::objectValue},
+      [this](const Json::Value&) {
+        LOG(INFO) << "Closing stream";
+        _conn->stream().close(beast::websocket::close_code::normal);
+        _conn = nullptr;
+      });
+
+  try {
+    while (_conn) _process_message();
+  } catch (const boost::system::system_error& e) {
+    if (e.code() != asio::ssl::error::stream_truncated) {
+      LOG(WARNING) << "Unexpected error while shutting down stream: ["
+                   << e.code() << "] " << e.what();
+    }
+  }
+}
+
+// MARK: stream chart data
+
+void stream::add_symbol(stock::Symbol symbol) {
+  // Field   | Name     | Type   | Description
+  // --------|----------|--------|------------------------------------
+  // 0 (key) | Symbol   | String | Ticker symbol in upper case
+  // 1 (seq) | Sequence | long   | Identifies the candle minute
+  // 2       | Open     | double | Opening price for the minute
+  // 3       | High     | double | Highest price for the minute
+  // 4       | Low      | double | Chart's lowest price for the minute
+  // 5       | Close    | double | Closing price for the minute
+  // 6       | Volume   | double | Total volume for the minute
+  // 7       | Time     | long   | Milliseconds since Epoch
+
+  Json::Value parameters{Json::objectValue};
+  parameters["keys"] = stock::Symbol_Name(symbol);
+  parameters["fields"] = "0,1,2,3,4,5,6,7";
+  _send_command(
+      {.service = "CHART_EQUITY",
+       .command = "ADD",
+       .parameters = std::move(parameters)},
+      [symbol](const Json::Value& response) {
+        const Json::Value* content = response.find("content");
+        check_json(content && content->isObject());
+        const Json::Value* code = content->find("code");
+        check_json(code && code->isInt());
+        if (*code != stream_code::SUCCESS) {
+          const Json::Value* msg = content->find("msg");
+          throw std::runtime_error(
+              absl::StrCat(
+                  "Failed to add ",
+                  stock::Symbol_Name(symbol),
+                  " (",
+                  symbol,
+                  ") to stream: [",
+                  code->asInt(),
+                  "] ",
+                  msg ? msg->asString() : "unknown"));
+        }
+      });
+}
+
+void stream::on_chart(chart_callback_type cb) {
+  _data_cb = [cb = std::move(cb)](const Json::Value& data) {
+    const Json::Value* content = data.find("content");
+    check_json(content && content->isArray());
+    for (const Json::Value& json_candle : *content) {
+      Candle candle;
+      // See add_symbol for key reference table.
+      candle.set_open(json_candle.find("2")->asDouble());
+      candle.set_close(json_candle.find("5")->asDouble());
+      candle.set_high(json_candle.find("3")->asDouble());
+      candle.set_low(json_candle.find("4")->asDouble());
+      candle.set_volume(
+          static_cast<int64_t>(json_candle.find("6")->asDouble()));
+
+      using namespace ::std::chrono;
+      system_clock::time_point time{
+          milliseconds{json_candle.find("7")->asInt64()}};
+      system_clock::time_point opened_at = floor<minutes>(time);
+      auto duration = time - opened_at;
+
+      *candle.mutable_opened_at() = to_proto(opened_at);
+      *candle.mutable_duration() =
+          to_proto(duration == milliseconds(0) ? seconds(60) : duration);
+
+      stock::Symbol symbol;
+      if (!stock::Symbol_Parse(json_candle.find("key")->asString(), &symbol)) {
+        throw std::runtime_error(
+            absl::StrCat(
+                "Unknown stock symbol returned: ",
+                json_candle.find("key")->asString()));
+      }
+
+      cb(symbol, std::move(candle));
+    }
+  };
+}
+
+// MARK: stream commands
+
+Json::Value stream::_make_command(command_parameters command) {
+  Json::Value root{Json::objectValue};
+  root["requestid"] = std::to_string(_request_counter++);
+  root["service"] = std::string{command.service};
+  root["command"] = std::string{command.command};
+  root["SchwabClientCustomerId"] = _customer_id;
+  root["SchwabClientCorrelId"] = _correlation_id;
+  root["parameters"] = std::move(command.parameters);
+  return root;
+}
+
+void stream::_send_command(
+    command_parameters command, command_callback_type cb) {
+  if (cb) {
+    _command_cbs[_request_counter] =
+        [this, request_id = _request_counter, cb = std::move(cb)](
+            const Json::Value& response) {
+          cb(response);
+          _command_cbs.erase(request_id);
+        };
+  }
+  std::string command_string = to_string(_make_command(std::move(command)));
+  // LOG(INFO) << "[S] " << command_string;
+  _conn->stream().write(asio::buffer(std::move(command_string)));
+}
+
+// MARK: stream messages
+
+Json::Value stream::_read_message() {
+  Json::Value message;
+  auto is_heartbeat = [](const Json::Value& message) {
+    return message.find("notify") != nullptr;
+  };
+  do {
+    beast::flat_buffer buffer;
+    _conn->stream().read(buffer);
+    message = to_json(beast::buffers_to_string(buffer.cdata()));
+  } while (is_heartbeat(message));
+  return message;
+}
+
+void stream::_process_message() {
+  Json::Value message = _read_message();
+  // LOG(INFO) << "[R] " << to_string(message);
+  if (message.find("notify") != nullptr) return; // Heartbeat.
+  const Json::Value* key = message.find("data");
+  if (key != nullptr) {
+    // TODO: Support levelone equity data.
+    check_json(key->isArray());
+    for (const Json::Value& datum : *key) {
+      const Json::Value* service = datum.find("service");
+      check_json(service && service->isString());
+      if (*service == "CHART_EQUITY") {
+        _data_cb(datum);
+      } else if (*service == "LEVELONE_EQUITY") {
+        LOG(ERROR) << "Levelone equity data support unimplemented.";
+      } else {
+        LOG(ERROR) << "Unknown data service received: " << service->asString();
+      }
+    }
+    return;
+  }
+  key = message.find("response");
+  check_json(key && key->isArray());
+  for (const Json::Value& response : *key) {
+    const Json::Value* request_id = response.find("requestid");
+    check_json(request_id && request_id->isString());
+    auto callback_itr = _command_cbs.find(parse_int(request_id->asString()));
+    if (callback_itr != _command_cbs.end()) callback_itr->second(response);
+  }
+}
+
+// MARK: stream login
+
+void stream::_login() {
+  Json::Value streamer_info = get_streamer_info();
+  urls::url stream_url{streamer_info["streamerSocketUrl"].asString()};
+  _customer_id = streamer_info["schwabClientCustomerId"].asString();
+  _correlation_id = streamer_info["schwabClientCorrelId"].asString();
+
+  _conn = net::make_websocket(
+      {.service = "443",
+       .host = stream_url.host(),
+       .target = std::string{stream_url.encoded_target()}});
+  _conn->stream().text(true);
+
+  Json::Value parameters{Json::objectValue};
+  parameters["Authorization"] = std::string{get_bearer_token(/*conn=*/nullptr)};
+  parameters["SchwabClientChannel"] =
+      streamer_info["schwabClientChannel"].asString();
+  parameters["SchwabClientFunctionId"] =
+      streamer_info["schwabClientFunctionId"].asString();
+  Json::Value login_response = Json::nullValue;
+  _send_command(
+      {.service = "ADMIN",
+       .command = "LOGIN",
+       .parameters = std::move(parameters)},
+      [&login_response](const Json::Value& res) { login_response = res; });
+
+  while (login_response.isNull()) _process_message();
+
+  if (!login_response) {
+    throw std::runtime_error("Never received login response!");
+  }
+  check_json(login_response.isObject());
+  const Json::Value* service = login_response.find("service");
+  const Json::Value* command = login_response.find("command");
+  check_json(service && *service == "ADMIN");
+  check_json(command && *command == "LOGIN");
+
+  const Json::Value* content = login_response.find("content");
+  check_json(content);
+  const Json::Value* code = content->find("code");
+  check_json(code && code->isInt());
+  if (*code != stream_code::SUCCESS) {
+    const Json::Value* msg = content->find("msg");
+    throw std::runtime_error(
+        absl::StrCat(
+            "Failed to login to streaming API (",
+            code->asInt(),
+            "): ",
+            msg ? msg->asString() : "unknown"));
+  }
 }
 
 } // namespace howling::schwab

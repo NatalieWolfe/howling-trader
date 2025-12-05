@@ -6,6 +6,7 @@
                 "${workspaceFolder}",
                 "${workspaceFolder}/bazel-bin",
                 "${workspaceFolder}/bazel-bin/**",
+                "${workspaceFolder}/bazel-howling-trader/external/jsoncpp+/include",
                 "${workspaceFolder}/bazel-howling-trader/external/*/include",
                 "${workspaceFolder}/bazel-howling-trader/external/*/src",
                 "${workspaceFolder}/bazel-howling-trader/external/*/*"
