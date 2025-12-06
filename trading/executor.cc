@@ -63,28 +63,30 @@ executor::executor(trading_state& state) : _state{state} {
   // TODO: Generate schwab connection.
 }
 
-void executor::buy(stock::Symbol symbol, metrics& m) {
+std::optional<trading_state::position>
+executor::buy(stock::Symbol symbol, metrics& m) {
   auto market_itr = _market.find(symbol);
-  if (market_itr == _market.end()) return;
+  if (market_itr == _market.end()) return std::nullopt;
 
   double share_price = market_itr->second.ask();
   int buy_quantity = get_buy_quantity(_state, share_price);
-  if (buy_quantity == 0) return;
+  if (buy_quantity == 0) return std::nullopt;
   m.last_buy_price = share_price;
 
   if (!absl::GetFlag(FLAGS_use_real_money)) {
     _state.positions[symbol].push_back(
         {.symbol = symbol, .price = share_price, .quantity = buy_quantity});
     _state.available_funds -= share_price * buy_quantity;
-    return;
+    return _state.positions[symbol].back();
   }
   std::cerr << "Buying with real money is not implemented.";
   std::exit(1); // Not implemented.
 }
 
-void executor::sell(stock::Symbol symbol, metrics& m) {
+std::optional<trading_state::position>
+executor::sell(stock::Symbol symbol, metrics& m) {
   auto market_itr = _market.find(symbol);
-  if (market_itr == _market.end()) return;
+  if (market_itr == _market.end()) return std::nullopt;
 
   double share_price = market_itr->second.bid();
   int sell_quantity = 0;
@@ -93,12 +95,13 @@ void executor::sell(stock::Symbol symbol, metrics& m) {
     if (share_price > position.price) ++m.profitable_sales;
     sell_quantity += position.quantity;
   }
-  if (sell_quantity == 0) return;
+  if (sell_quantity == 0) return std::nullopt;
 
   if (!absl::GetFlag(FLAGS_use_real_money)) {
     _state.positions[symbol].clear();
     _state.available_funds += share_price * sell_quantity;
-    return;
+    return trading_state::position{
+        .symbol = symbol, .price = share_price, .quantity = sell_quantity};
   }
   std::cerr << "Selling with real money is not implemented.";
   std::exit(1); // Not implemented.

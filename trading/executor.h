@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <unordered_map>
 
 #include "data/market.pb.h"
@@ -15,8 +16,8 @@ class executor {
 public:
   explicit executor(trading_state& state);
 
-  void buy(stock::Symbol symbol, metrics& m);
-  void sell(stock::Symbol symbol, metrics& m);
+  std::optional<trading_state::position> buy(stock::Symbol symbol, metrics& m);
+  std::optional<trading_state::position> sell(stock::Symbol symbol, metrics& m);
 
   void update_market(const Market& market);
 
