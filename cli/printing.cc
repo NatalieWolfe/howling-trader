@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <exception>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <string_view>
@@ -14,6 +15,7 @@
 #include "data/candle.pb.h"
 #include "time/conversion.h"
 #include "trading/metrics.h"
+#include "trading/trading_state.h"
 
 namespace howling {
 namespace {
@@ -33,9 +35,9 @@ int get_terminal_width() {
 
 std::string print_candle(
     const decision& d,
-    const metrics& m,
+    const std::optional<trading_state::position>& trade,
     const Candle& candle,
-    const print_extents& candle_extents) {
+    const print_candle_parameters& params) {
   using namespace ::std::chrono;
   zoned_time opened_at{current_zone(), to_std_chrono(candle.opened_at())};
   hh_mm_ss time_of_day{floor<seconds>(
@@ -46,32 +48,39 @@ std::string print_candle(
 
   color c = candle.open() < candle.close() ? color::GREEN : color::RED;
 
-  double usable_width = get_terminal_width() * candle_extents.max_width_usage;
-  double gap = candle_extents.max - candle_extents.min;
+  double usable_width = get_terminal_width() * params.candle_width;
+  double gap = params.candle_print_max - params.candle_print_min;
   double scaler = (usable_width) / gap;
 
   int body_min = std::floor(
-      (std::min(candle.open(), candle.close()) - candle_extents.min) * scaler);
+      (std::min(candle.open(), candle.close()) - params.candle_print_min) *
+      scaler);
   int body_max = std::floor(
-      (std::max(candle.open(), candle.close()) - candle_extents.min) * scaler);
-  int low_wick = std::floor((candle.low() - candle_extents.min) * scaler);
-  int high_wick = std::floor((candle.high() - candle_extents.min) * scaler);
+      (std::max(candle.open(), candle.close()) - params.candle_print_min) *
+      scaler);
+  int low_wick = std::floor((candle.low() - params.candle_print_min) * scaler);
+  int high_wick =
+      std::floor((candle.high() - params.candle_print_min) * scaler);
 
   std::string suffix;
+  double price = trade ? trade->price : candle.close();
+  int quantity = trade ? trade->quantity : 0;
   if (d.act == action::BUY) {
     suffix = std::format(
-        "{} - Buy ({:.2f})",
-        colorize(print_price(candle.close()), color::RED),
+        "{} x {} - Buy ({:.2f})",
+        colorize(print_price(price), color::RED),
+        quantity,
         d.confidence);
   } else if (d.act == action::SELL) {
     suffix = std::format(
-        "{} - Sell ({:.2f}: Δ{:.2f})",
-        colorize(print_price(candle.close()), color::GREEN),
+        "{} x {} - Sell ({:.2f}: Δ{:.2f})",
+        colorize(print_price(price), color::GREEN),
+        quantity,
         d.confidence,
-        candle.close() - m.last_buy_price);
-  } else if (candle.low() == m.min) {
+        price - params.last_buy_price);
+  } else if (candle.low() == params.price_min) {
     suffix = colorize(print_price(candle.low()), color::RED);
-  } else if (candle.high() == m.max) {
+  } else if (candle.high() == params.price_max) {
     suffix = colorize(print_price(candle.high()), color::GREEN);
   } else if (is_ref_point) {
     suffix = colorize(print_price(candle.close()), color::GRAY);

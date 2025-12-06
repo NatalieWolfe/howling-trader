@@ -39,39 +39,36 @@ void run() {
       get_history_file_path(symbol, absl::GetFlag(FLAGS_date)).string()));
   auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer), history);
 
-  print_extents extents{
-      .min = std::numeric_limits<double>::max(),
-      .max = std::numeric_limits<double>::min(),
-      .max_width_usage = 0.75};
-  double min_close = std::numeric_limits<double>::max();
-  double max_close = std::numeric_limits<double>::min();
+  print_candle_parameters print_params{
+      .price_min = std::numeric_limits<double>::max(),
+      .price_max = std::numeric_limits<double>::min(),
+      .candle_print_min = std::numeric_limits<double>::max(),
+      .candle_print_max = std::numeric_limits<double>::min(),
+      .candle_width = 0.70};
   for (const Candle& candle : history.candles()) {
-    extents.min = std::min(extents.min, candle.low());
-    extents.max = std::max(extents.max, candle.high());
-    min_close = std::min(min_close, candle.close());
-    max_close = std::max(max_close, candle.close());
+    print_params.price_min = print_params.candle_print_min =
+        std::min(print_params.candle_print_min, candle.low());
+    print_params.price_max = print_params.candle_print_max =
+        std::max(print_params.candle_print_max, candle.high());
   }
 
   trading_state state{
       .available_stocks = vector<stock::Symbol>{{symbol}},
       .initial_funds = absl::GetFlag(FLAGS_initial_funds),
       .available_funds = absl::GetFlag(FLAGS_initial_funds)};
-  metrics m{
-      .name = "Summary",
-      .initial_funds = state.initial_funds,
-      .min = extents.min,
-      .max = extents.max};
+  metrics m{.name = "Summary", .initial_funds = state.initial_funds};
   for (const Candle& candle : history.candles()) {
     state.time_now =
         to_std_chrono(candle.opened_at()) + to_std_chrono(candle.duration());
     add_next_minute(state.market[symbol], candle);
     decision d = anal->analyze(symbol, state);
 
-    std::cout << print_candle(d, m, candle, extents) << "\n";
+    std::cout << print_candle(d, /*trade=*/std::nullopt, candle, print_params)
+              << "\n";
 
     // TODO: Support quantities and target prices in buy and sell decisions.
     if (d.act == action::BUY) {
-      m.last_buy_price = candle.close();
+      print_params.last_buy_price = candle.close();
       state.available_funds -= candle.close();
       state.positions[symbol].push_back(
           {.symbol = symbol, .price = candle.close(), .quantity = 1});

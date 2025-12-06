@@ -4,6 +4,7 @@
 #include <exception>
 #include <iostream>
 #include <limits>
+#include <optional>
 #include <ranges>
 #include <thread>
 
@@ -36,13 +37,17 @@ class execution_printer {
 public:
   execution_printer() {}
 
-  void print(const Candle& candle, const decision& d) {
+  void print(
+      const Candle& candle,
+      const decision& d,
+      std::optional<trading_state::position> trade) {
     _clear_line();
     if (_update_limits(candle)) {
-      std::cout << "\nPrint bounds " << _extents.min << "-" << _extents.max
-                << "\n\n";
+      std::cout << "\nPrint bounds " << _params.candle_print_min << "-"
+                << _params.candle_print_max << "\n\n";
     }
-    std::cout << print_candle(d, _metrics, candle, _extents) << "\n";
+    if (d.act == action::BUY && trade) _params.last_buy_price = trade->price;
+    std::cout << print_candle(d, trade, candle, _params) << "\n";
     _print_length = 0;
     _reset_current_minute();
   }
@@ -66,7 +71,7 @@ public:
     _clear_line();
     _update_limits(_current_minute);
     std::string line =
-        print_candle(NO_ACTION, _metrics, _current_minute, _extents);
+        print_candle(NO_ACTION, std::nullopt, _current_minute, _params);
     _print_length = 165; // line.length();
     std::cout << line << std::flush;
   }
@@ -86,22 +91,25 @@ private:
   }
 
   bool _update_limits(const Candle& candle) {
-    _metrics.min = std::min(_metrics.min, candle.low());
-    _metrics.max = std::max(_metrics.max, candle.high());
-    if (candle.low() < _extents.min || candle.high() > _extents.max) {
-      _extents.min = std::min(_extents.min, candle.low() - 0.1);
-      _extents.max = std::max(_extents.max, candle.high() + 0.1);
+    _params.price_min = std::min(_params.price_min, candle.low());
+    _params.price_max = std::max(_params.price_max, candle.high());
+    if (candle.low() < _params.candle_print_min ||
+        candle.high() > _params.candle_print_max) {
+      _params.candle_print_min =
+          std::min(_params.candle_print_min, candle.low() - 0.1);
+      _params.candle_print_max =
+          std::max(_params.candle_print_max, candle.high() + 0.1);
       return true;
     }
     return false;
   }
 
-  // TODO: Merge metrics min/max into print_extents
-  print_extents _extents{
-      .min = std::numeric_limits<double>::max(),
-      .max = std::numeric_limits<double>::min(),
-      .max_width_usage = 0.75};
-  metrics _metrics;
+  print_candle_parameters _params{
+      .price_min = std::numeric_limits<double>::max(),
+      .price_max = std::numeric_limits<double>::min(),
+      .candle_print_min = std::numeric_limits<double>::max(),
+      .candle_print_max = std::numeric_limits<double>::min(),
+      .candle_width = 0.70};
   Candle _current_minute;
   int _print_length = 0;
 };
@@ -127,7 +135,7 @@ void run() {
     state.time_now =
         to_std_chrono(candle.opened_at()) + to_std_chrono(candle.duration());
     add_next_minute(state.market[symbol], candle);
-    printer.print(candle, NO_ACTION);
+    printer.print(candle, NO_ACTION, std::nullopt);
   }
 
   schwab::stream stream;
@@ -142,13 +150,14 @@ void run() {
     add_next_minute(state.market[symbol], candle);
     decision d = anal->analyze(symbol, state);
 
-    printer.print(candle, d);
-
+    std::optional<trading_state::position> trade;
     if (d.act == action::BUY) {
-      e.buy(symbol, m);
+      trade = e.buy(symbol, m);
     } else if (d.act == action::SELL) {
-      e.sell(symbol, m);
+      trade = e.sell(symbol, m);
     }
+
+    printer.print(candle, d, trade);
   });
 
   stream.on_market([&](stock::Symbol symbol, Market market) {

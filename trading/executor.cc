@@ -71,7 +71,6 @@ executor::buy(stock::Symbol symbol, metrics& m) {
   double share_price = market_itr->second.ask();
   int buy_quantity = get_buy_quantity(_state, share_price);
   if (buy_quantity == 0) return std::nullopt;
-  m.last_buy_price = share_price;
 
   if (!absl::GetFlag(FLAGS_use_real_money)) {
     _state.positions[symbol].push_back(

@@ -19,6 +19,7 @@ cc_library(
         "//data:candle_cc_proto",
         "//time:conversion",
         "//trading:metrics",
+        "//trading:trading_state",
         "@abseil-cpp//absl/strings",
     ],
 )
