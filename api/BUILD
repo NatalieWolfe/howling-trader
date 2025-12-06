@@ -22,6 +22,14 @@ cc_library(
 )
 
 cc_library(
+    name = "json",
+    srcs = ["json.cc"],
+    hdrs = ["json.h"],
+    visibility = ["//api:__subpackages__"],  # Move before growing visibility.
+    deps = ["@jsoncpp"],
+)
+
+cc_library(
     name = "schwab",
     srcs = ["schwab.cc"],
     hdrs = ["schwab.h"],
@@ -31,17 +39,17 @@ cc_library(
     ],
     visibility = ["//visibility:public"],
     deps = [
+        ":json",
+        "//api/schwab:connect",
+        "//api/schwab:oauth",
         "//containers:vector",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
-        "//howling_tools:runfiles",
         "//net:connect",
         "//net:url",
         "//strings:parse",
-        "//strings:trim",
         "//time:conversion",
-        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
         "@boost.beast",
