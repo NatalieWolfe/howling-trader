@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package howling;
+
+message Account {
+  string account_id = 1;
+  string name = 2;
+  double available_funds = 3;
+}

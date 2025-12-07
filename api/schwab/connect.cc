@@ -14,7 +14,7 @@ ABSL_FLAG(
 
 namespace howling::schwab {
 
-std::string_view get_schwab_host() {
+std::string get_schwab_host() {
   static const bool _checked = ([]() {
     if (absl::GetFlag(FLAGS_schwab_api_host).empty()) {
       throw std::runtime_error("--schwab_api_host flag is required.");
@@ -27,7 +27,7 @@ std::string_view get_schwab_host() {
 net::url make_net_url(std::string target) {
   return {
       .service = "https",
-      .host = std::string{get_schwab_host()},
+      .host = get_schwab_host(),
       .target = std::move(target)};
 }
 

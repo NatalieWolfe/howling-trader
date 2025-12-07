@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "containers/vector.h"
+#include "data/account.pb.h"
 #include "data/candle.pb.h"
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
@@ -28,8 +29,12 @@ struct get_history_parameters {
   bool need_previous_close = false;
 };
 
+/** Fetches the chart history for the given symbol as a candle series. */
 vector<Candle>
 get_history(stock::Symbol symbol, const get_history_parameters& params);
+
+std::vector<Account> get_accounts();
+std::vector<stock::Position> get_account_positions(std::string_view account_id);
 
 class stream {
 public:

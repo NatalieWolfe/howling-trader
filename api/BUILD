@@ -43,6 +43,7 @@ cc_library(
         "//api/schwab:connect",
         "//api/schwab:oauth",
         "//containers:vector",
+        "//data:account_cc_proto",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",

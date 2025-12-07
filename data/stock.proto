@@ -25,3 +25,9 @@ message History {
   google.protobuf.Duration duration = 3;
   repeated Candle candles = 4;
 }
+
+message Position {
+  Symbol symbol = 1;
+  double price = 2;
+  int64 quantity = 3;
+}

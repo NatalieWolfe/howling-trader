@@ -8,6 +8,7 @@
 #include <source_location>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 #include "absl/log/log.h"
@@ -20,6 +21,7 @@
 #include "boost/beast.hpp"
 #include "boost/url.hpp"
 #include "containers/vector.h"
+#include "data/account.pb.h"
 #include "data/candle.pb.h"
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
@@ -189,6 +191,102 @@ get_history(stock::Symbol symbol, const get_history_parameters& params) {
   }
 
   return candles;
+}
+
+// MARK: get_accounts
+
+std::vector<Account> get_accounts() {
+  net::url url = make_net_url("/trader/v1/accounts/accountNumbers");
+  std::unique_ptr<net::connection> conn = net::make_connection(url);
+  std::string_view bearer_token = get_bearer_token(conn);
+
+  Json::Value root = send_request(conn, bearer_token, url);
+  check_json(root.isArray());
+
+  std::unordered_map<std::string, Account*> accounts_by_number;
+  std::vector<Account> accounts;
+  accounts.reserve(root.size());
+  for (const Json::Value& a : root) {
+    check_json(a.isObject());
+    const Json::Value* account_number = a.find("accountNumber");
+    const Json::Value* hash = a.find("hashValue");
+    check_json(account_number && account_number->isString());
+    check_json(hash && hash->isString());
+
+    Account& account = accounts.emplace_back();
+    std::string number_str = account_number->asString();
+    account.set_name(number_str.substr(number_str.size() - 3, 3));
+    account.set_account_id(hash->asString());
+    accounts_by_number[number_str] = &account;
+  }
+
+  url.target = "/trader/v1/accounts";
+  root = send_request(conn, bearer_token, url);
+  check_json(root.isArray() && root.size() == accounts.size());
+  for (const Json::Value& a : root) {
+    check_json(a.isObject());
+    const Json::Value* json_account = a.find("securitiesAccount");
+    check_json(json_account && json_account->isObject());
+    const Json::Value* account_number = json_account->find("accountNumber");
+    const Json::Value* balance = json_account->find("currentBalances");
+    check_json(account_number && account_number->isString());
+    check_json(balance && balance->isObject());
+    const Json::Value* cash = balance->find("cashAvailableForTrading");
+    check_json(cash && cash->isDouble());
+
+    auto acct_itr = accounts_by_number.find(account_number->asString());
+    if (acct_itr == accounts_by_number.end()) {
+      throw std::runtime_error(
+          absl::StrCat(
+              "Unknown account details pulled: ",
+              account_number->asString().substr(
+                  account_number->asString().size() - 3)));
+    }
+    acct_itr->second->set_available_funds(cash->asDouble());
+  }
+
+  return accounts;
+}
+
+// MARK: get_account_positions
+
+std::vector<stock::Position>
+get_account_positions(std::string_view account_id) {
+  net::url url = make_net_url(
+      absl::StrCat("/trader/v1/accounts/", account_id, "?fields=positions"));
+  std::unique_ptr<net::connection> conn = net::make_connection(url);
+  std::string_view bearer_token = get_bearer_token(conn);
+
+  Json::Value root = send_request(conn, bearer_token, url);
+  check_json(root.isObject());
+  const Json::Value* securities = root.find("securitiesAccount");
+  check_json(securities && securities->isObject());
+  const Json::Value* positions_json = securities->find("positions");
+  check_json(positions_json && positions_json->isArray());
+
+  std::vector<stock::Position> positions;
+  for (const Json::Value& json_position : *positions_json) {
+    const Json::Value* instrument = json_position.find("instrument");
+    check_json(instrument && instrument->isObject());
+    const Json::Value* json_symbol = instrument->find("symbol");
+    check_json(json_symbol && json_symbol->isString());
+
+    // Skip any stocks which the trader does not support.
+    stock::Symbol symbol;
+    if (!stock::Symbol_Parse(json_symbol->asString(), &symbol)) continue;
+
+    const Json::Value* price = json_position.find("averagePrice");
+    const Json::Value* quantity = json_position.find("settledLongQuantity");
+    check_json(price && price->isDouble());
+    check_json(quantity && quantity->isDouble());
+
+    stock::Position& position = positions.emplace_back();
+    position.set_symbol(symbol);
+    position.set_price(price->asDouble());
+    position.set_quantity(static_cast<int64_t>(quantity->asDouble()));
+  }
+
+  return positions;
 }
 
 // MARK: stream

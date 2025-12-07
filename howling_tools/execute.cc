@@ -11,6 +11,7 @@
 #include "absl/flags/flag.h"
 #include "api/schwab.h"
 #include "cli/printing.h"
+#include "data/account.pb.h"
 #include "data/candle.pb.h"
 #include "data/load_analyzer.h"
 #include "data/market.pb.h"
@@ -23,6 +24,7 @@
 
 ABSL_FLAG(std::string, stock, "", "Stock symbol to evaluate against.");
 ABSL_FLAG(std::string, analyzer, "howling", "Name of an analyzer to evaluate.");
+ABSL_FLAG(std::string, account, "", "Name of account to use for trading.");
 
 namespace howling {
 namespace {
@@ -114,6 +116,24 @@ private:
   int _print_length = 0;
 };
 
+Account get_account() {
+  for (const Account& account : schwab::get_accounts()) {
+    if (account.name() == absl::GetFlag(FLAGS_account)) return account;
+  }
+  throw std::runtime_error(
+      "No account found with name " + absl::GetFlag(FLAGS_account));
+}
+
+void load_positions(trading_state& state, std::string_view account_id) {
+  for (const stock::Position& position :
+       schwab::get_account_positions(account_id)) {
+    state.positions[position.symbol()].push_back(
+        {.symbol = position.symbol(),
+         .price = position.price(),
+         .quantity = position.quantity()});
+  }
+}
+
 void run() {
   if (absl::GetFlag(FLAGS_analyzer).empty()) {
     throw std::runtime_error("Must specify an analyzer.");
@@ -121,7 +141,8 @@ void run() {
   stock::Symbol symbol = get_stock_symbol(absl::GetFlag(FLAGS_stock));
   auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));
 
-  // TODO: Fetch available funds from Schwab.
+  // TODO: Use account.available_funds for initial trading state.
+  Account account = get_account();
   trading_state state{
       .available_stocks = {{symbol}},
       .initial_funds = 20'000,
@@ -129,6 +150,7 @@ void run() {
   metrics m{.name = "Summary", .initial_funds = state.initial_funds};
   executor e{state};
   execution_printer printer;
+  load_positions(state, account.account_id());
 
   for (const Candle& candle : schwab::get_history(
            symbol, {.end_date = std::chrono::system_clock::now()})) {

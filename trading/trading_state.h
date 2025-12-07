@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstdint>
 #include <unordered_map>
 
 #include "containers/vector.h"
@@ -16,7 +17,7 @@ struct trading_state {
   struct position {
     stock::Symbol symbol;
     double price;
-    int quantity;
+    int64_t quantity;
 
     double cost() const { return price * quantity; }
   };

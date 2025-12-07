@@ -28,6 +28,7 @@ cc_binary(
         ":init",
         "//api:schwab",
         "//cli:printing",
+        "//data:account_cc_proto",
         "//data:candle_cc_proto",
         "//data:load_analyzer",
         "//data:market_cc_proto",

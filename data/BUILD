@@ -8,6 +8,17 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
+proto_library(
+    name = "account_proto",
+    srcs = ["account.proto"],
+)
+
+cc_proto_library(
+    name = "account_cc_proto",
+    visibility = ["//visibility:public"],
+    deps = [":account_proto"],
+)
+
 cc_library(
     name = "aggregate",
     srcs = ["aggregate.cc"],
