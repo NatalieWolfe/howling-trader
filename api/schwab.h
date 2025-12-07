@@ -18,23 +18,32 @@
 
 namespace howling::schwab {
 
-struct get_history_parameters {
-  std::string_view period_type = "day";
-  int period = 1;
-  std::string_view frequency_type = "minute";
-  int frequency = 1;
-  std::optional<std::chrono::system_clock::time_point> start_date;
-  std::optional<std::chrono::system_clock::time_point> end_date;
-  bool need_extended_hours_data = true;
-  bool need_previous_close = false;
+class api_connection {
+public:
+  api_connection();
+
+  struct get_history_parameters {
+    std::string_view period_type = "day";
+    int period = 1;
+    std::string_view frequency_type = "minute";
+    int frequency = 1;
+    std::optional<std::chrono::system_clock::time_point> start_date;
+    std::optional<std::chrono::system_clock::time_point> end_date;
+    bool need_extended_hours_data = true;
+    bool need_previous_close = false;
+  };
+
+  /** Fetches the chart history for the given symbol as a candle series. */
+  vector<Candle>
+  get_history(stock::Symbol symbol, const get_history_parameters& params);
+
+  std::vector<Account> get_accounts();
+  std::vector<stock::Position>
+  get_account_positions(std::string_view account_id);
+
+private:
+  std::unique_ptr<net::connection> _conn;
 };
-
-/** Fetches the chart history for the given symbol as a candle series. */
-vector<Candle>
-get_history(stock::Symbol symbol, const get_history_parameters& params);
-
-std::vector<Account> get_accounts();
-std::vector<stock::Position> get_account_positions(std::string_view account_id);
 
 class stream {
 public:

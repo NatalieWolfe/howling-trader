@@ -108,7 +108,9 @@ std::string format_time(const std::chrono::system_clock::time_point& time) {
       duration_cast<milliseconds>(time.time_since_epoch()).count());
 }
 
-net::url make_url(stock::Symbol symbol, const get_history_parameters& params) {
+net::url make_url(
+    stock::Symbol symbol,
+    const api_connection::get_history_parameters& params) {
   urls::url url;
   url.set_scheme("https");
   url.set_host(get_schwab_host());
@@ -167,16 +169,18 @@ Json::Value get_streamer_info() {
 
 } // namespace
 
+api_connection::api_connection()
+    : _conn{net::make_connection(make_net_url(""))} {}
+
 // MARK: get_history
 
-vector<Candle>
-get_history(stock::Symbol symbol, const get_history_parameters& params) {
+vector<Candle> api_connection::get_history(
+    stock::Symbol symbol, const get_history_parameters& params) {
   std::vector<Candle> candles;
   net::url url = make_url(symbol, params);
-  std::unique_ptr<net::connection> conn = net::make_connection(url);
-  std::string_view bearer_token = get_bearer_token(conn);
+  std::string_view bearer_token = get_bearer_token(_conn);
 
-  Json::Value root = send_request(conn, bearer_token, url);
+  Json::Value root = send_request(_conn, bearer_token, url);
   for (const Json::Value& val : root["candles"]) {
     Candle& candle = candles.emplace_back();
     candle.set_open(val["open"].asDouble());
@@ -195,12 +199,11 @@ get_history(stock::Symbol symbol, const get_history_parameters& params) {
 
 // MARK: get_accounts
 
-std::vector<Account> get_accounts() {
+std::vector<Account> api_connection::get_accounts() {
   net::url url = make_net_url("/trader/v1/accounts/accountNumbers");
-  std::unique_ptr<net::connection> conn = net::make_connection(url);
-  std::string_view bearer_token = get_bearer_token(conn);
+  std::string_view bearer_token = get_bearer_token(_conn);
 
-  Json::Value root = send_request(conn, bearer_token, url);
+  Json::Value root = send_request(_conn, bearer_token, url);
   check_json(root.isArray());
 
   std::unordered_map<std::string, Account*> accounts_by_number;
@@ -221,7 +224,7 @@ std::vector<Account> get_accounts() {
   }
 
   url.target = "/trader/v1/accounts";
-  root = send_request(conn, bearer_token, url);
+  root = send_request(_conn, bearer_token, url);
   check_json(root.isArray() && root.size() == accounts.size());
   for (const Json::Value& a : root) {
     check_json(a.isObject());
@@ -251,13 +254,12 @@ std::vector<Account> get_accounts() {
 // MARK: get_account_positions
 
 std::vector<stock::Position>
-get_account_positions(std::string_view account_id) {
+api_connection::get_account_positions(std::string_view account_id) {
   net::url url = make_net_url(
       absl::StrCat("/trader/v1/accounts/", account_id, "?fields=positions"));
-  std::unique_ptr<net::connection> conn = net::make_connection(url);
-  std::string_view bearer_token = get_bearer_token(conn);
+  std::string_view bearer_token = get_bearer_token(_conn);
 
-  Json::Value root = send_request(conn, bearer_token, url);
+  Json::Value root = send_request(_conn, bearer_token, url);
   check_json(root.isObject());
   const Json::Value* securities = root.find("securitiesAccount");
   check_json(securities && securities->isObject());

@@ -116,22 +116,47 @@ private:
   int _print_length = 0;
 };
 
-Account get_account() {
-  for (const Account& account : schwab::get_accounts()) {
+Account get_account(schwab::api_connection& api) {
+  for (const Account& account : api.get_accounts()) {
     if (account.name() == absl::GetFlag(FLAGS_account)) return account;
   }
   throw std::runtime_error(
       "No account found with name " + absl::GetFlag(FLAGS_account));
 }
 
-void load_positions(trading_state& state, std::string_view account_id) {
+void load_positions(
+    schwab::api_connection& api,
+    trading_state& state,
+    std::string_view account_id) {
   for (const stock::Position& position :
-       schwab::get_account_positions(account_id)) {
+       api.get_account_positions(account_id)) {
     state.positions[position.symbol()].push_back(
         {.symbol = position.symbol(),
          .price = position.price(),
          .quantity = position.quantity()});
   }
+}
+
+trading_state
+load_trading_state(execution_printer& printer, stock::Symbol symbol) {
+  // TODO: Use account.available_funds for initial trading state.
+  schwab::api_connection api;
+  Account account = get_account(api);
+  trading_state state{
+      .available_stocks = {{symbol}},
+      .initial_funds = 20'000,
+      .available_funds = 20'000};
+  load_positions(api, state, account.account_id());
+
+  for (const Candle& candle : api.get_history(
+           symbol, {.end_date = std::chrono::system_clock::now()})) {
+    state.time_now =
+        to_std_chrono(candle.opened_at()) + to_std_chrono(candle.duration());
+    add_next_minute(state.market[symbol], candle);
+    printer.print(candle, NO_ACTION, std::nullopt);
+  }
+
+  return state;
 }
 
 void run() {
@@ -141,24 +166,10 @@ void run() {
   stock::Symbol symbol = get_stock_symbol(absl::GetFlag(FLAGS_stock));
   auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));
 
-  // TODO: Use account.available_funds for initial trading state.
-  Account account = get_account();
-  trading_state state{
-      .available_stocks = {{symbol}},
-      .initial_funds = 20'000,
-      .available_funds = 20'000};
+  execution_printer printer;
+  trading_state state = load_trading_state(printer, symbol);
   metrics m{.name = "Summary", .initial_funds = state.initial_funds};
   executor e{state};
-  execution_printer printer;
-  load_positions(state, account.account_id());
-
-  for (const Candle& candle : schwab::get_history(
-           symbol, {.end_date = std::chrono::system_clock::now()})) {
-    state.time_now =
-        to_std_chrono(candle.opened_at()) + to_std_chrono(candle.duration());
-    add_next_minute(state.market[symbol], candle);
-    printer.print(candle, NO_ACTION, std::nullopt);
-  }
 
   schwab::stream stream;
   std::thread runner{[&]() { stream.start(); }};

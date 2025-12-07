@@ -107,7 +107,7 @@ void run_schwab() {
   *history.mutable_started_at() = to_proto(started_at);
   *history.mutable_duration() = to_proto(absl::GetFlag(FLAGS_duration));
 
-  vector<Candle> candles = schwab::get_history(
+  vector<Candle> candles = schwab::api_connection{}.get_history(
       symbol, {.start_date = started_at, .end_date = ended_at});
   history.mutable_candles()->Reserve(candles.size());
   history.mutable_candles()->Assign(candles.begin(), candles.end());
