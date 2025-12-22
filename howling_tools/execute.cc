@@ -11,6 +11,7 @@
 #include "absl/flags/flag.h"
 #include "api/schwab.h"
 #include "cli/printing.h"
+#include "containers/vector.h"
 #include "data/account.pb.h"
 #include "data/candle.pb.h"
 #include "data/load_analyzer.h"
@@ -18,6 +19,7 @@
 #include "data/stock.pb.h"
 #include "data/utilities.h"
 #include "howling_tools/init.h"
+#include "services/market_watch.h"
 #include "time/conversion.h"
 #include "trading/executor.h"
 #include "trading/trading_state.h"
@@ -42,7 +44,7 @@ public:
   void print(
       const Candle& candle,
       const decision& d,
-      std::optional<trading_state::position> trade) {
+      const std::optional<trading_state::position>& trade) {
     _clear_line();
     if (_update_limits(candle)) {
       std::cout << "\nPrint bounds " << _params.candle_print_min << "-"
@@ -137,24 +139,16 @@ void load_positions(
   }
 }
 
-trading_state
-load_trading_state(execution_printer& printer, stock::Symbol symbol) {
+trading_state load_trading_state(vector<stock::Symbol> symbols) {
   // TODO: Use account.available_funds for initial trading state.
   schwab::api_connection api;
   Account account = get_account(api);
   trading_state state{
-      .available_stocks = {{symbol}},
+      .available_stocks = std::move(symbols),
+      .account_id = account.account_id(),
       .initial_funds = 20'000,
       .available_funds = 20'000};
   load_positions(api, state, account.account_id());
-
-  for (const Candle& candle : api.get_history(
-           symbol, {.end_date = std::chrono::system_clock::now()})) {
-    state.time_now =
-        to_std_chrono(candle.opened_at()) + to_std_chrono(candle.duration());
-    add_next_minute(state.market[symbol], candle);
-    printer.print(candle, NO_ACTION, std::nullopt);
-  }
 
   return state;
 }
@@ -163,51 +157,55 @@ void run() {
   if (absl::GetFlag(FLAGS_analyzer).empty()) {
     throw std::runtime_error("Must specify an analyzer.");
   }
-  stock::Symbol symbol = get_stock_symbol(absl::GetFlag(FLAGS_stock));
+  vector<stock::Symbol> symbols;
+  symbols.push_back(get_stock_symbol(absl::GetFlag(FLAGS_stock)));
   auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));
 
   execution_printer printer;
-  trading_state state = load_trading_state(printer, symbol);
+  trading_state state = load_trading_state(std::move(symbols));
   metrics m{.name = "Summary", .initial_funds = state.initial_funds};
   executor e{state};
 
-  schwab::stream stream;
-  std::thread runner{[&]() { stream.start(); }};
+  auto watcher = std::make_unique<market_watch>();
+  std::thread candle_streamer([&]() {
+    for (const auto& [symbol, candle] : watcher->candle_stream()) {
+      system_clock::duration candle_duration = to_std_chrono(candle.duration());
+      if (candle_duration != 60s) {
+        throw std::runtime_error("Unexpected candle duration received!");
+      }
+      state.time_now = to_std_chrono(candle.opened_at()) + candle_duration;
+      add_next_minute(state.market[symbol], candle);
+      decision d = anal->analyze(symbol, state);
 
-  stream.on_chart([&](stock::Symbol symbol, Candle candle) {
-    system_clock::duration candle_duration = to_std_chrono(candle.duration());
-    if (candle_duration != 60s) {
-      throw std::runtime_error("Unexpected candle duration received!");
+      std::optional<trading_state::position> trade = std::nullopt;
+      if (d.act == action::BUY) {
+        trade = e.buy(symbol, m);
+      } else if (d.act == action::SELL) {
+        trade = e.sell(symbol, m);
+      }
+
+      printer.print(candle, d, trade);
     }
-    state.time_now = to_std_chrono(candle.opened_at()) + candle_duration;
-    add_next_minute(state.market[symbol], candle);
-    decision d = anal->analyze(symbol, state);
-
-    std::optional<trading_state::position> trade;
-    if (d.act == action::BUY) {
-      trade = e.buy(symbol, m);
-    } else if (d.act == action::SELL) {
-      trade = e.sell(symbol, m);
-    }
-
-    printer.print(candle, d, trade);
   });
 
-  stream.on_market([&](stock::Symbol symbol, Market market) {
-    printer.print(market);
-    e.update_market(std::move(market));
+  std::thread market_streamer([&]() {
+    for (const Market& market : watcher->market_stream()) {
+      printer.print(market);
+      e.update_market(std::move(market));
+    }
   });
 
-  while (!stream.is_running()) std::this_thread::sleep_for(1ms);
-  stream.add_symbol(symbol);
+  std::thread watcher_thread([&]() { watcher->start(state.available_stocks); });
 
   // Wait until after market close to shutdown.
   if (state.market_hour() < 15) {
     std::this_thread::sleep_for(std::chrono::hours(15 - state.market_hour()));
   }
-  while (state.market_is_open()) std::this_thread::sleep_for(1min);
-  stream.stop();
-  runner.join();
+  while (state.market_hour() == 15 && state.market_minute() < 45) {
+    std::this_thread::sleep_for(1min);
+  }
+  watcher = nullptr;
+  watcher_thread.join();
 
   std::cout << "\n" << print_metrics(m) << std::endl;
 }

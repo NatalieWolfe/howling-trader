@@ -8,6 +8,7 @@
 #include <source_location>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -42,8 +43,11 @@ namespace urls = ::boost::urls;
 
 using ::google::protobuf::util::TimeUtil;
 
+using http_headers = beast::http::field;
 using http_response =
     ::boost::beast::http::response<::boost::beast::http::dynamic_body>;
+using http_request =
+    ::boost::beast::http::request<::boost::beast::http::string_body>;
 
 enum class stream_code : int { SUCCESS = 0 };
 
@@ -64,23 +68,33 @@ void check_json(
   }
 }
 
-Json::Value send_request(
-    const std::unique_ptr<net::connection>& conn,
-    std::string_view bearer_token,
-    const net::url& url) {
-  LOG(INFO) << "GET " << url.target;
+std::string to_string(const Json::Value& root) {
+  static const Json::StreamWriterBuilder builder = ([]() {
+    Json::StreamWriterBuilder builder;
+    builder["commentStyle"] = "None";
+    builder["indentation"] = "";
+    return builder;
+  })();
+  return Json::writeString(builder, root);
+}
 
-  // TODO: Set custom user agent.
-
-  using http_headers = beast::http::field;
+http_request make_request(
+    beast::http::verb verb,
+    const net::url& url,
+    std::string_view bearer_token) {
   beast::http::request<beast::http::string_body> req{
-      beast::http::verb::get,
+      verb,
       url.target,
       /*http_version=*/11};
+  // TODO: Set custom user agent.
   req.set(http_headers::host, url.host);
   req.set(http_headers::accept, "application/json");
   req.set(http_headers::authorization, absl::StrCat("Bearer ", bearer_token));
+  return req;
+}
 
+http_response send_request(
+    const std::unique_ptr<net::connection>& conn, const http_request& req) {
   beast::http::write(conn->stream(), req);
   beast::flat_buffer buffer;
   http_response res;
@@ -98,7 +112,35 @@ Json::Value send_request(
             " ",
             std::string_view{res.reason()}));
   }
+  return res;
+}
 
+Json::Value send_request(
+    const std::unique_ptr<net::connection>& conn,
+    std::string_view bearer_token,
+    const net::url& url) {
+  LOG(INFO) << "GET " << url.target;
+
+  beast::http::request<beast::http::string_body> req =
+      make_request(beast::http::verb::get, url, bearer_token);
+  http_response res = send_request(conn, req);
+  return to_json(beast::buffers_to_string(res.body().data()));
+}
+
+Json::Value send_request(
+    const std::unique_ptr<net::connection>& conn,
+    std::string_view bearer_token,
+    const net::url& url,
+    const Json::Value& body) {
+  LOG(INFO) << "POST " << url.target;
+
+  beast::http::request<beast::http::string_body> req =
+      make_request(beast::http::verb::post, url, bearer_token);
+  std::string body_str = to_string(body);
+  req.set(http_headers::content_length, std::to_string(body_str.size()));
+  req.set(http_headers::content_type, "application/json");
+  req.body() = std::move(body_str);
+  http_response res = send_request(conn, req);
   return to_json(beast::buffers_to_string(res.body().data()));
 }
 
@@ -140,16 +182,6 @@ net::url make_url(
       .target = absl::StrCat(url.path(), "?", url.query())};
 }
 
-std::string to_string(const Json::Value& root) {
-  static const Json::StreamWriterBuilder builder = ([]() {
-    Json::StreamWriterBuilder builder;
-    builder["commentStyle"] = "None";
-    builder["indentation"] = "";
-    return builder;
-  })();
-  return Json::writeString(builder, root);
-}
-
 Json::Value get_streamer_info() {
   net::url user_pref_url = make_net_url("/trader/v1/userPreference");
   std::unique_ptr<net::connection> api_conn =
@@ -165,6 +197,30 @@ Json::Value get_streamer_info() {
   check_json(streamer_info.isObject());
 
   return streamer_info;
+}
+
+Json::Value make_order(
+    std::string_view instruction,
+    const api_connection::order_parameters& params) {
+  Json::Value body = Json::objectValue;
+  body["session"] = std::string{params.session};
+  body["duration"] = std::string{params.duration};
+  body["orderType"] = std::string{params.order_type};
+  body["orderStrategyType"] = std::string{params.order_strategy};
+  body["complexOrderStrategyType"] = std::string{params.complexity_strategy};
+  body["price"] = params.price;
+
+  Json::Value order = Json::objectValue;
+  order["instruction"] = std::string{instruction};
+  order["quantity"] = params.quantity;
+  Json::Value& instrument = order["instrument"] = Json::objectValue;
+  instrument["symbol"] = stock::Symbol_Name(params.symbol);
+  instrument["assetType"] = "EQUITY";
+
+  Json::Value& order_collection = body["orderLegCollection"] = Json::arrayValue;
+  order_collection.append(std::move(order));
+
+  return body;
 }
 
 } // namespace
@@ -291,6 +347,30 @@ api_connection::get_account_positions(std::string_view account_id) {
   return positions;
 }
 
+void api_connection::place_buy(const order_parameters& params) {
+  net::url url = make_net_url(
+      absl::StrCat("/trader/v1/accounts/", params.account_id, "/orders"));
+  Json::Value body = make_order("BUY", params);
+
+  LOG(INFO) << to_string(body);
+  LOG(WARNING) << "THIS IS NOT YET TESTED OR VERIFIED!";
+  return;
+
+  Json::Value res = send_request(_conn, get_bearer_token(_conn), url, body);
+}
+
+void api_connection::place_sell(const order_parameters& params) {
+  net::url url = make_net_url(
+      absl::StrCat("/trader/v1/accounts/", params.account_id, "/orders"));
+  Json::Value body = make_order("SELL", params);
+
+  LOG(INFO) << to_string(body);
+  LOG(WARNING) << "THIS IS NOT YET TESTED OR VERIFIED!";
+  return;
+
+  Json::Value res = send_request(_conn, get_bearer_token(_conn), url, body);
+}
+
 // MARK: stream
 
 stream::stream() {
@@ -310,8 +390,21 @@ void stream::start() {
   _stopping = false;
   _login();
 
+  // TODO: Attach to account order change notices here.
+
   _running = true;
-  while (!_stopping) _process_message();
+  try {
+    while (!_stopping) _process_message();
+  } catch (const boost::system::system_error& err) {
+    if (err.code() != asio::ssl::error::stream_truncated || !_stopping) {
+      LOG(ERROR) << "Unexpected error while running stream: [" << err.code()
+                 << "] " << err.what();
+    }
+  } catch (const std::exception& err) { LOG(ERROR) << err.what(); }
+  if (!_stopping) {
+    _conn->stream().close(beast::websocket::close_code::normal);
+    _conn = nullptr;
+  }
   _running = false;
 }
 

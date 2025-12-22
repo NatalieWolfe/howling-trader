@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <string>
 #include <unordered_map>
 
 #include "containers/vector.h"
@@ -28,6 +29,7 @@ struct trading_state {
   // Stocks which may be analyzed.
   vector<stock::Symbol> available_stocks;
 
+  std::string account_id;
   // Amount of funds at the beginning of the trading session.
   double initial_funds;
   // Currently liquid funds available for purchasing shares.

@@ -1,0 +1,16 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "market_watch",
+    srcs = ["market_watch.cc"],
+    hdrs = ["market_watch.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//api:schwab",
+        "//containers:buffered_stream",
+        "//data:candle_cc_proto",
+        "//data:market_cc_proto",
+        "//data:stock_cc_proto",
+        "@abseil-cpp//absl/flags:flag",
+    ],
+)

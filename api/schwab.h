@@ -41,6 +41,22 @@ public:
   std::vector<stock::Position>
   get_account_positions(std::string_view account_id);
 
+  struct order_parameters {
+    std::string_view account_id;
+    stock::Symbol symbol;
+    double price;
+    int quantity;
+
+    std::string_view session = "NORMAL";
+    std::string_view duration = "DAY";
+    std::string_view order_type = "LIMIT";
+    std::string_view order_strategy = "SINGLE";
+    std::string_view complexity_strategy = "NONE";
+  };
+
+  void place_buy(const order_parameters& params);
+  void place_sell(const order_parameters& params);
+
 private:
   std::unique_ptr<net::connection> _conn;
 };

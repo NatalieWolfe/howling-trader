@@ -4,9 +4,9 @@
 #include <optional>
 #include <unordered_map>
 
+#include "api/schwab.h"
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
-#include "net/connect.h"
 #include "trading/metrics.h"
 #include "trading/trading_state.h"
 
@@ -23,7 +23,7 @@ public:
 
 private:
   trading_state& _state;
-  std::unique_ptr<net::connection> _conn;
+  schwab::api_connection _conn;
   std::unordered_map<stock::Symbol, Market> _market;
 };
 

@@ -8,6 +8,7 @@ cc_library(
     deps = [
         ":metrics",
         ":trading_state",
+        "//api:schwab",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
         "//net:connect",

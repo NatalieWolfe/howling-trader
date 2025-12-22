@@ -59,8 +59,6 @@ int get_buy_quantity(const trading_state& state, double price) {
 
 executor::executor(trading_state& state) : _state{state} {
   check_real_money_flag();
-
-  // TODO: Generate schwab connection.
 }
 
 std::optional<trading_state::position>
@@ -80,6 +78,15 @@ executor::buy(stock::Symbol symbol, metrics& m) {
   }
   std::cerr << "Buying with real money is not implemented.";
   std::exit(1); // Not implemented.
+
+  // TODO: Inject a TRAILING_STOP as well.
+  // TODO: Adjust available funds.
+
+  _conn.place_buy(
+      {.account_id = _state.account_id,
+       .symbol = symbol,
+       .price = share_price,
+       .quantity = buy_quantity});
 }
 
 std::optional<trading_state::position>
@@ -104,6 +111,12 @@ executor::sell(stock::Symbol symbol, metrics& m) {
   }
   std::cerr << "Selling with real money is not implemented.";
   std::exit(1); // Not implemented.
+
+  _conn.place_sell(
+      {.account_id = _state.account_id,
+       .symbol = symbol,
+       .price = share_price,
+       .quantity = sell_quantity});
 }
 
 void executor::update_market(const Market& market) {
