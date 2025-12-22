@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <limits>
 #include <stdexcept>
@@ -89,8 +90,8 @@ private:
   size_t _circularize(size_t index) const { return index % _capacity; }
 
   size_t _capacity;
-  size_t _size = 0;
-  size_t _insert_count = 0;
+  std::atomic_size_t _size = 0;
+  std::atomic_size_t _insert_count = 0;
   std::vector<T> _buffer;
 };
 
@@ -105,6 +106,7 @@ public:
 
   iterator& operator++() {
     ++_index;
+    _jump_to_front();
     return *this;
   }
   iterator operator++(int) {
@@ -115,6 +117,7 @@ public:
 
   iterator& operator+=(uint32_t n) {
     _index += n;
+    _jump_to_front();
     return *this;
   }
 
@@ -152,6 +155,12 @@ private:
   iterator(size_t index, circular_buffer& buffer)
       : _index{index}, _buffer{&buffer} {}
 
+  void _jump_to_front() {
+    if (_buffer->_insert_count - _index > _buffer->_size) {
+      _index = _buffer->_front_index();
+    }
+  }
+
   bool _is_end() const {
     return _index == circular_buffer::END || _index == _buffer->_insert_count;
   }
@@ -178,6 +187,7 @@ public:
 
   const_iterator& operator++() {
     ++_index;
+    _jump_to_front();
     return *this;
   }
   const_iterator operator++(int) {
@@ -188,6 +198,7 @@ public:
 
   const_iterator& operator+=(uint32_t n) {
     _index += n;
+    _jump_to_front();
     return *this;
   }
 
@@ -224,6 +235,12 @@ private:
 
   const_iterator(size_t index, const circular_buffer& buffer)
       : _index{index}, _buffer{&buffer} {}
+
+  void _jump_to_front() {
+    if (_buffer->_insert_count - _index > _buffer->_size) {
+      _index = _buffer->_front_index();
+    }
+  }
 
   bool _is_end() const {
     return _index == circular_buffer::END || _index == _buffer->_insert_count;
