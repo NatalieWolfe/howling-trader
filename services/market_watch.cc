@@ -69,8 +69,9 @@ void market_watch::start(std::span<const stock::Symbol> symbols) {
   _schwab.on_market([this](stock::Symbol, Market market) {
     _market.push_back(std::move(market));
   });
-  for (stock::Symbol symbol : symbols) _schwab.add_symbol(symbol);
-  _schwab.start();
+  _schwab.start([&]() {
+    for (stock::Symbol symbol : symbols) _schwab.add_symbol(symbol);
+  });
 }
 
 } // namespace howling

@@ -39,7 +39,7 @@ struct trading_state {
   double total_positions_value() const;
 
   // UTC time as of most recent data added.
-  std::chrono::system_clock::time_point time_now;
+  std::chrono::system_clock::time_point time_now{};
   // Hour of day in the market timezone.
   int market_hour() const;
   // Minute of current hour in the market timezone.

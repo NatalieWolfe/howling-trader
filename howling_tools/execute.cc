@@ -197,6 +197,11 @@ void run() {
 
   std::thread watcher_thread([&]() { watcher->start(state.available_stocks); });
 
+  // Wait for the trading state to catch up with now.
+  while (system_clock::now() - state.time_now > 2min) {
+    std::this_thread::sleep_for(1s);
+  }
+
   // Wait until after market close to shutdown.
   if (state.market_hour() < 15) {
     std::this_thread::sleep_for(std::chrono::hours(15 - state.market_hour()));

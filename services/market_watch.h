@@ -13,7 +13,7 @@ namespace howling {
 
 class market_watch {
 public:
-  explicit market_watch() : _candles{1000}, _market{1000} {}
+  explicit market_watch() : _candles{1000}, _market{1000}, _schwab{} {}
   ~market_watch();
 
   void start(std::span<const stock::Symbol> symbols);
