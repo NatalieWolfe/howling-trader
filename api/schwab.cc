@@ -386,13 +386,14 @@ stream::~stream() {
   if (_conn && _running) stop();
 }
 
-void stream::start() {
+void stream::start(std::function<void()> callback) {
   _stopping = false;
   _login();
 
   // TODO: Attach to account order change notices here.
 
   _running = true;
+  if (callback) callback();
   try {
     while (!_stopping) _process_message();
   } catch (const boost::system::system_error& err) {

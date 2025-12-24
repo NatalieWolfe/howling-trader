@@ -69,7 +69,7 @@ public:
   stream();
   ~stream();
 
-  void start();
+  void start(std::function<void()> callback = nullptr);
   void stop();
 
   void add_symbol(stock::Symbol symbol);
