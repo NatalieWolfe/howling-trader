@@ -7,6 +7,7 @@
 #include <optional>
 #include <ranges>
 #include <thread>
+#include <unordered_set>
 
 #include "absl/flags/flag.h"
 #include "api/schwab.h"
@@ -169,7 +170,12 @@ void run() {
 
   auto watcher = std::make_unique<market_watch>();
   std::thread candle_streamer([&]() {
+    std::unordered_set<stock::Symbol> trading_stocks{
+        symbols.begin(), symbols.end()};
+
     for (const auto& [symbol, candle] : watcher->candle_stream()) {
+      if (!trading_stocks.contains(symbol)) continue;
+
       system_clock::duration candle_duration = to_std_chrono(candle.duration());
       if (candle_duration != 60s) {
         throw std::runtime_error("Unexpected candle duration received!");
@@ -206,7 +212,13 @@ void run() {
     for (const Market& market : watcher->market_stream()) db.save(market).get();
   });
 
-  std::thread watcher_thread([&]() { watcher->start(state.available_stocks); });
+  std::thread watcher_thread([&]() {
+    vector<stock::Symbol> all_stocks;
+    for (stock::Symbol symbol : list_stock_symbols()) {
+      all_stocks.push_back(symbol);
+    }
+    watcher->start(all_stocks);
+  });
 
   // Wait for the trading state to catch up with now.
   while (system_clock::now() - state.time_now > 2min) {
