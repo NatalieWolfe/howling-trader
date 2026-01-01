@@ -3,6 +3,7 @@
 #include <exception>
 #include <filesystem>
 #include <fstream>
+#include <generator>
 #include <ranges>
 #include <sstream>
 #include <string>
@@ -59,6 +60,16 @@ stock::Symbol get_stock_symbol(std::string_view name) {
         absl::StrCat("Unknown stock symbol: ", stock_name, "."));
   }
   return symbol;
+}
+
+std::generator<stock::Symbol> list_stock_symbols() {
+  const auto& enum_descriptor = *stock::Symbol_descriptor();
+  for (int i = 0; i < enum_descriptor.value_count(); ++i) {
+    auto* value_descriptor = enum_descriptor.value(i);
+    if (value_descriptor && value_descriptor->number() != 0) {
+      co_yield static_cast<stock::Symbol>(enum_descriptor.value(i)->number());
+    }
+  }
 }
 
 } // namespace howling
