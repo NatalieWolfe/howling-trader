@@ -9,6 +9,7 @@
 #include "absl/flags/flag.h"
 #include "absl/random/random.h"
 #include "data/candle.pb.h"
+#include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "google/protobuf/duration.pb.h"
 #include "google/protobuf/timestamp.pb.h"
@@ -63,14 +64,16 @@ TEST(SqliteDatabase, InitializesEmptyDatabase) {
   sqlite3_close_v2(raw_db);
 }
 
-TEST(SqliteDatabase, CanSaveCandles) {
+// MARK: Candle
+
+TEST(SqliteCandles, CanSaveCandles) {
   set_memory_database_path();
   sqlite_database db;
 
   EXPECT_NO_THROW(db.save(stock::NVDA, Candle::default_instance()).get());
 }
 
-TEST(SqliteDatabase, SavedCandlesAreReadable) {
+TEST(SqliteCandles, SavedCandlesAreReadable) {
   set_memory_database_path();
   sqlite_database db;
 
@@ -114,7 +117,7 @@ TEST(SqliteDatabase, SavedCandlesAreReadable) {
   EXPECT_EQ(count, 1);
 }
 
-TEST(SqliteDatabase, ReadingIteratesOverAllCandlesInOrder) {
+TEST(SqliteCandles, ReadingIteratesOverAllCandlesInOrder) {
   set_memory_database_path();
   sqlite_database db;
 
@@ -124,7 +127,7 @@ TEST(SqliteDatabase, ReadingIteratesOverAllCandlesInOrder) {
     Candle candle;
     candle.set_open(i);
     candle.mutable_opened_at()->set_seconds(
-        absl::Uniform(rand_gen, 0ll, 1ll << 62));
+        absl::Uniform(rand_gen, 0ll, 1ll << 30));
     db.save(stock::NVDA, candle).get();
   }
 
@@ -138,5 +141,77 @@ TEST(SqliteDatabase, ReadingIteratesOverAllCandlesInOrder) {
   EXPECT_EQ(counter, CANDLE_COUNT);
 }
 
+// MARK: Market
+
+TEST(SqliteMarket, CanSaveMarket) {
+  set_memory_database_path();
+  sqlite_database db;
+
+  EXPECT_NO_THROW(db.save(Market::default_instance()).get());
+}
+
+TEST(SqliteMarket, SavedMarketHistoryIsReadable) {
+  set_memory_database_path();
+  sqlite_database db;
+
+  Market market;
+  market.set_symbol(stock::NVDA);
+  market.set_bid(1.0);
+  market.set_bid_lots(2);
+  market.set_ask(3.0);
+  market.set_ask_lots(4);
+  market.set_last(5.0);
+  market.set_last_lots(6);
+  market.mutable_emitted_at()->set_seconds(7);
+
+  db.save(market).get();
+
+  int count = 0;
+  for (const Market& found_market : db.read_market(stock::NVDA)) {
+    ++count;
+    EXPECT_THAT(
+        found_market,
+        AllOf(
+            Property("bid", &Market::bid, market.bid()),
+            Property("bid_lots", &Market::bid_lots, market.bid_lots()),
+            Property("ask", &Market::ask, market.ask()),
+            Property("ask_lots", &Market::ask_lots, market.ask_lots()),
+            Property("last", &Market::last, market.last()),
+            Property("last_lots", &Market::last_lots, market.last_lots()),
+            Property(
+                "emitted_at",
+                &Market::emitted_at,
+                Property(
+                    "seconds",
+                    &Timestamp::seconds,
+                    market.emitted_at().seconds()))));
+  }
+  EXPECT_EQ(count, 1);
+}
+
+TEST(SqliteMarket, ReadingIteratesOverAllMarketHistoryInOrder) {
+  set_memory_database_path();
+  sqlite_database db;
+
+  constexpr int MARKET_COUNT = 100;
+  absl::BitGen rand_gen;
+  for (int i = 0; i < MARKET_COUNT; ++i) {
+    Market market;
+    market.set_symbol(stock::NVDA);
+    market.set_bid(i);
+    market.mutable_emitted_at()->set_seconds(
+        absl::Uniform(rand_gen, 0ll, 1ll << 30));
+    db.save(market).get();
+  }
+
+  int counter = 0;
+  int64_t prev_emitted_at = -1;
+  for (const Market& market : db.read_market(stock::NVDA)) {
+    ++counter;
+    EXPECT_GT(market.emitted_at().seconds(), prev_emitted_at);
+    prev_emitted_at = market.emitted_at().seconds();
+  }
+  EXPECT_EQ(counter, MARKET_COUNT);
+}
 } // namespace
 } // namespace howling

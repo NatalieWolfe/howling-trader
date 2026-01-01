@@ -355,6 +355,30 @@ sqlite_database::save(stock::Symbol symbol, const Candle& candle) {
   return p.get_future();
 }
 
+std::future<void> sqlite_database::save(const Market& market) {
+  std::promise<void> p;
+  try {
+    // TODO: Save insert query and re-use.
+    query q{*_db, query::single_use, R"sql(
+    INSERT OR REPLACE INTO market (
+      symbol, bid, bid_lots, ask, ask_lots, last, last_lots, emitted_at
+    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8))sql"};
+    q.bind_all(
+        static_cast<int>(market.symbol()),
+        market.bid(),
+        market.bid_lots(),
+        market.ask(),
+        market.ask_lots(),
+        market.last(),
+        market.last_lots(),
+        to_std_chrono(market.emitted_at()));
+    while (q.step());
+    p.set_value();
+  } catch (...) { p.set_exception(std::current_exception()); }
+
+  return p.get_future();
+}
+
 std::generator<Candle> sqlite_database::read_candles(stock::Symbol symbol) {
   query q{*_db, query::single_use, R"sql(
     SELECT open, close, high, low, volume, opened_at, duration_us
@@ -377,7 +401,33 @@ std::generator<Candle> sqlite_database::read_candles(stock::Symbol symbol) {
     *candle.mutable_opened_at() = to_proto(opened_at);
     *candle.mutable_duration() =
         to_proto(std::chrono::microseconds(duration_us));
-    co_yield candle;
+    co_yield std::move(candle);
+  }
+}
+
+std::generator<Market> sqlite_database::read_market(stock::Symbol symbol) {
+  query q{*_db, query::single_use, R"sql(
+    SELECT bid, bid_lots, ask, ask_lots, last, last_lots, emitted_at
+    FROM market
+    WHERE symbol = ?1
+    ORDER BY emitted_at ASC
+  )sql"};
+  q.bind_all(symbol);
+  while (q.step()) {
+    double bid, ask, last;
+    int64_t bid_lots, ask_lots, last_lots;
+    system_clock::time_point emitted_at;
+    q.read_all(bid, bid_lots, ask, ask_lots, last, last_lots, emitted_at);
+    Market market;
+    market.set_symbol(symbol);
+    market.set_bid(bid);
+    market.set_bid_lots(bid_lots);
+    market.set_ask(ask);
+    market.set_ask_lots(ask_lots);
+    market.set_last(last);
+    market.set_last_lots(last_lots);
+    *market.mutable_emitted_at() = to_proto(emitted_at);
+    co_yield std::move(market);
   }
 }
 

@@ -4,6 +4,11 @@ cc_library(
     name = "database",
     hdrs = ["database.h"],
     visibility = ["//visibility:public"],
+    deps = [
+        "//data:candle_cc_proto",
+        "//data:market_cc_proto",
+        "//data:stock_cc_proto",
+    ],
 )
 
 cc_library(

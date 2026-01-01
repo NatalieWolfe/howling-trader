@@ -7,6 +7,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//data:candle_cc_proto",
+        "//data:market_cc_proto",
         "//data:stock_cc_proto",
         "//services:database",
         "//services/db/schema",
