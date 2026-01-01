@@ -4,6 +4,7 @@
 #include <exception>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <ranges>
 #include <thread>
@@ -20,7 +21,8 @@
 #include "data/stock.pb.h"
 #include "data/utilities.h"
 #include "howling_tools/init.h"
-#include "services/db/sqlite_database.h"
+#include "services/database.h"
+#include "services/db/make_database.h"
 #include "services/market_watch.h"
 #include "time/conversion.h"
 #include "trading/executor.h"
@@ -202,14 +204,16 @@ void run() {
     }
   });
 
-  sqlite_database db;
+  std::unique_ptr<database> db = make_database();
   std::thread candle_saver([&]() {
     for (const auto& [symbol, candle] : watcher->candle_stream()) {
-      db.save(symbol, candle).get();
+      db->save(symbol, candle).get();
     }
   });
   std::thread market_saver([&]() {
-    for (const Market& market : watcher->market_stream()) db.save(market).get();
+    for (const Market& market : watcher->market_stream()) {
+      db->save(market).get();
+    }
   });
 
   std::thread watcher_thread([&]() {

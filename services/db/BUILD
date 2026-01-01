@@ -1,10 +1,20 @@
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
+    name = "make_database",
+    srcs = ["make_database.cc"],
+    hdrs = ["make_database.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":sqlite_database",
+        "//services:database",
+    ],
+)
+
+cc_library(
     name = "sqlite_database",
     srcs = ["sqlite_database.cc"],
     hdrs = ["sqlite_database.h"],
-    visibility = ["//visibility:public"],
     deps = [
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
