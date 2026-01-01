@@ -17,6 +17,18 @@ CREATE TABLE candles (
   PRIMARY KEY (symbol, opened_at ASC) ON CONFLICT REPLACE
 );
 
+CREATE TABLE market (
+  symbol      INT NOT NULL,
+  bid         DOUBLE PRECISION NOT NULL,
+  bid_lots    BIGINT NOT NULL,
+  ask         DOUBLE PRECISION NOT NULL,
+  ask_lots    BIGINT NOT NULL,
+  last        DOUBLE PRECISION NOT NULL,
+  last_lots   BIGINT NOT NULL,
+  emitted_at  TIMESTAMP NOT NULL,
+  PRIMARY KEY (symbol, emitted_at ASC) ON CONFLICT REPLACE
+);
+
 -- VERSION INSERT
 INSERT INTO howling_version (v, updater_id, update_started_at, updated_at)
 VALUES (1, NULL, NULL, CURRENT_TIMESTAMP);
