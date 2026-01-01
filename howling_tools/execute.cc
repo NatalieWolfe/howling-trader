@@ -19,6 +19,7 @@
 #include "data/stock.pb.h"
 #include "data/utilities.h"
 #include "howling_tools/init.h"
+#include "services/db/sqlite_database.h"
 #include "services/market_watch.h"
 #include "time/conversion.h"
 #include "trading/executor.h"
@@ -192,6 +193,13 @@ void run() {
     for (const Market& market : watcher->market_stream()) {
       printer.print(market);
       e.update_market(std::move(market));
+    }
+  });
+
+  sqlite_database db;
+  std::thread candle_saver([&]() {
+    for (const auto& [symbol, candle] : watcher->candle_stream()) {
+      db.save(symbol, candle).get();
     }
   });
 

@@ -36,6 +36,7 @@ cc_binary(
         "//data:stock_cc_proto",
         "//data:utilities",
         "//services:market_watch",
+        "//services/db:sqlite_database",
         "//time:conversion",
         "//trading:executor",
         "//trading:trading_state",
