@@ -3,6 +3,7 @@
 #include <charconv>
 #include <chrono>
 #include <iostream>
+#include <sstream>
 #include <string_view>
 #include <system_error>
 
@@ -10,6 +11,7 @@ namespace howling {
 namespace {
 
 using ::std::chrono::milliseconds;
+using ::std::chrono::system_clock;
 
 constexpr std::errc NO_ERROR{};
 
@@ -20,6 +22,13 @@ bool from_chars(std::string_view str, T& val) {
 }
 
 } // namespace
+
+system_clock::time_point parse_timepoint(std::string_view timepoint_str) {
+  std::stringstream stream{std::string{timepoint_str}};
+  system_clock::time_point tp;
+  std::chrono::from_stream(stream, "%F %T", tp);
+  return tp;
+}
 
 milliseconds parse_duration(std::string_view duration_str) {
   milliseconds duration{0};

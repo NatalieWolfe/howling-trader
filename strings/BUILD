@@ -4,6 +4,7 @@ package(default_visibility = ["//:__subpackages__"])
 
 cc_library(
     name = "format",
+    srcs = ["format.cc"],
     hdrs = ["format.h"],
 )
 
