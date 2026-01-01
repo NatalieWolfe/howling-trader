@@ -202,6 +202,9 @@ void run() {
       db.save(symbol, candle).get();
     }
   });
+  std::thread market_saver([&]() {
+    for (const Market& market : watcher->market_stream()) db.save(market).get();
+  });
 
   std::thread watcher_thread([&]() { watcher->start(state.available_stocks); });
 
