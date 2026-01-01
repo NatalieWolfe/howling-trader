@@ -1,6 +1,12 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
+    name = "database",
+    hdrs = ["database.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "market_watch",
     srcs = ["market_watch.cc"],
     hdrs = ["market_watch.h"],
