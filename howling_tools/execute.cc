@@ -4,7 +4,6 @@
 #include <exception>
 #include <iostream>
 #include <limits>
-#include <map>
 #include <memory>
 #include <optional>
 #include <thread>
@@ -171,12 +170,9 @@ void run() {
   }
   std::unordered_set<stock::Symbol> trading_stocks{
       symbols.begin(), symbols.end()};
+  stock::Symbol followed_stock = symbols.front();
 
-  std::map<stock::Symbol, execution_printer> printers;
-  for (stock::Symbol symbol : symbols) {
-    printers.emplace(symbol, execution_printer{});
-  }
-
+  execution_printer printer;
   trading_state state = load_trading_state(std::move(symbols));
   metrics m{.name = "Summary", .initial_funds = state.initial_funds};
   executor e{state};
@@ -202,14 +198,14 @@ void run() {
         trade = e.sell(symbol, m);
       }
 
-      printers.at(symbol).print(candle, d, trade);
+      if (symbol == followed_stock) printer.print(candle, d, trade);
     }
   });
 
   std::thread market_streamer([&]() {
     for (const Market& market : watcher->market_stream()) {
       if (!trading_stocks.contains(market.symbol())) continue;
-      printers.at(market.symbol()).print(market);
+      if (market.symbol() == followed_stock) printer.print(market);
       e.update_market(std::move(market));
     }
   });
