@@ -14,6 +14,8 @@ cc_binary(
         "//data:load_analyzer",
         "//data:stock_cc_proto",
         "//data:utilities",
+        "//services:database",
+        "//services/db:make_database",
         "//time:conversion",
         "//trading:metrics",
         "//trading:trading_state",

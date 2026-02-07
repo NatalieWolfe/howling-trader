@@ -1,10 +1,13 @@
 #include <chrono>
 #include <exception>
 #include <filesystem>
+#include <format>
+#include <generator>
 #include <iostream>
 #include <ranges>
 #include <sstream>
 #include <string>
+#include <utility>
 
 #include "absl/flags/flag.h"
 #include "cli/printing.h"
@@ -16,6 +19,8 @@
 #include "data/utilities.h"
 #include "howling_tools/init.h"
 #include "howling_tools/runfiles.h"
+#include "services/database.h"
+#include "services/db/make_database.h"
 #include "time/conversion.h"
 #include "trading/metrics.h"
 #include "trading/trading_state.h"
@@ -31,6 +36,7 @@ ABSL_FLAG(
     initial_funds,
     200'000,
     "Available funds at begining of evaluation.");
+ABSL_FLAG(bool, use_database, false, "Use database for evaluation.");
 
 namespace howling {
 namespace {
@@ -43,7 +49,7 @@ using ::std::chrono::year_month_day;
 year_month_day parse_date(std::string date) {
   year_month_day ymd;
   std::stringstream stream{std::move(date)};
-  std::chrono::from_stream(stream, "%Y-%m-%d", ymd);
+  std::chrono::from_stream(stream, "%F", ymd);
   return ymd;
 }
 
@@ -53,6 +59,51 @@ year_month_day get_date(system_clock::time_point time) {
 
 std::string print_date(year_month_day ymd) {
   return std::format("{:%B %Y}", ymd);
+}
+
+struct day_data {
+  std::string name;
+  vector<Candle> candles;
+};
+
+std::generator<day_data> get_days(stock::Symbol symbol) {
+  if (absl::GetFlag(FLAGS_use_database)) {
+    auto db = make_database();
+    vector<Candle> day_candles;
+    std::string day_name;
+    for (const Candle& candle : db->read_candles(symbol)) {
+      std::string current_day = std::format(
+          "{:%F}",
+          std::chrono::floor<std::chrono::days>(
+              to_std_chrono(candle.opened_at())));
+      if (day_candles.empty()) {
+        day_name = current_day;
+      } else if (current_day != day_name) {
+        co_yield {day_name, std::move(day_candles)};
+        day_candles.clear();
+        day_name = current_day;
+      }
+      day_candles.push_back(candle);
+    }
+    if (!day_candles.empty()) co_yield {day_name, std::move(day_candles)};
+  } else {
+    fs::path data_directory = runfile(
+        get_history_file_path(symbol, /*date=*/"").parent_path().string());
+    auto files = fs::directory_iterator(data_directory) |
+        std::ranges::to<vector<fs::directory_entry>>();
+    std::ranges::sort(
+        files, [](const fs::directory_entry& a, const fs::directory_entry& b) {
+          return std::ranges::lexicographical_compare(
+              a.path().filename(), b.path().filename());
+        });
+    for (const fs::directory_entry& file : files) {
+      stock::History history = read_history(file.path());
+      vector<Candle> day_candles;
+      day_candles.reserve(history.candles_size());
+      for (const Candle& c : history.candles()) day_candles.push_back(c);
+      co_yield {file.path().stem().string(), std::move(day_candles)};
+    }
+  }
 }
 
 void run() {
@@ -65,28 +116,25 @@ void run() {
   }
   auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));
 
-  fs::path data_directory = runfile(
-      get_history_file_path(symbol, /*date=*/"").parent_path().string());
-  auto files = fs::directory_iterator(data_directory) |
-      std::ranges::to<vector<fs::directory_entry>>();
-  std::ranges::sort(
-      files, [](const fs::directory_entry& a, const fs::directory_entry& b) {
-        return std::ranges::lexicographical_compare(
-            a.path().filename(), b.path().filename());
-      });
-
   trading_state state{
       .available_stocks = vector<stock::Symbol>{{symbol}},
       .initial_funds = absl::GetFlag(FLAGS_initial_funds),
       .available_funds = absl::GetFlag(FLAGS_initial_funds)};
 
-  year_month_day previous_date = parse_date(files.front().path().stem());
-  std::vector<metrics> months{
-      {.name = print_date(previous_date),
-       .initial_funds = state.initial_funds}};
-  for (const fs::directory_entry& file : files) {
-    stock::History history = read_history(file.path());
-    state.time_now = to_std_chrono(history.candles(0).opened_at());
+  vector<metrics> months;
+  year_month_day previous_date;
+  bool first_day = true;
+
+  for (day_data day : get_days(symbol)) {
+    if (first_day) {
+      previous_date = parse_date(day.name);
+      months.push_back(
+          {.name = print_date(previous_date),
+           .initial_funds = state.initial_funds});
+      first_day = false;
+    }
+
+    state.time_now = to_std_chrono(day.candles.front().opened_at());
     year_month_day current_date = get_date(state.time_now);
     if (current_date.month() != previous_date.month()) {
       months.back().assets_value = state.total_positions_value();
@@ -95,11 +143,10 @@ void run() {
            .initial_funds = state.available_funds});
       previous_date = current_date;
     }
-    metrics day{
-        .name = file.path().stem().string(),
-        .initial_funds = state.available_funds};
+    metrics day_metrics{
+        .name = day.name, .initial_funds = state.available_funds};
 
-    for (const Candle& candle : history.candles()) {
+    for (const Candle& candle : day.candles) {
       state.time_now =
           to_std_chrono(candle.opened_at()) + to_std_chrono(candle.duration());
 
@@ -111,18 +158,21 @@ void run() {
             {.symbol = symbol, .price = candle.close(), .quantity = 1});
       } else if (d.act == action::SELL && !state.positions[symbol].empty()) {
         for (const trading_state::position& p : state.positions[symbol]) {
-          ++day.sales;
-          if (p.price < candle.close()) ++day.profitable_sales;
+          ++day_metrics.sales;
+          if (p.price < candle.close()) ++day_metrics.profitable_sales;
           state.available_funds += candle.close() * p.quantity;
         }
         state.positions[symbol].clear();
       }
     }
-    day.available_funds = state.available_funds;
-    day.assets_value = state.total_positions_value();
-    std::cout << print_metrics(day) << "\n";
-    add_metrics(months.back(), day);
+    day_metrics.available_funds = state.available_funds;
+    day_metrics.assets_value = state.total_positions_value();
+    std::cout << print_metrics(day_metrics) << "\n";
+    add_metrics(months.back(), day_metrics);
   }
+
+  if (months.empty()) return;
+
   metrics totals{.name = "Total", .initial_funds = state.initial_funds};
   std::cout << "\n";
   for (const metrics& m : months) {
