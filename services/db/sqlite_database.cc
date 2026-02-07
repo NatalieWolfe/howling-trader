@@ -252,7 +252,7 @@ void execute(sqlite3& db, std::string_view query_str) {
 
 template <typename... Outputs>
 void execute_read(query& q, Outputs&&... outs) {
-  if (!q.step()) { throw std::runtime_error("No row returned from query."); }
+  if (!q.step()) throw std::runtime_error("No row returned from query.");
   q.read_all(std::forward<Outputs>(outs)...);
   if (q.step()) {
     throw std::runtime_error(

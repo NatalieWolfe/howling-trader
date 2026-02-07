@@ -14,7 +14,7 @@ CREATE TABLE candles (
   volume      BIGINT NOT NULL,
   opened_at   TIMESTAMP NOT NULL,
   duration_us BIGINT NOT NULL,
-  PRIMARY KEY (symbol, opened_at ASC) ON CONFLICT REPLACE
+  PRIMARY KEY (symbol, opened_at)
 );
 
 CREATE TABLE market (
@@ -26,7 +26,7 @@ CREATE TABLE market (
   last        DOUBLE PRECISION NOT NULL,
   last_lots   BIGINT NOT NULL,
   emitted_at  TIMESTAMP NOT NULL,
-  PRIMARY KEY (symbol, emitted_at ASC) ON CONFLICT REPLACE
+  PRIMARY KEY (symbol, emitted_at)
 );
 
 -- VERSION INSERT
