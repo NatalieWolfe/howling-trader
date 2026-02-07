@@ -7,9 +7,8 @@
 #include "absl/flags/flag.h"
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
+#include "environment/configuration.h"
 #include "trading/metrics.h"
-
-ABSL_FLAG(bool, use_real_money, false, "Enables real money trading.");
 ABSL_FLAG(
     double,
     max_fund_use,
@@ -27,12 +26,14 @@ namespace {
 void check_real_money_flag() {
   static int x = ([]() {
     if (absl::GetFlag(FLAGS_use_real_money)) {
-      std::cout << "Confirm use of real money for trading? [y/N] ";
-      std::string confirmation;
-      std::cin >> confirmation;
-      if (confirmation != "y" && confirmation != "Y") {
-        std::cout << "Real money not confirmed." << std::endl;
-        std::exit(1);
+      if (!absl::GetFlag(FLAGS_headless)) {
+        std::cout << "Confirm use of real money for trading? [y/N] ";
+        std::string confirmation;
+        std::cin >> confirmation;
+        if (confirmation != "y" && confirmation != "Y") {
+          std::cout << "Real money not confirmed." << std::endl;
+          std::exit(1);
+        }
       }
       std::cout << "WARNING: USING REAL MONEY" << std::endl;
       std::cerr << "j/k not implemented yet lolol" << std::endl;

@@ -11,6 +11,7 @@ cc_library(
         "//api:schwab",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
+        "//environment:configuration",
         "//net:connect",
     ],
 )

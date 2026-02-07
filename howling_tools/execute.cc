@@ -19,6 +19,7 @@
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "data/utilities.h"
+#include "environment/configuration.h"
 #include "howling_tools/init.h"
 #include "services/database.h"
 #include "services/db/make_database.h"
@@ -178,6 +179,8 @@ void run() {
   executor e{state};
 
   auto watcher = std::make_unique<market_watch>();
+  std::unique_ptr<database> db = make_database();
+
   std::thread candle_streamer([&]() {
     auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));
     for (const auto& [symbol, candle] : watcher->candle_stream()) {
@@ -198,19 +201,22 @@ void run() {
         trade = e.sell(symbol, m);
       }
 
-      if (symbol == followed_stock) printer.print(candle, d, trade);
+      if (symbol == followed_stock && !absl::GetFlag(FLAGS_headless)) {
+        printer.print(candle, d, trade);
+      }
     }
   });
 
   std::thread market_streamer([&]() {
     for (const Market& market : watcher->market_stream()) {
       if (!trading_stocks.contains(market.symbol())) continue;
-      if (market.symbol() == followed_stock) printer.print(market);
+      if (market.symbol() == followed_stock && !absl::GetFlag(FLAGS_headless)) {
+        printer.print(market);
+      }
       e.update_market(std::move(market));
     }
   });
 
-  std::unique_ptr<database> db = make_database();
   std::thread candle_saver([&]() {
     for (const auto& [symbol, candle] : watcher->candle_stream()) {
       db->save(symbol, candle).get();

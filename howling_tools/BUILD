@@ -37,6 +37,7 @@ cc_binary(
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
         "//data:utilities",
+        "//environment:configuration",
         "//services:database",
         "//services:market_watch",
         "//services/db:make_database",
