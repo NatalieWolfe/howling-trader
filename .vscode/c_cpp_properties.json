@@ -7,6 +7,7 @@
                 "${workspaceFolder}/bazel-bin",
                 "${workspaceFolder}/bazel-bin/**",
                 "${workspaceFolder}/bazel-howling-trader/external/sqlite3+",
+                "${workspaceFolder}/bazel-howling-trader/external/postgres+/src/interfaces/libpq",
                 "${workspaceFolder}/bazel-howling-trader/external/jsoncpp+/include",
                 "${workspaceFolder}/bazel-howling-trader/external/googletest+/*/include",
                 "${workspaceFolder}/bazel-howling-trader/external/*/include",

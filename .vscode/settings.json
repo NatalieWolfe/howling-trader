@@ -3,9 +3,13 @@
     "absl",
     "aggr",
     "Bollinger",
+    "htobe",
     "jsoncpp",
     "MACD",
-    "runfiles"
+    "pgconn",
+    "PGRES",
+    "runfiles",
+    "testonly"
   ],
   "files.associations": {
     "string_view": "cpp",
