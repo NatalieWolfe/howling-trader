@@ -1,3 +1,7 @@
 
 build --host_cxxopt='-std=c++23' --color=yes --cxxopt="-std=c++23" --@boost.asio//:ssl=boringssl
 test --test_output=errors --compilation_mode=dbg
+
+# IWYU configuration
+build:iwyu --aspects=@bazel_iwyu//bazel/iwyu:iwyu.bzl%iwyu_aspect
+build:iwyu --output_groups=report
