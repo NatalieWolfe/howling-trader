@@ -22,7 +22,7 @@
 #include "strings/parse.h"
 #include "time/conversion.h"
 
-ABSL_FLAG(std::string, sqlite_db_path, "", "Path to the SQLite database file.");
+ABSL_FLAG(std::string, sqlite_db_path, "howling.db", "Path to the SQLite database file.");
 
 namespace howling {
 namespace {

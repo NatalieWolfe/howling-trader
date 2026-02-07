@@ -7,8 +7,10 @@ cc_library(
     hdrs = ["make_database.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":postgres_database",
         ":sqlite_database",
         "//services:database",
+        "@abseil-cpp//absl/flags:flag",
     ],
 )
 
