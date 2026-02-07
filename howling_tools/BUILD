@@ -72,9 +72,11 @@ cc_library(
     hdrs = ["init.h"],
     deps = [
         ":runfiles_init",
+        "//logs:json_sink",
         "//logs:stdout_sink",
         "@abseil-cpp//absl/flags:parse",
         "@abseil-cpp//absl/log:flags",
+        "@abseil-cpp//absl/log:globals",
         "@abseil-cpp//absl/log:initialize",
     ],
 )
