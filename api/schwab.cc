@@ -12,9 +12,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include "absl/log/log_entry.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
-#include "api/json.h"
 #include "api/schwab/connect.h"
 #include "api/schwab/oauth.h"
 #include "boost/asio.hpp"
@@ -29,6 +29,7 @@
 #include "google/protobuf/util/time_util.h"
 #include "net/connect.h"
 #include "net/url.h"
+#include "strings/json.h"
 #include "strings/parse.h"
 #include "time/conversion.h"
 #include "json/json.h"

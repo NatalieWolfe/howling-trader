@@ -9,6 +9,24 @@ cc_library(
 )
 
 cc_library(
+    name = "json",
+    srcs = ["json.cc"],
+    hdrs = ["json.h"],
+    visibility = ["//visibility:public"],
+    deps = ["@jsoncpp"],
+)
+
+cc_test(
+    name = "json_test",
+    srcs = ["json_test.cc"],
+    deps = [
+        ":json",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+    ],
+)
+
+cc_library(
     name = "parse",
     srcs = ["parse.cc"],
     hdrs = ["parse.h"],

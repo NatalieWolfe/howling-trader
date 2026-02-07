@@ -18,9 +18,9 @@ cc_library(
     hdrs = ["oauth.h"],
     deps = [
         ":connect",
-        "//api:json",
         "//howling_tools:runfiles",
         "//net:connect",
+        "//strings:json",
         "//strings:trim",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",

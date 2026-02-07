@@ -13,7 +13,6 @@
 #include "absl/log/log.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
-#include "api/json.h"
 #include "api/schwab/connect.h"
 #include "boost/asio.hpp"
 #include "boost/asio/ssl.hpp"
@@ -21,6 +20,7 @@
 #include "boost/url.hpp"
 #include "howling_tools/runfiles.h"
 #include "net/connect.h"
+#include "strings/json.h"
 #include "strings/trim.h"
 #include "json/json.h"
 
