@@ -389,7 +389,7 @@ std::string_view get_bearer_token(
   // Try to refresh the bearer token using a refresh token saved to disk. If
   // refresh fails, runs a new OAuth sequence.
   std::optional<Json::Value> root = refresh_token(conn);
-  if (!root) { root = execute_oauth(conn); }
+  if (!root) root = execute_oauth(conn);
 
   // Cache the retrieved token with its expiration. We will refresh the token
   // early to avoid any clock skew.
