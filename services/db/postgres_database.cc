@@ -2,7 +2,6 @@
 
 #include <array>
 #include <bit>
-#include <cctype>
 #include <chrono>
 #include <endian.h>
 #include <exception>
@@ -14,19 +13,14 @@
 #include <source_location>
 #include <string>
 #include <string_view>
-#include <tuple>
 #include <utility>
 #include <vector>
 
-#include "absl/flags/flag.h"
 #include "absl/log/log.h"
-#include "absl/strings/str_cat.h"
 #include "data/candle.pb.h"
 #include "data/stock.pb.h"
 #include "libpq/libpq-fe.h"
 #include "services/db/schema/schema.h"
-#include "strings/format.h"
-#include "strings/parse.h"
 #include "time/conversion.h"
 
 namespace howling {

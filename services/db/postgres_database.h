@@ -2,10 +2,8 @@
 
 #include <future>
 #include <generator>
-#include <map>
 #include <memory>
-#include <source_location>
-#include <string>
+#include <string_view>
 
 #include "data/candle.pb.h"
 #include "data/market.pb.h"

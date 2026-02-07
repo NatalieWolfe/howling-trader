@@ -22,12 +22,8 @@ cc_library(
         "//data:stock_cc_proto",
         "//services:database",
         "//services/db/schema",
-        "//strings:format",
-        "//strings:parse",
         "//time:conversion",
-        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
         "@postgres//:libpq",
     ],
 )
