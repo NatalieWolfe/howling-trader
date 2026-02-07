@@ -4,9 +4,9 @@
 #include <exception>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <memory>
 #include <optional>
-#include <ranges>
 #include <thread>
 #include <unordered_set>
 
@@ -28,7 +28,11 @@
 #include "trading/executor.h"
 #include "trading/trading_state.h"
 
-ABSL_FLAG(std::string, stock, "", "Stock symbol to evaluate against.");
+ABSL_FLAG(
+    std::vector<howling::stock::Symbol>,
+    stocks,
+    {},
+    "Comma-separated list of stock symbols to evaluate against.");
 ABSL_FLAG(std::string, analyzer, "howling", "Name of an analyzer to evaluate.");
 ABSL_FLAG(std::string, account, "", "Name of account to use for trading.");
 
@@ -161,20 +165,25 @@ void run() {
   if (absl::GetFlag(FLAGS_analyzer).empty()) {
     throw std::runtime_error("Must specify an analyzer.");
   }
-  vector<stock::Symbol> symbols;
-  symbols.push_back(get_stock_symbol(absl::GetFlag(FLAGS_stock)));
-  auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));
+  vector<stock::Symbol> symbols = absl::GetFlag(FLAGS_stocks);
+  if (symbols.empty()) {
+    throw std::runtime_error("Must specify at least one stock in --stocks.");
+  }
+  std::unordered_set<stock::Symbol> trading_stocks{
+      symbols.begin(), symbols.end()};
 
-  execution_printer printer;
+  std::map<stock::Symbol, execution_printer> printers;
+  for (stock::Symbol symbol : symbols) {
+    printers.emplace(symbol, execution_printer{});
+  }
+
   trading_state state = load_trading_state(std::move(symbols));
   metrics m{.name = "Summary", .initial_funds = state.initial_funds};
   executor e{state};
 
   auto watcher = std::make_unique<market_watch>();
   std::thread candle_streamer([&]() {
-    std::unordered_set<stock::Symbol> trading_stocks{
-        symbols.begin(), symbols.end()};
-
+    auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));
     for (const auto& [symbol, candle] : watcher->candle_stream()) {
       if (!trading_stocks.contains(symbol)) continue;
 
@@ -193,13 +202,14 @@ void run() {
         trade = e.sell(symbol, m);
       }
 
-      printer.print(candle, d, trade);
+      printers.at(symbol).print(candle, d, trade);
     }
   });
 
   std::thread market_streamer([&]() {
     for (const Market& market : watcher->market_stream()) {
-      printer.print(market);
+      if (!trading_stocks.contains(market.symbol())) continue;
+      printers.at(market.symbol()).print(market);
       e.update_market(std::move(market));
     }
   });

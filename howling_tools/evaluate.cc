@@ -5,7 +5,6 @@
 #include <ranges>
 #include <sstream>
 #include <string>
-#include <string_view>
 
 #include "absl/flags/flag.h"
 #include "cli/printing.h"
@@ -21,7 +20,11 @@
 #include "trading/metrics.h"
 #include "trading/trading_state.h"
 
-ABSL_FLAG(std::string, stock, "", "Stock symbol to evaluate against.");
+ABSL_FLAG(
+    howling::stock::Symbol,
+    stock,
+    howling::stock::SYMBOL_UNSPECIFIED,
+    "Stock symbol to evaluate against.");
 ABSL_FLAG(std::string, analyzer, "", "Name of an analyzer to evaluate.");
 ABSL_FLAG(
     double,
@@ -56,7 +59,10 @@ void run() {
   if (absl::GetFlag(FLAGS_analyzer).empty()) {
     throw std::runtime_error("Must specify an analyzer.");
   }
-  stock::Symbol symbol = get_stock_symbol(absl::GetFlag(FLAGS_stock));
+  stock::Symbol symbol = absl::GetFlag(FLAGS_stock);
+  if (symbol == stock::SYMBOL_UNSPECIFIED) {
+    throw std::runtime_error("Must specify a stock symbol.");
+  }
   auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));
 
   fs::path data_directory = runfile(

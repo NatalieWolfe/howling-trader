@@ -1,9 +1,7 @@
-#include <cctype>
 #include <chrono>
 #include <exception>
 #include <iostream>
 #include <optional>
-#include <ranges>
 #include <stdexcept>
 #include <string>
 
@@ -14,12 +12,16 @@
 #include "api/schwab.h"
 #include "containers/vector.h"
 #include "data/stock.pb.h"
+#include "data/utilities.h"
 #include "google/protobuf/text_format.h"
 #include "howling_tools/init.h"
-#include "strings/format.h"
 #include "time/conversion.h"
 
-ABSL_FLAG(std::string, stock, "", "Stock symbol to fetch.");
+ABSL_FLAG(
+    howling::stock::Symbol,
+    stock,
+    howling::stock::SYMBOL_UNSPECIFIED,
+    "Stock symbol to fetch.");
 ABSL_FLAG(
     absl::Duration,
     duration,
@@ -53,22 +55,11 @@ system_clock::time_point get_started_at() {
   return to_std_chrono(absl::GetFlag(FLAGS_start));
 }
 
-stock::Symbol get_stock_symbol() {
-  std::string stock_name = absl::GetFlag(FLAGS_stock) |
-      std::views::transform(to_upper) | std::ranges::to<std::string>();
-  if (stock_name.empty()) {
-    throw std::runtime_error("Must specify --stock flag.");
-  }
-  stock::Symbol symbol;
-  if (!stock::Symbol_Parse(stock_name, &symbol)) {
-    throw std::runtime_error(
-        absl::StrCat("Unknown stock symbol: ", stock_name, "."));
-  }
-  return symbol;
-}
-
 void run_alpaca() {
-  stock::Symbol symbol = get_stock_symbol();
+  howling::stock::Symbol symbol = absl::GetFlag(FLAGS_stock);
+  if (symbol == stock::SYMBOL_UNSPECIFIED) {
+    throw std::runtime_error("Must specify a stock symbol.");
+  }
   system_clock::time_point started_at = get_started_at();
   std::optional<system_clock::time_point> ended_at;
   if (has_started_at()) {
@@ -94,7 +85,10 @@ void run_alpaca() {
 }
 
 void run_schwab() {
-  stock::Symbol symbol = get_stock_symbol();
+  howling::stock::Symbol symbol = absl::GetFlag(FLAGS_stock);
+  if (symbol == stock::SYMBOL_UNSPECIFIED) {
+    throw std::runtime_error("Must specify a stock symbol.");
+  }
   system_clock::time_point started_at = get_started_at();
   std::optional<system_clock::time_point> ended_at;
   if (has_started_at()) {

@@ -18,7 +18,11 @@
 #include "trading/metrics.h"
 #include "trading/trading_state.h"
 
-ABSL_FLAG(std::string, stock, "", "Stock symbol to visualize.");
+ABSL_FLAG(
+    howling::stock::Symbol,
+    stock,
+    howling::stock::SYMBOL_UNSPECIFIED,
+    "Stock symbol to visualize.");
 ABSL_FLAG(std::string, date, "", "Day to visualize.");
 ABSL_FLAG(std::string, analyzer, "", "Name of an analyzer to run.");
 ABSL_FLAG(
@@ -30,11 +34,13 @@ ABSL_FLAG(
 namespace howling {
 namespace {
 
-using ::std::chrono::hh_mm_ss;
 using ::std::chrono::system_clock;
 
 void run() {
-  stock::Symbol symbol = get_stock_symbol(absl::GetFlag(FLAGS_stock));
+  howling::stock::Symbol symbol = absl::GetFlag(FLAGS_stock);
+  if (symbol == stock::SYMBOL_UNSPECIFIED) {
+    throw std::runtime_error("Must specify a stock symbol.");
+  }
   stock::History history = read_history(runfile(
       get_history_file_path(symbol, absl::GetFlag(FLAGS_date)).string()));
   auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer), history);

@@ -1,18 +1,52 @@
 #include "data/utilities.h"
 
-#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <generator>
 #include <ranges>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 
 #include "absl/strings/str_cat.h"
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
 #include "data/stock.pb.h"
 #include "google/protobuf/text_format.h"
 #include "strings/format.h"
+
+namespace howling::stock {
+
+bool AbslParseFlag(absl::string_view text, Symbol* symbol, std::string* error) {
+  std::string stock_name =
+      text | std::views::transform(to_upper) | std::ranges::to<std::string>();
+  if (Symbol_Parse(stock_name, symbol)) return true;
+  *error = absl::StrCat("Unknown stock symbol: ", text);
+  return false;
+}
+
+std::string AbslUnparseFlag(Symbol symbol) {
+  return Symbol_Name(symbol);
+}
+
+bool AbslParseFlag(
+    absl::string_view text, std::vector<Symbol>* symbols, std::string* error) {
+  for (absl::string_view s : absl::StrSplit(text, ',', absl::SkipEmpty())) {
+    Symbol symbol;
+    if (!AbslParseFlag(s, &symbol, error)) return false;
+    symbols->push_back(symbol);
+  }
+  return true;
+}
+
+std::string AbslUnparseFlag(const std::vector<Symbol>& symbols) {
+  std::vector<std::string> parts;
+  for (Symbol s : symbols) parts.push_back(Symbol_Name(s));
+  return absl::StrJoin(parts, ",");
+}
+
+} // namespace howling::stock
 
 namespace howling {
 namespace {
@@ -46,20 +80,6 @@ stock::History read_history(const fs::path& path) {
         absl::StrCat("Failed to parse contents of ", path.string()));
   }
   return history;
-}
-
-stock::Symbol get_stock_symbol(std::string_view name) {
-  std::string stock_name =
-      name | std::views::transform(to_upper) | std::ranges::to<std::string>();
-  if (stock_name.empty()) {
-    throw std::runtime_error("Stock name not specified.");
-  }
-  stock::Symbol symbol;
-  if (!stock::Symbol_Parse(stock_name, &symbol)) {
-    throw std::runtime_error(
-        absl::StrCat("Unknown stock symbol: ", stock_name, "."));
-  }
-  return symbol;
 }
 
 std::generator<stock::Symbol> list_stock_symbols() {
