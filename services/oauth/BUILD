@@ -5,7 +5,10 @@ cc_library(
     srcs = ["auth_service.cc"],
     hdrs = ["auth_service.h"],
     deps = [
+        "//api/schwab:configuration",
+        "//api/schwab:oauth",
         "//services/oauth/proto:auth_service_cc_grpc",
+        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
     ],
 )

@@ -15,7 +15,7 @@
 #include "absl/strings/str_cat.h"
 #include "api/schwab/configuration.h"
 #include "api/schwab/connect.h"
-#include "api/schwab/oauth_logic.h"
+#include "api/schwab/oauth.h"
 #include "boost/asio.hpp"
 #include "boost/asio/ssl.hpp"
 #include "boost/beast.hpp"

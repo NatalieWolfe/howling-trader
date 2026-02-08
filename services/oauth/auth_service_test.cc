@@ -2,6 +2,9 @@
 
 #include <memory>
 
+#include <grpcpp/support/channel_arguments.h>
+#include <grpcpp/support/status.h>
+
 #include "google/protobuf/empty.pb.h"
 #include "grpcpp/grpcpp.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"

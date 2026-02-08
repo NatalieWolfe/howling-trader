@@ -13,11 +13,23 @@ cc_library(
 )
 
 cc_library(
+    name = "configuration",
+    srcs = ["configuration.cc"],
+    hdrs = ["configuration.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@abseil-cpp//absl/flags:flag",
+    ],
+)
+
+cc_library(
     name = "oauth_internal",
     srcs = ["oauth_internal.cc"],
     hdrs = ["oauth_internal.h"],
     deps = [
+        ":configuration",
         ":connect",
+        ":oauth",
         "//environment:runfiles",
         "//net:connect",
         "//strings:json",
@@ -28,5 +40,16 @@ cc_library(
         "@boost.beast",
         "@boost.url",
         "@jsoncpp",
+    ],
+)
+
+cc_library(
+    name = "oauth",
+    srcs = ["oauth.cc"],
+    hdrs = ["oauth.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":connect",
+        "@boost.url",
     ],
 )
