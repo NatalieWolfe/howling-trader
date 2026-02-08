@@ -65,19 +65,30 @@ private:
     _response.version(_request.version());
     _response.keep_alive(false);
 
-    // TODO: Gracefully handle thrown exceptions here. If the response is
-    // unfinished (respones code unset or body empty) send a 500 internal.
-    switch (_request.method()) {
-      case http::verb::get:
-        _process_get();
-        break;
+    try {
+      switch (_request.method()) {
+        case http::verb::get:
+          _process_get();
+          break;
 
-      default:
-        _response.result(http::status::bad_request);
-        _response.set(http::field::content_type, "text/plain");
-        beast::ostream(_response.body())
-            << "Invalid request method '" << _request.method_string() << "'";
-        break;
+        default:
+          _response.result(http::status::bad_request);
+          _response.set(http::field::content_type, "text/plain");
+          beast::ostream(_response.body())
+              << "Invalid request method '" << _request.method_string() << "'";
+          break;
+      }
+    } catch (const std::exception& e) {
+      LOG(ERROR) << "Exception in _process_request: " << e.what();
+      _set_internal_error(e.what());
+    } catch (...) {
+      LOG(ERROR) << "Unknown exception in _process_request";
+      _set_internal_error("unknown exception");
+    }
+
+    if (_response.result() == http::status::unknown) {
+      LOG(ERROR) << "No response set.";
+      _set_internal_error("unfinished response");
     }
 
     _write_response();
@@ -126,6 +137,18 @@ private:
     _deadline.async_wait([self](beast::error_code ec) {
       if (!ec) self->_stream.socket().close(ec);
     });
+  }
+
+  void _set_internal_error(std::string_view message = "") {
+    _response.result(http::status::internal_server_error);
+    _response.body().clear();
+    auto&& stream = beast::ostream(_response.body());
+    stream << "Internal server error";
+    if (!message.empty()) {
+      stream << ": " << message << "\n";
+    } else {
+      stream << ".\n";
+    }
   }
 
   beast::tcp_stream _stream;
