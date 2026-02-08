@@ -20,7 +20,7 @@
 #include "data/stock.pb.h"
 #include "data/utilities.h"
 #include "environment/configuration.h"
-#include "howling_tools/init.h"
+#include "environment/init.h"
 #include "services/database.h"
 #include "services/db/make_database.h"
 #include "services/market_watch.h"

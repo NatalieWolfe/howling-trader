@@ -18,7 +18,7 @@ cc_library(
     hdrs = ["oauth.h"],
     deps = [
         ":connect",
-        "//howling_tools:runfiles",
+        "//environment:runfiles",
         "//net:connect",
         "//strings:json",
         "//strings:trim",

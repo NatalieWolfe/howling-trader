@@ -1,4 +1,4 @@
-#include "howling_tools/init.h"
+#include "environment/init.h"
 
 #include <string>
 
@@ -8,7 +8,7 @@
 #include "absl/log/globals.h"
 #include "absl/log/initialize.h"
 #include "absl/log/log_sink_registry.h"
-#include "howling_tools/runfiles_init.h"
+#include "environment/runfiles_init.h"
 #include "logs/json_sink.h"
 #include "logs/stdout_sink.h"
 

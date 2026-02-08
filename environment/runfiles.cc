@@ -1,4 +1,4 @@
-#include "howling_tools/runfiles.h"
+#include "environment/runfiles.h"
 
 #include <string>
 #include <string_view>
@@ -27,7 +27,9 @@ Runfiles& runfiles(std::string_view argv0 = "") {
 
 } // namespace
 
-void initialize_runfiles(std::string_view argv0) { runfiles(argv0); }
+void initialize_runfiles(std::string_view argv0) {
+  runfiles(argv0);
+}
 
 std::string runfile(std::string_view path) {
   return runfiles().Rlocation(std::string{path});

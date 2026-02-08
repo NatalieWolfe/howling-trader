@@ -10,7 +10,7 @@
 #include <string>
 #include <string_view>
 
-#include "howling_tools/runfiles.h"
+#include "environment/runfiles.h"
 #include "strings/parse.h"
 #include "strings/trim.h"
 

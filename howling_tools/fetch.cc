@@ -13,8 +13,8 @@
 #include "containers/vector.h"
 #include "data/stock.pb.h"
 #include "data/utilities.h"
+#include "environment/init.h"
 #include "google/protobuf/text_format.h"
-#include "howling_tools/init.h"
 #include "time/conversion.h"
 
 ABSL_FLAG(

@@ -23,7 +23,7 @@ cc_library(
     ],
     visibility = ["//services/db:__subpackages__"],
     deps = [
-        "//howling_tools:runfiles",
+        "//environment:runfiles",
         "//strings:parse",
         "//strings:trim",
     ],
