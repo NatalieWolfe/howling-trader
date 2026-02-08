@@ -1,25 +1,43 @@
 #include <memory>
 #include <string>
+#include <string_view>
+#include <thread>
 
 #include "absl/log/log.h"
 #include "environment/init.h"
 #include "grpcpp/grpcpp.h"
 #include "grpcpp/security/server_credentials.h"
 #include "services/oauth/auth_service.h"
+#include "services/oauth/oauth_http_service.h"
 
 namespace howling {
 namespace {
 
-void run_server() {
-  std::string server_address("0.0.0.0:50051");
-  auth_service service;
+// TODO: Take the port from a flag.
+constexpr std::string_view GRPC_ADDRESS = "0.0.0.0:50051";
+constexpr unsigned short HTTP_PORT = 8080;
 
+void run_server() {
+  boost::asio::io_context ioc{/*concurrency_hint=*/1};
+  oauth_http_service http_service(ioc, HTTP_PORT);
+  http_service.start();
+
+  std::jthread http_thread([&ioc]() {
+    LOG(INFO) << "HTTP Server starting...";
+    ioc.run();
+  });
+
+  auth_service service;
   grpc::ServerBuilder builder;
-  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+  // TODO: Use secure server credentials.
+  builder.AddListeningPort(
+      std::string{GRPC_ADDRESS}, grpc::InsecureServerCredentials());
   builder.RegisterService(&service);
 
   std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
-  LOG(INFO) << "gRPC Server listening on " << server_address;
+  LOG(INFO) << "gRPC Server listening on " << GRPC_ADDRESS;
+  LOG(INFO) << "HTTP Server listening on port " << HTTP_PORT;
+
   server->Wait();
 }
 
