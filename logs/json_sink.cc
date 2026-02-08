@@ -1,12 +1,14 @@
 #include "logs/json_sink.h"
 
 #include <iostream>
+#include <string>
 
+#include "absl/base/log_severity.h"
 #include "absl/log/log_entry.h"
-#include "absl/log/log_sink.h"
-#include "json/json.h"
+#include "absl/time/time.h"
 #include "strings/format.h"
-#include "strings/json.h"
+#include "json/value.h"
+#include "json/writer.h"
 
 namespace howling {
 
@@ -23,6 +25,8 @@ void JsonLogSink::Send(const absl::LogEntry& entry) {
   std::cout << Json::writeString(builder, root) << std::endl;
 }
 
-void JsonLogSink::Flush() { std::cout << std::flush; }
+void JsonLogSink::Flush() {
+  std::cout << std::flush;
+}
 
 } // namespace howling

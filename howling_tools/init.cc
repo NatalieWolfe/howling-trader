@@ -1,5 +1,8 @@
 #include "howling_tools/init.h"
 
+#include <string>
+
+#include "absl/base/log_severity.h"
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/log/globals.h"

@@ -195,10 +195,25 @@ void run() {
       decision d = anal->analyze(symbol, state);
 
       std::optional<trading_state::position> trade = std::nullopt;
+      trading::Action trade_act = trading::ACTION_UNSPECIFIED;
       if (d.act == action::BUY) {
         trade = e.buy(symbol, m);
+        trade_act = trading::BUY;
       } else if (d.act == action::SELL) {
         trade = e.sell(symbol, m);
+        trade_act = trading::SELL;
+      }
+
+      if (trade) {
+        trading::TradeRecord record;
+        record.set_symbol(symbol);
+        *record.mutable_executed_at() = to_proto(system_clock::now());
+        record.set_action(trade_act);
+        record.set_price(trade->price);
+        record.set_quantity(trade->quantity);
+        record.set_confidence(d.confidence);
+        record.set_dry_run(!absl::GetFlag(FLAGS_use_real_money));
+        db->save_trade(record);
       }
 
       if (symbol == followed_stock && !absl::GetFlag(FLAGS_headless)) {
@@ -222,6 +237,7 @@ void run() {
       db->save(symbol, candle).get();
     }
   });
+
   std::thread market_saver([&]() {
     for (const Market& market : watcher->market_stream()) {
       db->save(market).get();

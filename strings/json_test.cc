@@ -1,11 +1,10 @@
 #include "strings/json.h"
 
+#include <memory>
 #include <stdexcept>
 #include <string_view>
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "json/json.h"
 
 namespace howling {
 namespace {

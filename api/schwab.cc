@@ -12,8 +12,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "absl/log/log_entry.h"
 #include "absl/log/log.h"
+#include "absl/log/log_entry.h"
 #include "absl/strings/str_cat.h"
 #include "api/schwab/connect.h"
 #include "api/schwab/oauth.h"
