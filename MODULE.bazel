@@ -13,25 +13,40 @@ bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
 bazel_dep(name = "jsoncpp", version = "1.9.6")
 archive_override(
     module_name = "jsoncpp",
-    integrity = "sha256-+Ttt1855axPQLBCLyfeYEiRaguV3WBxMmqvlcHXJDqI=",
-    urls = ["https://github.com/open-source-parsers/jsoncpp/archive/refs/tags/1.9.6.tar.gz"],
-    strip_prefix = "jsoncpp-1.9.6",
     build_file = "//patches:jsoncpp.BUILD",
+    integrity = "sha256-+Ttt1855axPQLBCLyfeYEiRaguV3WBxMmqvlcHXJDqI=",
     patch_cmds = [
         "echo 'module(name=\"jsoncpp\", version=\"1.9.6\")' > MODULE.bazel",
         "echo 'bazel_dep(name=\"rules_cc\", version=\"0.2.16\")' >> MODULE.bazel",
     ],
+    strip_prefix = "jsoncpp-1.9.6",
+    urls = ["https://github.com/open-source-parsers/jsoncpp/archive/refs/tags/1.9.6.tar.gz"],
 )
+
 bazel_dep(name = "postgres", version = "16.2.bcr.3")
 bazel_dep(name = "protobuf", version = "33.4")
 bazel_dep(name = "rules_cc", version = "0.2.16")
 bazel_dep(name = "rules_shell", version = "0.6.1")
 bazel_dep(name = "sqlite3", version = "3.51.1.bcr.1")
+bazel_dep(name = "aspect_bazel_lib", version = "2.22.5")
+bazel_dep(name = "rules_oci", version = "2.2.7")
+bazel_dep(name = "rules_pkg", version = "1.2.0")
+
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+oci.pull(
+    name = "distroless_cc",
+    digest = "sha256:72344f7f909a8bf003c67f55687e6d51a441b49661af8f660aa7b285f00e57df",
+    image = "gcr.io/distroless/cc-debian12",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+)
+use_repo(oci, "distroless_cc", "distroless_cc_linux_amd64", "distroless_cc_linux_arm64")
 
 bazel_dep(name = "bazel_iwyu", version = "0.0.0")
 git_override(
     module_name = "bazel_iwyu",
-    remote = "https://github.com/storypku/bazel_iwyu.git",
     commit = "1fe9048c30469ac506498c3c740ce47475ad3361",
     patch_cmds = [
         "sed -i '1i load(\"@rules_shell//shell:sh_binary.bzl\", \"sh_binary\")' bazel/iwyu/BUILD.bazel",
@@ -39,4 +54,5 @@ git_override(
         "echo 'bazel_dep(name = \"rules_shell\", version = \"0.6.1\")' >> MODULE.bazel",
         "echo 'bazel_dep(name = \"rules_cc\", version = \"0.2.16\")' >> MODULE.bazel",
     ],
+    remote = "https://github.com/storypku/bazel_iwyu.git",
 )

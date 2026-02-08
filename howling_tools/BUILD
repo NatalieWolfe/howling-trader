@@ -1,4 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 cc_binary(
     name = "evaluate",
@@ -117,4 +119,31 @@ cc_binary(
         "//trading:trading_state",
         "@abseil-cpp//absl/flags:flag",
     ],
+)
+
+pkg_tar(
+    name = "execute_layer",
+    srcs = [":execute"],
+)
+
+oci_image(
+    name = "executor_image",
+    base = "@distroless_cc",
+    entrypoint = ["/howling_tools/execute"],
+    tars = [":execute_layer"],
+)
+
+# For local testing: bazel run //howling_tools:load
+oci_load(
+    name = "load",
+    image = ":executor_image",
+    repo_tags = ["howling-trader:latest"],
+)
+
+# For pushing: bazel run //howling_tools:push
+oci_push(
+    name = "push",
+    image = ":executor_image",
+    remote_tags = ["latest"],
+    repository = "ghcr.io/nataliewolfe/howling-trader",
 )
