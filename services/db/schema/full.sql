@@ -29,6 +29,19 @@ CREATE TABLE market (
   PRIMARY KEY (symbol, emitted_at)
 );
 
+CREATE TABLE trades (
+  symbol      INT NOT NULL,
+  executed_at TIMESTAMP NOT NULL,
+  action      INT NOT NULL,
+  price       DOUBLE PRECISION NOT NULL,
+  quantity    BIGINT NOT NULL,
+  confidence  DOUBLE PRECISION NOT NULL,
+  dry_run     BOOLEAN NOT NULL
+);
+
+CREATE INDEX idx_trades_symbol_executed_at_desc
+ON trades (symbol, executed_at DESC);
+
 -- VERSION INSERT
 INSERT INTO howling_version (v, updater_id, update_started_at, updated_at)
 VALUES (1, NULL, NULL, CURRENT_TIMESTAMP);

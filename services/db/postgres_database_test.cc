@@ -1,5 +1,6 @@
 #include "services/db/postgres_database.h"
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -12,6 +13,8 @@
 #include "data/stock.pb.h"
 #include "google/protobuf/duration.pb.h"
 #include "google/protobuf/timestamp.pb.h"
+#include "libpq/libpq-fe.h"
+#include "time/conversion.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -32,6 +35,7 @@ namespace {
 
 using ::google::protobuf::Duration;
 using ::google::protobuf::Timestamp;
+using ::std::chrono::system_clock;
 using ::testing::AllOf;
 using ::testing::Property;
 
@@ -45,7 +49,24 @@ protected:
         .user = absl::GetFlag(FLAGS_pg_user),
         .password = absl::GetFlag(FLAGS_pg_password),
         .dbname = absl::GetFlag(FLAGS_pg_database)});
-    _db->clear_all();
+    _clear_database();
+  }
+
+  void _clear_database() {
+    PGconn* conn = PQsetdbLogin(
+        absl::GetFlag(FLAGS_pg_host).c_str(),
+        _port_str.c_str(),
+        /*options=*/nullptr,
+        /*tty=*/nullptr,
+        absl::GetFlag(FLAGS_pg_database).c_str(),
+        absl::GetFlag(FLAGS_pg_user).c_str(),
+        absl::GetFlag(FLAGS_pg_password).c_str());
+    ASSERT_EQ(PQstatus(conn), CONNECTION_OK) << PQerrorMessage(conn);
+    PGresult* res = PQexec(
+        conn, "TRUNCATE candles, market, trades RESTART IDENTITY CASCADE");
+    ASSERT_EQ(PQresultStatus(res), PGRES_COMMAND_OK) << PQerrorMessage(conn);
+    PQclear(res);
+    PQfinish(conn);
   }
 
   std::string _port_str;
@@ -190,8 +211,49 @@ TEST_F(PostgresDatabaseTest, ReadingIteratesOverAllMarketHistoryInOrder) {
   }
   EXPECT_EQ(counter, MARKET_COUNT);
 }
-} // namespace
 
+// MARK: Trade
+
+TEST_F(PostgresDatabaseTest, CanSaveTrade) {
+  trading::TradeRecord trade;
+  trade.set_symbol(stock::NVDA);
+  trade.set_action(trading::BUY);
+  trade.set_price(100.0);
+  trade.set_quantity(10);
+  trade.set_confidence(0.9);
+  trade.set_dry_run(true);
+  *trade.mutable_executed_at() = to_proto(system_clock::now());
+
+  EXPECT_NO_THROW(_db->save_trade(trade).get());
+}
+
+TEST_F(PostgresDatabaseTest, SavedTradesAreReadable) {
+  trading::TradeRecord trade;
+  trade.set_symbol(stock::NVDA);
+  trade.set_action(trading::SELL);
+  trade.set_price(200.0);
+  trade.set_quantity(20);
+  trade.set_confidence(0.95);
+  trade.set_dry_run(false);
+  *trade.mutable_executed_at() = to_proto(system_clock::now());
+
+  _db->save_trade(trade).get();
+  int count = 0;
+
+  for (const trading::TradeRecord& trade : _db->read_trades(stock::NVDA)) {
+    ++count;
+    EXPECT_EQ(trade.symbol(), stock::NVDA);
+    EXPECT_EQ(trade.action(), trading::SELL);
+    EXPECT_DOUBLE_EQ(trade.price(), 200.0);
+    EXPECT_EQ(trade.quantity(), 20);
+    EXPECT_DOUBLE_EQ(trade.confidence(), 0.95);
+    EXPECT_FALSE(trade.dry_run());
+  }
+
+  EXPECT_EQ(count, 1);
+}
+
+} // namespace
 } // namespace howling
 
 int main(int argc, char** argv) {

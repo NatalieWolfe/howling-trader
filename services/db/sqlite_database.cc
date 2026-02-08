@@ -22,7 +22,11 @@
 #include "strings/parse.h"
 #include "time/conversion.h"
 
-ABSL_FLAG(std::string, sqlite_db_path, "howling.db", "Path to the SQLite database file.");
+ABSL_FLAG(
+    std::string,
+    sqlite_db_path,
+    "howling.db",
+    "Path to the SQLite database file.");
 
 namespace howling {
 namespace {
@@ -351,7 +355,6 @@ sqlite_database::save(stock::Symbol symbol, const Candle& candle) {
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
-
   return p.get_future();
 }
 
@@ -372,6 +375,30 @@ std::future<void> sqlite_database::save(const Market& market) {
         market.last(),
         market.last_lots(),
         to_std_chrono(market.emitted_at()));
+    while (q.step());
+    p.set_value();
+  } catch (...) { p.set_exception(std::current_exception()); }
+
+  return p.get_future();
+}
+
+std::future<void>
+sqlite_database::save_trade(const trading::TradeRecord& trade) {
+  std::promise<void> p;
+
+  try {
+    query q{*_db, query::single_use, R"sql(
+      INSERT INTO trades (
+        symbol, executed_at, action, price, quantity, confidence, dry_run
+      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7))sql"};
+    q.bind_all(
+        static_cast<int>(trade.symbol()),
+        to_std_chrono(trade.executed_at()),
+        static_cast<int>(trade.action()),
+        trade.price(),
+        trade.quantity(),
+        trade.confidence(),
+        trade.dry_run() ? 1 : 0);
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
@@ -428,6 +455,33 @@ std::generator<Market> sqlite_database::read_market(stock::Symbol symbol) {
     market.set_last_lots(last_lots);
     *market.mutable_emitted_at() = to_proto(emitted_at);
     co_yield std::move(market);
+  }
+}
+
+std::generator<trading::TradeRecord>
+sqlite_database::read_trades(stock::Symbol symbol) {
+  query q{*_db, query::single_use, R"sql(
+    SELECT executed_at, action, price, quantity, confidence, dry_run
+    FROM trades
+    WHERE symbol = ?1
+    ORDER BY executed_at DESC
+  )sql"};
+  q.bind_all(symbol);
+  while (q.step()) {
+    system_clock::time_point executed_at;
+    int32_t act_int, dry_run_int;
+    double price, confidence;
+    int64_t quantity;
+    q.read_all(executed_at, act_int, price, quantity, confidence, dry_run_int);
+    trading::TradeRecord trade;
+    trade.set_symbol(symbol);
+    *trade.mutable_executed_at() = to_proto(executed_at);
+    trade.set_action(static_cast<trading::Action>(act_int));
+    trade.set_price(price);
+    trade.set_quantity(quantity);
+    trade.set_confidence(confidence);
+    trade.set_dry_run(dry_run_int != 0);
+    co_yield std::move(trade);
   }
 }
 

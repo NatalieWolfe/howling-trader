@@ -8,7 +8,7 @@ package howling.stock;
 
 // Available symbols for trading.
 //
-// Next tag: 6
+// Next tag: 7
 enum Symbol {
   SYMBOL_UNSPECIFIED = 0;
   AAPL = 2;
@@ -17,6 +17,7 @@ enum Symbol {
   // INTC = 5;
   MU = 3;
   NVDA = 1;
+  RIVN = 6;
 }
 
 message History {

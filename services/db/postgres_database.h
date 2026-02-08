@@ -27,12 +27,12 @@ public:
 
   std::future<void> save(stock::Symbol symbol, const Candle& candle) override;
   std::future<void> save(const Market& market) override;
+  std::future<void> save_trade(const trading::TradeRecord& trade) override;
 
   std::generator<Candle> read_candles(stock::Symbol symbol) override;
   std::generator<Market> read_market(stock::Symbol symbol) override;
-
-  // Clears all data from the database.
-  void clear_all();
+  std::generator<trading::TradeRecord>
+  read_trades(stock::Symbol symbol) override;
 
 private:
   struct implementation;

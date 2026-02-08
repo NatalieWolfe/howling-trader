@@ -1,5 +1,6 @@
 #include "services/db/sqlite_database.h"
 
+#include <chrono>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -14,6 +15,7 @@
 #include "google/protobuf/duration.pb.h"
 #include "google/protobuf/timestamp.pb.h"
 #include "sqlite3.h"
+#include "time/conversion.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -24,6 +26,7 @@ namespace {
 
 using ::google::protobuf::Duration;
 using ::google::protobuf::Timestamp;
+using ::std::chrono::system_clock;
 using ::testing::AllOf;
 using ::testing::IsSupersetOf;
 using ::testing::Property;
@@ -60,7 +63,8 @@ TEST(SqliteDatabase, InitializesEmptyDatabase) {
           &found_tables,
           nullptr),
       SQLITE_OK);
-  EXPECT_THAT(found_tables, IsSupersetOf({"howling_version", "candles"}));
+  EXPECT_THAT(
+      found_tables, IsSupersetOf({"howling_version", "candles", "trades"}));
   sqlite3_close_v2(raw_db);
 }
 
@@ -213,5 +217,50 @@ TEST(SqliteMarket, ReadingIteratesOverAllMarketHistoryInOrder) {
   }
   EXPECT_EQ(counter, MARKET_COUNT);
 }
+
+// MARK: Trade
+
+TEST(SqliteTrades, CanSaveTrade) {
+  set_memory_database_path();
+  sqlite_database db;
+  trading::TradeRecord trade;
+  trade.set_symbol(stock::NVDA);
+  trade.set_action(trading::BUY);
+  trade.set_price(100.0);
+  trade.set_quantity(10);
+  trade.set_confidence(0.9);
+  trade.set_dry_run(true);
+  *trade.mutable_executed_at() = to_proto(system_clock::now());
+
+  EXPECT_NO_THROW(db.save_trade(trade).get());
+}
+
+TEST(SqliteTrades, SavedTradesAreReadable) {
+  set_memory_database_path();
+  sqlite_database db;
+  trading::TradeRecord trade;
+  trade.set_symbol(stock::NVDA);
+  trade.set_action(trading::BUY);
+  trade.set_price(150.0);
+  trade.set_quantity(5);
+  trade.set_confidence(0.85);
+  trade.set_dry_run(true);
+  *trade.mutable_executed_at() = to_proto(system_clock::now());
+  db.save_trade(trade).get();
+  int count = 0;
+
+  for (const trading::TradeRecord& trade : db.read_trades(stock::NVDA)) {
+    ++count;
+    EXPECT_EQ(trade.symbol(), stock::NVDA);
+    EXPECT_EQ(trade.action(), trading::BUY);
+    EXPECT_DOUBLE_EQ(trade.price(), 150.0);
+    EXPECT_EQ(trade.quantity(), 5);
+    EXPECT_DOUBLE_EQ(trade.confidence(), 0.85);
+    EXPECT_TRUE(trade.dry_run());
+  }
+
+  EXPECT_EQ(count, 1);
+}
+
 } // namespace
 } // namespace howling

@@ -5,9 +5,11 @@ cc_library(
     hdrs = ["database.h"],
     visibility = ["//visibility:public"],
     deps = [
+        "//data:analyzer",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
+        "//data:trade_cc_proto",
     ],
 )
 

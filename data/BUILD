@@ -45,6 +45,7 @@ cc_library(
 proto_library(
     name = "candle_proto",
     srcs = ["candle.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         "@protobuf//:duration_proto",
         "@protobuf//:timestamp_proto",
@@ -79,6 +80,7 @@ cc_library(
 proto_library(
     name = "market_proto",
     srcs = ["market.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         ":stock_proto",
         "@protobuf//:timestamp_proto",
@@ -94,6 +96,7 @@ cc_proto_library(
 proto_library(
     name = "stock_proto",
     srcs = ["stock.proto"],
+    visibility = ["//visibility:public"],
     deps = [
         ":candle_proto",
         "@protobuf//:duration_proto",
@@ -105,6 +108,22 @@ cc_proto_library(
     name = "stock_cc_proto",
     visibility = ["//visibility:public"],
     deps = [":stock_proto"],
+)
+
+proto_library(
+    name = "trade_proto",
+    srcs = ["trade.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":stock_proto",
+        "@protobuf//:timestamp_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "trade_cc_proto",
+    visibility = ["//visibility:public"],
+    deps = [":trade_proto"],
 )
 
 cc_library(

@@ -64,12 +64,10 @@ void check_not_null(PGresult* res, int row, int col) {
 template <typename T>
 unsigned int pg_type_id();
 
-/*
 template <>
 unsigned int pg_type_id<bool>() {
   return 16;
 }
-*/
 
 template <>
 unsigned int pg_type_id<int64_t>() {
@@ -400,12 +398,6 @@ struct postgres_database::implementation {
   std::map<std::string, std::unique_ptr<query>> _prepared_queries;
 };
 
-void postgres_database::clear_all() {
-  execute(
-      *_implementation->_conn,
-      "TRUNCATE candles, market RESTART IDENTITY CASCADE");
-}
-
 postgres_database::postgres_database(postgres_options options)
     : _implementation{std::make_unique<implementation>()} {
   _implementation->_conn = PQsetdbLogin(
@@ -486,6 +478,31 @@ postgres_database::postgres_database(postgres_options options)
           FROM market
           WHERE symbol = $1
           ORDER BY emitted_at ASC)sql"));
+
+    // Prepare Trade SELECT query
+    _implementation->_prepared_queries.emplace(
+        "trade_select", query::prepare<int>(*_implementation->_conn, R"sql(
+          SELECT executed_at, action, price, quantity, confidence, dry_run
+          FROM trades
+          WHERE symbol = $1
+          ORDER BY executed_at DESC)sql"));
+
+    // Prepare Trade INSERT query
+    _implementation->_prepared_queries.emplace(
+        "trade_insert",
+        query::prepare<
+            int,
+            system_clock::time_point,
+            int,
+            double,
+            int64_t,
+            double,
+            bool>(
+            *_implementation->_conn,
+            R"sql(
+              INSERT INTO trades (
+                symbol, executed_at, action, price, quantity, confidence, dry_run
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7))sql"));
   } catch (...) {
     if (_implementation->_conn) {
       PQfinish(_implementation->_conn);
@@ -518,7 +535,6 @@ postgres_database::save(stock::Symbol symbol, const Candle& candle) {
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
-
   return p.get_future();
 }
 
@@ -535,6 +551,27 @@ std::future<void> postgres_database::save(const Market& market) {
         market.last(),
         market.last_lots(),
         to_std_chrono(market.emitted_at()));
+    while (q.step());
+    p.set_value();
+  } catch (...) { p.set_exception(std::current_exception()); }
+
+  return p.get_future();
+}
+
+std::future<void>
+postgres_database::save_trade(const trading::TradeRecord& trade) {
+  std::promise<void> p;
+
+  try {
+    query& q = *_implementation->_prepared_queries.at("trade_insert");
+    q.bind_all(
+        static_cast<int>(trade.symbol()),
+        to_std_chrono(trade.executed_at()),
+        static_cast<int>(trade.action()),
+        trade.price(),
+        trade.quantity(),
+        trade.confidence(),
+        trade.dry_run());
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
@@ -580,6 +617,29 @@ std::generator<Market> postgres_database::read_market(stock::Symbol symbol) {
     market.set_last_lots(last_lots);
     *market.mutable_emitted_at() = to_proto(emitted_at);
     co_yield std::move(market);
+  }
+}
+
+std::generator<trading::TradeRecord>
+postgres_database::read_trades(stock::Symbol symbol) {
+  query& q = *_implementation->_prepared_queries.at("trade_select");
+  q.bind_all(symbol);
+  while (q.step()) {
+    system_clock::time_point executed_at;
+    int32_t act_int;
+    double price, confidence;
+    int64_t quantity;
+    bool dry_run;
+    q.read_all(executed_at, act_int, price, quantity, confidence, dry_run);
+    trading::TradeRecord trade;
+    trade.set_symbol(symbol);
+    *trade.mutable_executed_at() = to_proto(executed_at);
+    trade.set_action(static_cast<trading::Action>(act_int));
+    trade.set_price(price);
+    trade.set_quantity(quantity);
+    trade.set_confidence(confidence);
+    trade.set_dry_run(dry_run);
+    co_yield std::move(trade);
   }
 }
 
