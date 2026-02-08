@@ -1,14 +1,13 @@
 #pragma once
 
-#include <limits>
 #include <string>
 
 namespace howling {
 
 struct metrics {
   std::string name;
-  double initial_funds;
-  double available_funds = initial_funds;
+  double initial_funds = 0;
+  double available_funds = 0;
   double assets_value = 0;
   int sales = 0;
   int profitable_sales = 0;

@@ -1,7 +1,5 @@
 #include "trading/metrics.h"
 
-#include <algorithm>
-
 namespace howling {
 
 void add_metrics(metrics& lhs, const metrics& rhs) {
