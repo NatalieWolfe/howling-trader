@@ -136,9 +136,13 @@ public:
     if (_is_end() || other._is_end()) return _is_end() == other._is_end();
     return _index == other._index && _buffer == other._buffer;
   }
+  bool operator!=(const iterator& other) const { return !(*this == other); }
   bool operator==(const const_iterator& other) const {
     if (_is_end() || other._is_end()) return _is_end() == other._is_end();
     return _index == other._index && _buffer == other._buffer;
+  }
+  bool operator!=(const const_iterator& other) const {
+    return !(*this == other);
   }
 
   T& operator*() const {
@@ -217,10 +221,14 @@ public:
     if (_is_end() || other._is_end()) return _is_end() == other._is_end();
     return _index == other._index && _buffer == other._buffer;
   }
+  bool operator!=(const const_iterator& other) const {
+    return !(*this == other);
+  }
   bool operator==(const iterator& other) const {
     if (_is_end() || other._is_end()) return _is_end() == other._is_end();
     return _index == other._index && _buffer == other._buffer;
   }
+  bool operator!=(const iterator& other) const { return !(*this == other); }
 
   const T& operator*() const {
     return _buffer->_buffer.at(_buffer->_circularize(_index));
