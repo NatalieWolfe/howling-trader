@@ -1,4 +1,4 @@
-#include "api/schwab/oauth.h"
+#include "api/schwab/oauth_internal.h"
 
 #include <cstdlib>
 #include <filesystem>
@@ -13,7 +13,9 @@
 #include "absl/log/log.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
+#include "api/schwab/configuration.h"
 #include "api/schwab/connect.h"
+#include "api/schwab/oauth_logic.h"
 #include "boost/asio.hpp"
 #include "boost/asio/ssl.hpp"
 #include "boost/beast.hpp"
@@ -23,9 +25,6 @@
 #include "strings/json.h"
 #include "strings/trim.h"
 #include "json/json.h"
-
-ABSL_FLAG(std::string, schwab_api_key_id, "", "API key ID for Schwab.");
-ABSL_FLAG(std::string, schwab_api_key_secret, "", "API secret for Schwab.");
 
 namespace howling::schwab {
 namespace {

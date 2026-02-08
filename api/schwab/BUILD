@@ -13,9 +13,9 @@ cc_library(
 )
 
 cc_library(
-    name = "oauth",
-    srcs = ["oauth.cc"],
-    hdrs = ["oauth.h"],
+    name = "oauth_internal",
+    srcs = ["oauth_internal.cc"],
+    hdrs = ["oauth_internal.h"],
     deps = [
         ":connect",
         "//environment:runfiles",
