@@ -1,6 +1,18 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
+    name = "authenticate",
+    srcs = ["authenticate.cc"],
+    hdrs = ["authenticate.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/oauth/proto:auth_service_cc_grpc",
+        "@abseil-cpp//absl/log",
+        "@grpc//:grpc++",
+    ],
+)
+
+cc_library(
     name = "database",
     hdrs = ["database.h"],
     visibility = ["//visibility:public"],

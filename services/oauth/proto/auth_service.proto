@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package howling;
+
+import "google/protobuf/empty.proto";
+
+service AuthService {
+  // Triggered when the Executor detects an invalid refresh token.
+  // The Auth Service should notify the user to re-authenticate.
+  rpc RequestLogin(LoginRequest) returns (google.protobuf.Empty);
+}
+
+message LoginRequest {
+  string service_name = 1; // e.g., "schwab"
+}
