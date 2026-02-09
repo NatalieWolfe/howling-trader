@@ -5,6 +5,12 @@ CREATE TABLE howling_version (
   updated_at        TIMESTAMP NOT NULL
 );
 
+CREATE TABLE auth_tokens (
+  service_name  TEXT PRIMARY KEY,
+  refresh_token BYTEA NOT NULL,
+  updated_at    TIMESTAMP NOT NULL
+);
+
 CREATE TABLE candles (
   symbol      INT NOT NULL,
   open        DOUBLE PRECISION NOT NULL,
@@ -44,4 +50,4 @@ ON trades (symbol, executed_at DESC);
 
 -- VERSION INSERT
 INSERT INTO howling_version (v, updater_id, update_started_at, updated_at)
-VALUES (1, NULL, NULL, CURRENT_TIMESTAMP);
+VALUES (2, NULL, NULL, CURRENT_TIMESTAMP);

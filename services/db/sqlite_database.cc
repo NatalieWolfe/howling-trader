@@ -307,7 +307,11 @@ void upgrade(sqlite3& db) {
       update_started_at);
 
   if (version != db_internal::get_schema_version()) {
-    throw std::runtime_error("Schema upgrading not implemented.");
+    LOG(INFO) << "Upgrading schema from version " << version << " to "
+              << db_internal::get_schema_version();
+    for (std::string_view statement : db_internal::get_schema_update(version)) {
+      execute(db, statement);
+    }
   }
 }
 

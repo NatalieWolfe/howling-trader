@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <exception>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <generator>
 #include <sstream>
@@ -37,6 +38,22 @@ std::string load_full_schema() {
   return std::move(schema_stream).str();
 }
 
+std::generator<std::string> split_commands(std::string schema) {
+  size_t offset = 0;
+  while (offset < schema.length()) {
+    size_t pos = schema.find(';', offset);
+    if (pos == std::string::npos) {
+      std::string_view tail = trim(std::string_view{schema}.substr(offset));
+      if (!tail.empty()) co_yield std::string{tail};
+      break;
+    }
+    std::string_view cmd =
+        trim(std::string_view{schema}.substr(offset, pos - offset + 1));
+    if (!cmd.empty()) co_yield std::string{cmd};
+    offset = pos + 1;
+  }
+}
+
 } // namespace
 
 int get_schema_version() {
@@ -50,27 +67,36 @@ int get_schema_version() {
           max_version,
           parse_int(
               std::string_view{
-                  filename.begin() + UPDATE_PREFIX.length(), filename.end()}));
+                  filename.data() + UPDATE_PREFIX.length(),
+                  filename.length() - UPDATE_PREFIX.length()}));
     }
   }
   return max_version;
 }
 
-std::generator<std::string_view> get_full_schema() {
+std::generator<std::string> get_full_schema() {
   std::string schema = load_full_schema();
   if (schema.empty()) {
     throw std::runtime_error("Full schema file is empty!");
   }
+  return split_commands(std::move(schema));
+}
 
-  constexpr std::string_view COMMAND_BREAK = ";\n\n";
-  size_t pos, offset = 0;
-  while ((pos = schema.find(COMMAND_BREAK, offset)) != std::string::npos) {
-    co_yield trim(std::string_view{schema.data() + offset, pos - offset + 1});
-    offset = pos + 1;
-  }
-  if (schema.length() > (offset + COMMAND_BREAK.length())) {
-    co_yield trim(
-        std::string_view{schema.data() + offset, schema.length() - offset});
+std::generator<std::string> get_schema_update(int from_version) {
+  int target_version = get_schema_version();
+  for (int v = from_version + 1; v <= target_version; ++v) {
+    fs::path update_path =
+        runfile((SCHEMA_DIR / std::format("update_{}.sql", v)).string());
+    if (!fs::exists(update_path)) continue;
+
+    std::ifstream update_stream(update_path);
+    std::string update_sql(
+        (std::istreambuf_iterator<char>(update_stream)),
+        (std::istreambuf_iterator<char>()));
+
+    for (std::string command : split_commands(std::move(update_sql))) {
+      co_yield command;
+    }
   }
 }
 
