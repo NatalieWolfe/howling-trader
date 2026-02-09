@@ -1,32 +1,16 @@
 #include "strings/trim.h"
 
-#include <algorithm>
-#include <cctype>
-#include <cstdint>
-#include <string>
+#include <string_view>
 
 namespace howling {
-namespace {
 
-int64_t find_first_non_space(std::string_view str) {
-  return std::ranges::find_if_not(str, [](char c) { return std::isspace(c); }) -
-      str.begin();
-}
-
-int64_t find_last_non_space(std::string_view str) {
-  return std::ranges::find_last_if_not(
-             str, [](char c) { return std::isspace(c); })
-             .begin() -
-      str.begin();
-}
-
-} // namespace
+constexpr std::string_view WHITESPACE_CHARS = " \t\n\r";
 
 std::string_view trim(std::string_view term) {
-  int64_t start_pos = find_first_non_space(term);
-  int64_t end_pos = find_last_non_space(term);
-  int64_t len = end_pos - start_pos + 1;
-  return term.substr(start_pos, len);
+  size_t start = term.find_first_not_of(WHITESPACE_CHARS);
+  if (start == std::string_view::npos) return "";
+  size_t end = term.find_last_not_of(WHITESPACE_CHARS);
+  return term.substr(start, end - start + 1);
 }
 
 } // namespace howling
