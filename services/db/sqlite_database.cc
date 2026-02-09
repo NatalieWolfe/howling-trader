@@ -4,6 +4,7 @@
 #include <chrono>
 #include <exception>
 #include <future>
+#include <limits>
 #include <optional>
 #include <source_location>
 #include <string>
@@ -16,6 +17,7 @@
 #include "absl/strings/str_cat.h"
 #include "data/candle.pb.h"
 #include "data/stock.pb.h"
+#include "google/protobuf/util/time_util.h"
 #include "services/db/schema/schema.h"
 #include "sqlite3.h"
 #include "strings/format.h"
@@ -410,6 +412,24 @@ sqlite_database::save_trade(const trading::TradeRecord& trade) {
   return p.get_future();
 }
 
+std::future<void> sqlite_database::save_refresh_token(
+    std::string_view service_name, std::string_view token) {
+  std::promise<void> p;
+  try {
+    query q{*_db, query::single_use, R"sql(
+      INSERT INTO auth_tokens (
+        service_name, refresh_token, updated_at
+      ) VALUES (?1, ?2, CURRENT_TIMESTAMP)
+      ON CONFLICT (service_name) DO UPDATE SET
+        refresh_token = excluded.refresh_token,
+        updated_at = CURRENT_TIMESTAMP)sql"};
+    q.bind_all(service_name, token);
+    while (q.step());
+    p.set_value();
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
+}
+
 std::generator<Candle> sqlite_database::read_candles(stock::Symbol symbol) {
   query q{*_db, query::single_use, R"sql(
     SELECT open, close, high, low, volume, opened_at, duration_us
@@ -487,6 +507,24 @@ sqlite_database::read_trades(stock::Symbol symbol) {
     trade.set_dry_run(dry_run_int != 0);
     co_yield std::move(trade);
   }
+}
+
+std::future<std::string> sqlite_database::read_refresh_token(
+    std::string_view service_name) {
+  std::promise<std::string> p;
+  try {
+    query q{*_db, query::single_use, R"sql(
+      SELECT refresh_token
+      FROM auth_tokens
+      WHERE service_name = ?1)sql"};
+    q.bind_all(service_name);
+    if (!q.step()) {
+      p.set_value("");
+    } else {
+      p.set_value(q.read<std::string>(0));
+    }
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
 }
 
 void sqlite_database::_check(int code, std::source_location loc) {

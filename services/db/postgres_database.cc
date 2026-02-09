@@ -7,6 +7,7 @@
 #include <exception>
 #include <format>
 #include <future>
+#include <limits>
 #include <map>
 #include <memory>
 #include <optional>
@@ -19,6 +20,7 @@
 #include "absl/log/log.h"
 #include "data/candle.pb.h"
 #include "data/stock.pb.h"
+#include "google/protobuf/util/time_util.h"
 #include "libpq/libpq-fe.h"
 #include "services/db/schema/schema.h"
 #include "time/conversion.h"
@@ -86,7 +88,6 @@ unsigned int pg_type_id<int32_t>() {
   return 23;
 }
 
-/*
 template <>
 unsigned int pg_type_id<std::string>() {
   return 25; // Text
@@ -96,12 +97,6 @@ template <>
 unsigned int pg_type_id<std::string_view>() {
   return 25; // Text
 }
-
-template <>
-unsigned int pg_type_id<float>() {
-  return 700;
-}
-*/
 
 template <>
 unsigned int pg_type_id<double>() {
@@ -507,6 +502,29 @@ postgres_database::postgres_database(postgres_options options)
               INSERT INTO trades (
                 symbol, executed_at, action, price, quantity, confidence, dry_run
               ) VALUES ($1, $2, $3, $4, $5, $6, $7))sql"));
+
+    // Prepare Refresh Token INSERT query
+    _implementation->_prepared_queries.emplace(
+        "refresh_token_insert",
+        query::prepare<std::string_view, std::string_view>(
+            *_implementation->_conn,
+            R"sql(
+              INSERT INTO auth_tokens (
+                service_name, refresh_token, updated_at
+              ) VALUES ($1, $2::bytea, CURRENT_TIMESTAMP)
+              ON CONFLICT (service_name) DO UPDATE SET
+                refresh_token = EXCLUDED.refresh_token,
+                updated_at = CURRENT_TIMESTAMP)sql"));
+
+    // Prepare Refresh Token SELECT query
+    _implementation->_prepared_queries.emplace(
+        "refresh_token_select",
+        query::prepare<std::string_view>(
+            *_implementation->_conn,
+            R"sql(
+              SELECT refresh_token
+              FROM auth_tokens
+              WHERE service_name = $1)sql"));
   } catch (...) {
     if (_implementation->_conn) {
       PQfinish(_implementation->_conn);
@@ -583,6 +601,19 @@ postgres_database::save_trade(const trading::TradeRecord& trade) {
   return p.get_future();
 }
 
+std::future<void> postgres_database::save_refresh_token(
+    std::string_view service_name, std::string_view token) {
+  std::promise<void> p;
+  try {
+    query& q = *_implementation->_prepared_queries.at("refresh_token_insert");
+    // TODO: Actually encrypt the token.
+    q.bind_all(service_name, token);
+    while (q.step());
+    p.set_value();
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
+}
+
 std::generator<Candle> postgres_database::read_candles(stock::Symbol symbol) {
   query& q = *_implementation->_prepared_queries.at("candle_select");
   q.bind_all(symbol);
@@ -645,6 +676,23 @@ postgres_database::read_trades(stock::Symbol symbol) {
     trade.set_dry_run(dry_run);
     co_yield std::move(trade);
   }
+}
+
+std::future<std::string>
+postgres_database::read_refresh_token(std::string_view service_name) {
+  std::promise<std::string> p;
+  try {
+    query& q = *_implementation->_prepared_queries.at("refresh_token_select");
+    q.bind_all(service_name);
+    if (!q.step()) {
+      p.set_value("");
+    } else {
+      std::string token;
+      q.read_all(token);
+      p.set_value(std::move(token));
+    }
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
 }
 
 } // namespace howling

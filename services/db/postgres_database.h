@@ -28,11 +28,16 @@ public:
   std::future<void> save(stock::Symbol symbol, const Candle& candle) override;
   std::future<void> save(const Market& market) override;
   std::future<void> save_trade(const trading::TradeRecord& trade) override;
+  std::future<void> save_refresh_token(
+      std::string_view service_name, std::string_view token) override;
 
   std::generator<Candle> read_candles(stock::Symbol symbol) override;
   std::generator<Market> read_market(stock::Symbol symbol) override;
   std::generator<trading::TradeRecord>
   read_trades(stock::Symbol symbol) override;
+
+  std::future<std::string>
+  read_refresh_token(std::string_view service_name) override;
 
 private:
   struct implementation;

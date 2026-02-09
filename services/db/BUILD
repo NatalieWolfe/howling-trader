@@ -30,11 +30,27 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "database_test_interface",
+    testonly = True,
+    hdrs = ["database_test_interface.h"],
+    deps = [
+        "//data:candle_cc_proto",
+        "//data:market_cc_proto",
+        "//data:stock_cc_proto",
+        "//data:trade_cc_proto",
+        "@googletest//:gtest",
+        "@protobuf//:duration_cc_proto",
+        "@protobuf//:timestamp_cc_proto",
+    ],
+)
+
 cc_binary(
     name = "postgres_database_test_bin",
     testonly = True,
     srcs = ["postgres_database_test.cc"],
     deps = [
+        ":database_test_interface",
         ":postgres_database",
         "//data:candle_cc_proto",
         "//data:stock_cc_proto",
@@ -85,6 +101,7 @@ cc_test(
     name = "sqlite_database_test",
     srcs = ["sqlite_database_test.cc"],
     deps = [
+        ":database_test_interface",
         ":sqlite_database",
         "//data:candle_cc_proto",
         "//data:stock_cc_proto",
