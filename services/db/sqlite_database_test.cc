@@ -21,6 +21,7 @@
 #include "gtest/gtest.h"
 
 ABSL_DECLARE_FLAG(std::string, sqlite_db_path);
+ABSL_DECLARE_FLAG(std::string, db_encryption_key);
 
 namespace howling {
 namespace {
@@ -42,6 +43,9 @@ void set_memory_database_path() {
 class SqliteDatabaseTest : public DatabaseTest {
 protected:
   void SetUp() override {
+    absl::SetFlag(
+        &FLAGS_db_encryption_key,
+        "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
     set_memory_database_path();
     _db = std::make_unique<sqlite_database>();
   }

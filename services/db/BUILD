@@ -2,6 +2,27 @@ load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 cc_library(
+    name = "crypto",
+    srcs = ["crypto.cc"],
+    hdrs = ["crypto.h"],
+    deps = [
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/strings",
+        "@boringssl//:crypto",
+    ],
+)
+
+cc_test(
+    name = "crypto_test",
+    srcs = ["crypto_test.cc"],
+    deps = [
+        ":crypto",
+        "@abseil-cpp//absl/flags:flag",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "make_database",
     srcs = ["make_database.cc"],
     hdrs = ["make_database.h"],
@@ -19,6 +40,7 @@ cc_library(
     srcs = ["postgres_database.cc"],
     hdrs = ["postgres_database.h"],
     deps = [
+        ":crypto",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
@@ -82,6 +104,7 @@ cc_library(
     srcs = ["sqlite_database.cc"],
     hdrs = ["sqlite_database.h"],
     deps = [
+        ":crypto",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",

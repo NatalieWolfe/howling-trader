@@ -18,6 +18,7 @@
 #include "data/candle.pb.h"
 #include "data/stock.pb.h"
 #include "google/protobuf/util/time_util.h"
+#include "services/db/crypto.h"
 #include "services/db/schema/schema.h"
 #include "sqlite3.h"
 #include "strings/format.h"
@@ -423,7 +424,7 @@ std::future<void> sqlite_database::save_refresh_token(
       ON CONFLICT (service_name) DO UPDATE SET
         refresh_token = excluded.refresh_token,
         updated_at = CURRENT_TIMESTAMP)sql"};
-    q.bind_all(service_name, token);
+    q.bind_all(service_name, encrypt_token(token));
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
@@ -521,7 +522,7 @@ std::future<std::string> sqlite_database::read_refresh_token(
     if (!q.step()) {
       p.set_value("");
     } else {
-      p.set_value(q.read<std::string>(0));
+      p.set_value(decrypt_token(q.read<std::string>(0)));
     }
   } catch (...) { p.set_exception(std::current_exception()); }
   return p.get_future();

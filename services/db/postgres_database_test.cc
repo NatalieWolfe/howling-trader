@@ -31,6 +31,8 @@ ABSL_FLAG(int, pg_port, 5432, "Port to connect to for the Postgres database.");
 ABSL_FLAG(
     std::string, pg_database, "howling", "Name of the Postgres database.");
 
+ABSL_DECLARE_FLAG(std::string, db_encryption_key);
+
 namespace howling {
 namespace {
 
@@ -43,6 +45,9 @@ using ::testing::Property;
 class PostgresDatabaseTest : public DatabaseTest {
 protected:
   void SetUp() override {
+    absl::SetFlag(
+        &FLAGS_db_encryption_key,
+        "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
     _port_str = std::to_string(absl::GetFlag(FLAGS_pg_port));
     _db = std::make_unique<postgres_database>(postgres_options{
         .host = absl::GetFlag(FLAGS_pg_host),

@@ -3,6 +3,7 @@
 #include <array>
 #include <bit>
 #include <chrono>
+#include <deque>
 #include <endian.h>
 #include <exception>
 #include <format>
@@ -22,6 +23,7 @@
 #include "data/stock.pb.h"
 #include "google/protobuf/util/time_util.h"
 #include "libpq/libpq-fe.h"
+#include "services/db/crypto.h"
 #include "services/db/schema/schema.h"
 #include "time/conversion.h"
 
@@ -35,6 +37,10 @@ using ::std::chrono::system_clock;
 constexpr std::string_view PREPARED_PREFIX = "prepared_";
 constexpr int BINARY_FORMAT = 1;
 constexpr microseconds PG_EPOCH{946684800000000}; // 2000-01-01.
+
+struct bytes {
+  std::string_view value;
+};
 
 void check_pgconn_err(PGconn& conn, std::source_location = {}) {
   int code = PQstatus(&conn);
@@ -72,6 +78,11 @@ unsigned int pg_type_id<bool>() {
 }
 
 template <>
+unsigned int pg_type_id<bytes>() {
+  return 17; // BYTEA
+}
+
+template <>
 unsigned int pg_type_id<int64_t>() {
   return 20;
 }
@@ -86,11 +97,6 @@ unsigned int pg_type_id<int16_t>() {
 template <>
 unsigned int pg_type_id<int32_t>() {
   return 23;
-}
-
-template <>
-unsigned int pg_type_id<std::string>() {
-  return 25; // Text
 }
 
 template <>
@@ -186,7 +192,6 @@ public:
     _param_lengths.clear();
     _param_formats.clear();
     if constexpr (sizeof...(Args) > 0) {
-      _param_buffers.reserve(sizeof...(Args));
       _param_values.reserve(sizeof...(Args));
       _param_lengths.reserve(sizeof...(Args));
       _param_formats.reserve(sizeof...(Args));
@@ -238,6 +243,8 @@ private:
   }
 
   void _bind_arg(std::string_view val) { _store_param(val.data(), val.size()); }
+
+  void _bind_arg(bytes b) { _store_param(b.value.data(), b.value.size()); }
 
   void _bind_arg(system_clock::time_point val) {
     microseconds duration =
@@ -318,7 +325,7 @@ private:
   PGresult* _res = nullptr;
   int _current_row = -1;
   int _total_rows = 0;
-  std::vector<std::string> _param_buffers;
+  std::deque<std::string> _param_buffers;
   std::vector<const char*> _param_values;
   std::vector<int> _param_lengths;
   std::vector<int> _param_formats;
@@ -506,12 +513,12 @@ postgres_database::postgres_database(postgres_options options)
     // Prepare Refresh Token INSERT query
     _implementation->_prepared_queries.emplace(
         "refresh_token_insert",
-        query::prepare<std::string_view, std::string_view>(
+        query::prepare<std::string_view, bytes>(
             *_implementation->_conn,
             R"sql(
               INSERT INTO auth_tokens (
                 service_name, refresh_token, updated_at
-              ) VALUES ($1, $2::bytea, CURRENT_TIMESTAMP)
+              ) VALUES ($1, $2, CURRENT_TIMESTAMP)
               ON CONFLICT (service_name) DO UPDATE SET
                 refresh_token = EXCLUDED.refresh_token,
                 updated_at = CURRENT_TIMESTAMP)sql"));
@@ -606,8 +613,7 @@ std::future<void> postgres_database::save_refresh_token(
   std::promise<void> p;
   try {
     query& q = *_implementation->_prepared_queries.at("refresh_token_insert");
-    // TODO: Actually encrypt the token.
-    q.bind_all(service_name, token);
+    q.bind_all(service_name, bytes{encrypt_token(token)});
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
@@ -687,9 +693,9 @@ postgres_database::read_refresh_token(std::string_view service_name) {
     if (!q.step()) {
       p.set_value("");
     } else {
-      std::string token;
-      q.read_all(token);
-      p.set_value(std::move(token));
+      std::string encrypted_token;
+      q.read_all(encrypted_token);
+      p.set_value(decrypt_token(encrypted_token));
     }
   } catch (...) { p.set_exception(std::current_exception()); }
   return p.get_future();
