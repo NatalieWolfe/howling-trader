@@ -161,16 +161,6 @@ fs::path get_user_cache_folder() {
   return cache_path;
 }
 
-/** Checks the Schwab API key flags are set. */
-void check_schwab_flags() {
-  if (absl::GetFlag(FLAGS_schwab_api_key_id).empty()) {
-    throw std::runtime_error("--schwab_api_key_id flag is required.");
-  }
-  if (absl::GetFlag(FLAGS_schwab_api_key_secret).empty()) {
-    throw std::runtime_error("--schwab_api_key_secret flag is required.");
-  }
-}
-
 struct oauth_exchange_params {
   std::optional<std::string_view> code;
   std::optional<std::string_view> refresh_token;
@@ -239,6 +229,8 @@ Json::Value send_oauth_request(
 
   // Stash the refresh token to disk if available.
   // TODO: Encrypt the refresh token on disk.
+  // TODO: Replace disk-storage of the refresh token with use of the
+  // //services:authorization client to fetch tokens securely.
   Json::Value root = to_json(beast::buffers_to_string(res.body().data()));
   const Json::Value* next_refresh_token = root.find("refresh_token");
   if (next_refresh_token && next_refresh_token->isString()) {
@@ -283,6 +275,8 @@ refresh_token(const std::unique_ptr<net::connection>& conn) {
 
 /** Runs a new oauth sequence with the user by opening the browser. */
 Json::Value execute_oauth(const std::unique_ptr<net::connection>& conn) {
+  check_schwab_flags();
+
   // Run an HTTPS server in another thread which will listen for the OAuth
   // callback with the authentication code to be exchanged for the bearer token.
   std::string auth_code;
@@ -354,6 +348,8 @@ Json::Value execute_oauth(const std::unique_ptr<net::connection>& conn) {
   url.params().append({"redirect_uri", REDIRECT_URL});
   url.params().append({"response_type", "code"});
 
+  // TODO: Replace this std::system call below with fork, exec, or similar call
+  // to remove potential for a command injection through the URL string.
   std::string command =
       absl::StrCat("xdg-open \"", std::string_view{url.buffer()}, "\"");
   LOG(INFO) << command;

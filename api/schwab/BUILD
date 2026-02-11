@@ -6,6 +6,10 @@ cc_library(
     name = "connect",
     srcs = ["connect.cc"],
     hdrs = ["connect.h"],
+    visibility = [
+        "//api:__subpackages__",
+        "//services/oauth:__pkg__",
+    ],
     deps = [
         "//net:connect",
         "@abseil-cpp//absl/flags:flag",
@@ -47,9 +51,20 @@ cc_library(
     name = "oauth",
     srcs = ["oauth.cc"],
     hdrs = ["oauth.h"],
-    visibility = ["//visibility:public"],
+    visibility = [
+        "//api:__subpackages__",
+        "//services/oauth:__pkg__",
+    ],
     deps = [
+        ":configuration",
         ":connect",
+        "//net:connect",
+        "//strings:json",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
+        "@boost.beast",
         "@boost.url",
+        "@jsoncpp",
     ],
 )

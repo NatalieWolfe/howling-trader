@@ -227,7 +227,7 @@ Json::Value make_order(
 } // namespace
 
 api_connection::api_connection()
-    : _conn{net::make_connection(make_net_url(""))} {}
+    : _conn{net::make_connection(make_net_url("/"))} {}
 
 // MARK: get_history
 
