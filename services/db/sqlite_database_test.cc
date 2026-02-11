@@ -110,6 +110,45 @@ TEST_F(SqliteDatabaseTest, InitializesEmptyDatabase) {
   sqlite3_close_v2(raw_db);
 }
 
+TEST_F(SqliteDatabaseTest, SavedRefreshTokenIsEncryptedAtRest) {
+  // Use a shared cache memory DB to allow multiple connections.
+  absl::SetFlag(&FLAGS_sqlite_db_path, SHARED_MEMORY_DB_PATH);
+
+  // Re-initialize _db with the new path.
+  _db = std::make_unique<sqlite_database>();
+
+  std::string secret_token = "my_very_secret_refresh_token";
+  save_refresh_token("schwab", secret_token);
+
+  // Open a raw connection to verify the data on disk (or in memory).
+  sqlite3* raw_db;
+  ASSERT_EQ(sqlite3_open(SHARED_MEMORY_DB_PATH.data(), &raw_db), SQLITE_OK);
+
+  sqlite3_stmt* stmt;
+  ASSERT_EQ(
+      sqlite3_prepare_v2(
+          raw_db,
+          "SELECT refresh_token FROM auth_tokens WHERE service_name = 'schwab'",
+          -1,
+          &stmt,
+          nullptr),
+      SQLITE_OK);
+
+  ASSERT_EQ(sqlite3_step(stmt), SQLITE_ROW);
+  std::string stored_token{
+      reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)),
+      static_cast<size_t>(sqlite3_column_bytes(stmt, 0))};
+
+  // The stored token should NOT be the secret token.
+  EXPECT_NE(stored_token, secret_token);
+
+  // Ensure it can still be read back through the API correctly.
+  EXPECT_EQ(read_refresh_token("schwab"), secret_token);
+
+  sqlite3_finalize(stmt);
+  sqlite3_close_v2(raw_db);
+}
+
 DATABASE_TEST(SqliteDatabaseTest);
 
 } // namespace

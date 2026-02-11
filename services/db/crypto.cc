@@ -4,7 +4,8 @@
 
 #include "absl/flags/flag.h"
 #include "absl/strings/escaping.h"
-#include "openssl/aead.h"
+#include "absl/strings/str_cat.h"
+#include "openssl/evp.h"
 #include "openssl/rand.h"
 
 ABSL_FLAG(
@@ -18,6 +19,7 @@ namespace {
 
 constexpr size_t KEY_SIZE = 32;
 constexpr size_t NONCE_SIZE = 12;
+constexpr size_t TAG_SIZE = 16;
 
 std::string get_key() {
   std::string hex_key = absl::GetFlag(FLAGS_db_encryption_key);
@@ -31,89 +33,107 @@ std::string get_key() {
   return key;
 }
 
+struct cipher_context {
+  cipher_context() : ctx(EVP_CIPHER_CTX_new()) {
+    if (!ctx) throw std::runtime_error("Failed to create cipher context.");
+  }
+  ~cipher_context() { EVP_CIPHER_CTX_free(ctx); }
+  operator EVP_CIPHER_CTX*() { return ctx; }
+
+  EVP_CIPHER_CTX* ctx;
+};
+
 } // namespace
 
 std::string encrypt_token(std::string_view plaintext) {
   std::string key = get_key();
   std::string nonce(NONCE_SIZE, '\0');
-  RAND_bytes(reinterpret_cast<uint8_t*>(nonce.data()), NONCE_SIZE);
-
-  EVP_AEAD_CTX ctx;
-  if (!EVP_AEAD_CTX_init(
-          &ctx,
-          EVP_aead_aes_256_gcm(),
-          reinterpret_cast<const uint8_t*>(key.data()),
-          key.size(),
-          EVP_AEAD_DEFAULT_TAG_LENGTH,
-          nullptr)) {
-    throw std::runtime_error("Failed to initialize encryption context.");
+  if (RAND_bytes(reinterpret_cast<uint8_t*>(nonce.data()), NONCE_SIZE) != 1) {
+    throw std::runtime_error("Failed to generate random nonce.");
   }
 
-  size_t max_out_len =
-      plaintext.size() + EVP_AEAD_max_overhead(EVP_aead_aes_256_gcm());
-  std::string ciphertext(max_out_len, '\0');
-  size_t out_len;
-
-  if (!EVP_AEAD_CTX_seal(
-          &ctx,
-          reinterpret_cast<uint8_t*>(ciphertext.data()),
-          &out_len,
-          max_out_len,
-          reinterpret_cast<const uint8_t*>(nonce.data()),
-          nonce.size(),
-          reinterpret_cast<const uint8_t*>(plaintext.data()),
-          plaintext.size(),
+  cipher_context ctx;
+  if (EVP_EncryptInit_ex(
+          ctx,
+          EVP_aes_256_gcm(),
           nullptr,
-          0)) {
-    EVP_AEAD_CTX_cleanup(&ctx);
-    throw std::runtime_error("Encryption failed.");
+          reinterpret_cast<const uint8_t*>(key.data()),
+          reinterpret_cast<const uint8_t*>(nonce.data())) != 1) {
+    throw std::runtime_error("Failed to initialize encryption.");
   }
-  EVP_AEAD_CTX_cleanup(&ctx);
 
-  ciphertext.resize(out_len);
-  return absl::StrCat(nonce, ciphertext);
+  std::string ciphertext(plaintext.size(), '\0');
+  int len;
+  if (EVP_EncryptUpdate(
+          ctx,
+          reinterpret_cast<uint8_t*>(ciphertext.data()),
+          &len,
+          reinterpret_cast<const uint8_t*>(plaintext.data()),
+          plaintext.size()) != 1) {
+    throw std::runtime_error("Encryption update failed.");
+  }
+
+  if (EVP_EncryptFinal_ex(ctx, nullptr, &len) != 1) {
+    throw std::runtime_error("Encryption finalization failed.");
+  }
+
+  std::string tag(TAG_SIZE, '\0');
+  if (EVP_CIPHER_CTX_ctrl(
+          ctx,
+          EVP_CTRL_GCM_GET_TAG,
+          TAG_SIZE,
+          reinterpret_cast<uint8_t*>(tag.data())) != 1) {
+    throw std::runtime_error("Failed to retrieve authentication tag.");
+  }
+
+  return absl::StrCat(nonce, ciphertext, tag);
 }
 
 std::string decrypt_token(std::string_view input) {
-  std::string key = get_key();
-  if (input.size() < NONCE_SIZE) {
+  if (input.size() < NONCE_SIZE + TAG_SIZE) {
     throw std::runtime_error("Invalid ciphertext: too short.");
   }
 
+  std::string key = get_key();
   std::string_view nonce = input.substr(0, NONCE_SIZE);
-  std::string_view ciphertext = input.substr(NONCE_SIZE);
+  std::string_view tag = input.substr(input.size() - TAG_SIZE);
+  std::string_view ciphertext =
+      input.substr(NONCE_SIZE, input.size() - NONCE_SIZE - TAG_SIZE);
 
-  EVP_AEAD_CTX ctx;
-  if (!EVP_AEAD_CTX_init(
-          &ctx,
-          EVP_aead_aes_256_gcm(),
+  cipher_context ctx;
+  if (EVP_DecryptInit_ex(
+          ctx,
+          EVP_aes_256_gcm(),
+          nullptr,
           reinterpret_cast<const uint8_t*>(key.data()),
-          key.size(),
-          EVP_AEAD_DEFAULT_TAG_LENGTH,
-          nullptr)) {
-    throw std::runtime_error("Failed to initialize decryption context.");
+          reinterpret_cast<const uint8_t*>(nonce.data())) != 1) {
+    throw std::runtime_error("Failed to initialize decryption.");
   }
 
   std::string plaintext(ciphertext.size(), '\0');
-  size_t out_len;
-
-  if (!EVP_AEAD_CTX_open(
-          &ctx,
+  int len;
+  if (EVP_DecryptUpdate(
+          ctx,
           reinterpret_cast<uint8_t*>(plaintext.data()),
-          &out_len,
-          plaintext.size(),
-          reinterpret_cast<const uint8_t*>(nonce.data()),
-          nonce.size(),
+          &len,
           reinterpret_cast<const uint8_t*>(ciphertext.data()),
-          ciphertext.size(),
-          nullptr,
-          0)) {
-    EVP_AEAD_CTX_cleanup(&ctx);
-    throw std::runtime_error("Decryption failed.");
+          ciphertext.size()) != 1) {
+    throw std::runtime_error("Decryption update failed.");
   }
-  EVP_AEAD_CTX_cleanup(&ctx);
 
-  plaintext.resize(out_len);
+  if (EVP_CIPHER_CTX_ctrl(
+          ctx,
+          EVP_CTRL_GCM_SET_TAG,
+          TAG_SIZE,
+          const_cast<uint8_t*>(reinterpret_cast<const uint8_t*>(tag.data()))) !=
+      1) {
+    throw std::runtime_error("Failed to set authentication tag.");
+  }
+
+  if (EVP_DecryptFinal_ex(ctx, nullptr, &len) != 1) {
+    throw std::runtime_error("Decryption authentication failed.");
+  }
+
   return plaintext;
 }
 

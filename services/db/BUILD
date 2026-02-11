@@ -8,7 +8,7 @@ cc_library(
     deps = [
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/strings",
-        "@boringssl//:crypto",
+        "@openssl//:ssl",
     ],
 )
 

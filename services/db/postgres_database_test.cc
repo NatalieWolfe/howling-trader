@@ -114,6 +114,40 @@ TEST_F(PostgresDatabaseTest, InitializesEmptyDatabase) {
   EXPECT_NE(_db, nullptr);
 }
 
+TEST_F(PostgresDatabaseTest, SavedRefreshTokenIsEncryptedAtRest) {
+  std::string secret_token = "my_very_secret_refresh_token";
+  save_refresh_token("schwab", secret_token);
+
+  // Open a raw connection to verify the data in the database.
+  PGconn* conn = PQsetdbLogin(
+      absl::GetFlag(FLAGS_pg_host).c_str(),
+      _port_str.c_str(),
+      /*options=*/nullptr,
+      /*tty=*/nullptr,
+      absl::GetFlag(FLAGS_pg_database).c_str(),
+      absl::GetFlag(FLAGS_pg_user).c_str(),
+      absl::GetFlag(FLAGS_pg_password).c_str());
+  ASSERT_EQ(PQstatus(conn), CONNECTION_OK) << PQerrorMessage(conn);
+
+  PGresult* res = PQexec(
+      conn,
+      "SELECT refresh_token FROM auth_tokens WHERE service_name = 'schwab'");
+  ASSERT_EQ(PQresultStatus(res), PGRES_TUPLES_OK) << PQerrorMessage(conn);
+  ASSERT_EQ(PQntuples(res), 1);
+
+  std::string stored_token{
+      PQgetvalue(res, 0, 0), static_cast<size_t>(PQgetlength(res, 0, 0))};
+
+  // The stored token should NOT be the secret token.
+  EXPECT_NE(stored_token, secret_token);
+
+  // Ensure it can still be read back through the API correctly.
+  EXPECT_EQ(read_refresh_token("schwab"), secret_token);
+
+  PQclear(res);
+  PQfinish(conn);
+}
+
 DATABASE_TEST(PostgresDatabaseTest);
 
 } // namespace

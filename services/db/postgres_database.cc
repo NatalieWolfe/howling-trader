@@ -39,7 +39,7 @@ constexpr int BINARY_FORMAT = 1;
 constexpr microseconds PG_EPOCH{946684800000000}; // 2000-01-01.
 
 struct bytes {
-  std::string_view value;
+  std::string value;
 };
 
 void check_pgconn_err(PGconn& conn, std::source_location = {}) {
@@ -244,7 +244,7 @@ private:
 
   void _bind_arg(std::string_view val) { _store_param(val.data(), val.size()); }
 
-  void _bind_arg(bytes b) { _store_param(b.value.data(), b.value.size()); }
+  void _bind_arg(const bytes& b) { _store_param(b.value.data(), b.value.size()); }
 
   void _bind_arg(system_clock::time_point val) {
     microseconds duration =
