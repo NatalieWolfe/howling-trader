@@ -1,0 +1,11 @@
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -15,7 +15,7 @@
+ # When tagging a new periodic snapshot, bump the version here and then tag at
+ # the revision where we bump the version.
+ module(
+-    name = "boringssl",
++    name = "openssl",
+     version = "0.20251002.0",
+     compatibility_level = 2,
+ )

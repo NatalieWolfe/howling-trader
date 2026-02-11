@@ -5,6 +5,8 @@
 #include <grpcpp/support/channel_arguments.h>
 #include <grpcpp/support/status.h>
 
+#include "absl/flags/flag.h"
+#include "api/schwab/configuration.h"
 #include "google/protobuf/empty.pb.h"
 #include "grpcpp/grpcpp.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
@@ -17,6 +19,8 @@ namespace {
 class auth_service_test : public ::testing::Test {
 protected:
   void SetUp() override {
+    absl::SetFlag(&FLAGS_schwab_api_key_id, "test_id");
+    absl::SetFlag(&FLAGS_schwab_api_key_secret, "test_secret");
     _service = std::make_unique<auth_service>();
     grpc::ServerBuilder builder;
     builder.RegisterService(_service.get());

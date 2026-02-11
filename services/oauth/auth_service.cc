@@ -26,6 +26,11 @@ grpc::Status auth_service::RequestLogin(
   LOG(INFO) << "Received RequestLogin for service: " << request->service_name();
 
   if (request->service_name() == "schwab") {
+    try {
+      schwab::check_schwab_flags();
+    } catch (const std::exception& e) {
+      return grpc::Status(grpc::StatusCode::FAILED_PRECONDITION, e.what());
+    }
     std::string url = schwab::make_schwab_authorize_url(
         absl::GetFlag(FLAGS_schwab_api_key_id), REDIRECT_URL);
     LOG(INFO) << "Generated Schwab OAuth URL: " << url;

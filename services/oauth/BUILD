@@ -14,10 +14,50 @@ cc_library(
 )
 
 cc_library(
+    name = "oauth_exchanger",
+    hdrs = ["oauth_exchanger.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//api/schwab:oauth",
+        "//net:connect",
+    ],
+)
+
+cc_library(
+    name = "oauth_exchanger_impl",
+    srcs = ["oauth_exchanger_impl.cc"],
+    hdrs = ["oauth_exchanger_impl.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":oauth_exchanger",
+        "//api/schwab:oauth",
+        "//net:connect",
+    ],
+)
+
+cc_library(
+    name = "mock_oauth_exchanger",
+    testonly = True,
+    hdrs = ["mock_oauth_exchanger.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":oauth_exchanger",
+        "//api/schwab:oauth",
+        "//net:connect",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "oauth_http_service_lib",
     srcs = ["oauth_http_service.cc"],
     hdrs = ["oauth_http_service.h"],
     deps = [
+        ":oauth_exchanger",
+        ":oauth_exchanger_impl",
+        "//api/schwab:oauth",
+        "//net:connect",
+        "//services:database",
         "@abseil-cpp//absl/log",
         "@boost.asio",
         "@boost.beast",
@@ -30,8 +70,12 @@ cc_binary(
     srcs = ["server.cc"],
     deps = [
         ":auth_service_lib",
+        ":oauth_exchanger_impl",
         ":oauth_http_service_lib",
+        "//api/schwab:connect",
         "//environment:init",
+        "//net:connect",
+        "//services/db:make_database",
         "@abseil-cpp//absl/log",
         "@grpc//:grpc++",
     ],
@@ -52,7 +96,9 @@ cc_test(
     name = "oauth_http_service_test",
     srcs = ["oauth_http_service_test.cc"],
     deps = [
+        ":mock_oauth_exchanger",
         ":oauth_http_service_lib",
+        "//services:mock_database",
         "@googletest//:gtest_main",
     ],
 )

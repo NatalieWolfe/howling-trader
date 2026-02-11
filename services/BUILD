@@ -26,6 +26,17 @@ cc_library(
 )
 
 cc_library(
+    name = "mock_database",
+    testonly = True,
+    hdrs = ["mock_database.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":database",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "market_watch",
     srcs = ["market_watch.cc"],
     hdrs = ["market_watch.h"],

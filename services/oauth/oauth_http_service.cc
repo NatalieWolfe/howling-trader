@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "absl/log/log.h"
+#include "api/schwab/oauth.h"
 #include "boost/asio/basic_waitable_timer.hpp"
 #include "boost/asio/io_context.hpp"
 #include "boost/asio/ip/tcp.hpp"
@@ -23,6 +24,7 @@
 #include "boost/beast/http/verb.hpp"
 #include "boost/beast/http/write.hpp"
 #include "boost/url/url_view.hpp"
+#include "services/oauth/oauth_exchanger.h"
 
 namespace howling {
 
@@ -36,11 +38,14 @@ using http_response =
 using http_request =
     ::boost::beast::http::request<::boost::beast::http::dynamic_body>;
 
+namespace {
+
 class oauth_http_connection :
     public std::enable_shared_from_this<oauth_http_connection> {
 public:
-  explicit oauth_http_connection(asio::ip::tcp::socket socket)
-      : _stream{std::move(socket)} {}
+  explicit oauth_http_connection(
+      asio::ip::tcp::socket socket, database& db, oauth_exchanger* exchanger)
+      : _stream{std::move(socket)}, _db{db}, _exchanger{exchanger} {}
 
   void start() {
     _read_request();
@@ -113,7 +118,8 @@ private:
 
     LOG(INFO) << "Received OAuth code";
 
-    // TODO: Exchange code for tokens and store in DB.
+    schwab::oauth_tokens tokens = _exchanger->exchange((*code_itr).value);
+    _db.save_refresh_token("schwab", tokens.refresh_token).get();
 
     _response.result(http::status::ok);
     _response.set(http::field::content_type, "text/plain");
@@ -152,6 +158,8 @@ private:
   }
 
   beast::tcp_stream _stream;
+  database& _db;
+  oauth_exchanger* _exchanger;
   // TODO: Record incoming request sizes and monitor in grafana. Determine if a
   // larger buffer size is needed.
   beast::flat_buffer _buffer{8192};
@@ -161,19 +169,30 @@ private:
       _stream.get_executor(), std::chrono::seconds(60)};
 };
 
+} // namespace
+
 struct oauth_http_service::implementation {
   asio::io_context& ioc;
   asio::ip::tcp::acceptor acceptor;
+  database& db;
+  std::unique_ptr<oauth_exchanger> exchanger;
 
-  implementation(asio::io_context& ioc, unsigned short port)
-      : ioc(ioc), acceptor(ioc, {asio::ip::tcp::v4(), port}) {}
+  implementation(
+      asio::io_context& ioc,
+      unsigned short port,
+      database& db,
+      std::unique_ptr<oauth_exchanger> exchanger)
+      : ioc(ioc), acceptor(ioc, {asio::ip::tcp::v4(), port}), db(db),
+        exchanger(std::move(exchanger)) {}
 
   void do_accept() {
     acceptor.async_accept(
         asio::make_strand(ioc),
         [this](beast::error_code ec, asio::ip::tcp::socket socket) {
           if (!ec) {
-            std::make_shared<oauth_http_connection>(std::move(socket))->start();
+            std::make_shared<oauth_http_connection>(
+                std::move(socket), db, exchanger.get())
+                ->start();
           }
           do_accept();
         });
@@ -181,8 +200,13 @@ struct oauth_http_service::implementation {
 };
 
 oauth_http_service::oauth_http_service(
-    asio::io_context& ioc, unsigned short port)
-    : _implementation(std::make_unique<implementation>(ioc, port)) {}
+    asio::io_context& ioc,
+    unsigned short port,
+    database& db,
+    std::unique_ptr<oauth_exchanger> exchanger)
+    : _implementation(
+          std::make_unique<implementation>(
+              ioc, port, db, std::move(exchanger))) {}
 
 // Defined out-of-line due to incomplete `implementation` struct in header.
 oauth_http_service::~oauth_http_service() = default;

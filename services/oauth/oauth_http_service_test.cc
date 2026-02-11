@@ -1,10 +1,19 @@
 #include "services/oauth/oauth_http_service.h"
+#include "services/oauth/mock_oauth_exchanger.h"
 
 #include <chrono>
+#include <future>
+#include <memory>
+#include <string>
 #include <thread>
 
+#include "api/schwab/oauth.h"
 #include "boost/asio.hpp"
 #include "boost/beast.hpp"
+#include "net/connect.h"
+#include "services/database.h"
+#include "services/mock_database.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace howling {
@@ -13,6 +22,9 @@ namespace {
 namespace asio = ::boost::asio;
 namespace beast = ::boost::beast;
 namespace http = ::boost::beast::http;
+
+using ::testing::_;
+using ::testing::Return;
 
 using http_response =
     ::boost::beast::http::response<::boost::beast::http::dynamic_body>;
@@ -25,8 +37,12 @@ unsigned short get_port() {
 }
 
 struct test_server {
-  test_server() : port{get_port()}, service{ioc, port} {
-    service.start();
+  test_server() : port{get_port()}, service{} {
+    auto oauth_exchanger = std::make_unique<mock_oauth_exchanger>();
+    exchanger = oauth_exchanger.get();
+    service = std::make_unique<oauth_http_service>(
+        ioc, port, db, std::move(oauth_exchanger));
+    service->start();
     server_thread = std::jthread([this]() { ioc.run(); });
     // Give the server a moment to start and enter the accept loop.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -39,7 +55,9 @@ struct test_server {
 
   asio::io_context ioc;
   unsigned short port;
-  oauth_http_service service;
+  mock_database db;
+  mock_oauth_exchanger* exchanger;
+  std::unique_ptr<oauth_http_service> service;
   std::jthread server_thread;
 };
 
@@ -53,16 +71,32 @@ struct test_client {
   ~test_client() {
     beast::error_code ec;
     stream.socket().shutdown(asio::ip::tcp::socket::shutdown_both, ec);
-    // TODO: Throw if ec is not ok.
   }
 
   asio::io_context ioc;
   beast::tcp_stream stream;
 };
 
-TEST(OauthHttpService, CallbackReturnsOk) {
+TEST(OauthHttpService, CallbackReturnsOkAndStoresToken) {
   test_server server;
   test_client client{server.port};
+
+  EXPECT_CALL(*server.exchanger, exchange("test_code"))
+      .WillOnce(Return(
+          schwab::oauth_tokens{
+              .access_token = "access",
+              .refresh_token = "refresh",
+              .expires_in = 3600}));
+
+  std::promise<void> save_promise;
+  std::future<void> save_future = save_promise.get_future();
+  EXPECT_CALL(server.db, save_refresh_token("schwab", "refresh"))
+      .WillOnce([&](std::string_view, std::string_view) {
+        save_promise.set_value();
+        std::promise<void> p;
+        p.set_value();
+        return p.get_future();
+      });
 
   http::request<http::string_body> req{
       http::verb::get, "/callback?code=test_code", 11};
@@ -78,6 +112,10 @@ TEST(OauthHttpService, CallbackReturnsOk) {
   EXPECT_EQ(res.result(), http::status::ok);
   EXPECT_TRUE(
       res.body().find("Authentication successful") != std::string::npos);
+
+  // Wait for the async DB call to complete.
+  EXPECT_EQ(
+      save_future.wait_for(std::chrono::seconds(1)), std::future_status::ready);
 }
 
 TEST(OauthHttpService, MissingCodeReturnsBadRequest) {
