@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "absl/strings/str_join.h"
+#include "sqlite3.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -16,9 +17,34 @@ namespace {
 
 using ::testing::StartsWith;
 
-TEST(GetSchemaVersion, ReturnsCurrentSchema) {
-  // TODO: Refactor this test so it isn't a change detection test.
-  EXPECT_EQ(get_schema_version(), 2);
+TEST(GetSchemaVersion, MatchesFullSchemaInsert) {
+  sqlite3* db;
+  ASSERT_EQ(sqlite3_open(":memory:", &db), SQLITE_OK);
+
+  for (std::string_view command : get_full_schema()) {
+    char* error_message = nullptr;
+    int res = sqlite3_exec(
+        db, std::string{command}.c_str(), nullptr, nullptr, &error_message);
+    if (res != SQLITE_OK) {
+      std::string error = error_message;
+      sqlite3_free(error_message);
+      sqlite3_close(db);
+      FAIL() << "Failed to execute schema command: " << command << " (" << error
+             << ")";
+    }
+  }
+
+  sqlite3_stmt* stmt;
+  ASSERT_EQ(
+      sqlite3_prepare_v2(
+          db, "SELECT v FROM howling_version", -1, &stmt, nullptr),
+      SQLITE_OK);
+  ASSERT_EQ(sqlite3_step(stmt), SQLITE_ROW);
+  int db_version = sqlite3_column_int(stmt, 0);
+  sqlite3_finalize(stmt);
+  sqlite3_close(db);
+
+  EXPECT_EQ(get_schema_version(), db_version);
 }
 
 TEST(GetFullSchema, StartsWithCreateVersionTable) {

@@ -36,5 +36,6 @@ cc_test(
         ":schema",
         "@abseil-cpp//absl/strings",
         "@googletest//:gtest_main",
+        "@sqlite3",
     ],
 )
