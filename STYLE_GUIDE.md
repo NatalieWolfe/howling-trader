@@ -5,7 +5,8 @@ Follow the style applied by Clang Format according to the rules described in the
 guide style.
 
 ## Snake Case
-All C++ identifiers (functions, variables, members) and Bazel targets must use `snake_case`. C++ classes also use `snake_case`.
+All C++ identifiers (functions, variables, members) and Bazel targets must use
+`snake_case`. C++ classes also use `snake_case`.
 
 **Good:**
 ```cpp
@@ -17,6 +18,32 @@ int schema_version;
 ```cpp
 void SaveCandle();
 int SchemaVersion;
+```
+
+## Variable Names
+Use full words for variable names. Avoid abbreviations and single-letter
+variable names except for well-established patterns (e.g. `itr`, `i`, `j`, `k`
+for loop iterators). Use a leading underscore `_` for private member variables.
+
+**Good:**
+```cpp
+int retry_count;
+for (int i = 0; i < 10; ++i);
+auto itr = buffer.begin();
+class my_class {
+ private:
+  int _member_variable;
+};
+```
+**Bad:**
+```cpp
+int ret_cnt;
+int r;
+auto it = buffer.begin();
+class my_class {
+ private:
+  int member_variable;
+};
 ```
 
 ## Capital Snake Case
@@ -62,7 +89,8 @@ message MarketUpdate {
 Use `#pragma once` for all header guards.
 
 ## Header Cleanliness
-Do not use `using` declarations or `using namespace` in header files. Always fully qualify types or matchers.
+Do not use `using` declarations or `using namespace` in header files. Always
+fully qualify types or matchers.
 
 ## Absolute Includes
 Include all project files using their full path from the workspace root.
@@ -84,7 +112,18 @@ R"sql(
 
 ## Modern C++
 Prefer `std::generator`, `std::future`, and `std::string_view` where
-appropriate.
+appropriate. Prefer `std::unique_ptr` and `std::shared_ptr` over raw `new`/
+`delete`. Use `[[nodiscard]]` for functions where ignoring the return value is
+likely a bug (e.g., `empty()`, `size()`).
+
+## Thread Safety
+Classes designed for multi-threaded use should explicitly state their
+thread-safety guarantees (e.g., "thread-safe," "thread-compatible," or
+"internally synchronized").
+
+Use `std::atomic` only for simple, independent counters. For complex state
+transitions (e.g., coordinating head and tail in a circular buffer), prefer
+`std::mutex` to ensure consistency across multiple variables.
 
 ## Bazel Naming
 All Bazel targets must be `snake_case`.
@@ -93,18 +132,20 @@ All Bazel targets must be `snake_case`.
 Limit all lines to 80 columns.
 
 ## Indentation
-Use 2 spaces for indentation. Never use tabs. For wrapped lines (continuation indentation), use 4 spaces.
+Use 2 spaces for indentation. Never use tabs. For wrapped lines (continuation
+indentation), use 4 spaces.
 
 **Good:**
 ```cpp
 void function() {
-  int result = long_function_name(
+  int result = very_long_function_name_causing_parameters_to_wrap(
       parameter_one, parameter_two);
 }
 ```
 
 ## Curly Braces
-Always use curly braces for blocks (if, for, while, functions) unless the entire statement fits on a single line. Braces should open on the same line.
+Always use curly braces for blocks (if, for, while, functions) unless the entire
+statement fits on a single line. Braces should open on the same line.
 
 **Good:**
 ```cpp
@@ -134,15 +175,29 @@ void save_candle(const Candle& candle);
 ```
 
 ## Single-line Blocks
-Simple if/for/while statements may be written on a single line without braces if they are short and clear.
+Simple if/for/while statements may be written on a single line without braces if
+they are short and clear.
 
 **Good:**
 ```cpp
 if (!exists) return;
 for (const auto& item : items) process(item);
+
+// Wrapped even though they'd fit on one line.
+if (condition) {
+  do_something();
+} else {
+  do_something_else();
+}
 ```
 **Bad:**
 ```cpp
 if (condition)
   do_something(); // Body on new line requires braces.
+
+// Compound conditions should be considered on a whole, this should be wrapped
+// in braces.
+if (first_condition) do_something();
+else if (second_condition) do_other_thing();
+else do_something_else();
 ```
