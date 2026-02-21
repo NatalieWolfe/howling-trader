@@ -1,4 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 cc_library(
     name = "auth_service_lib",
@@ -7,6 +9,7 @@ cc_library(
     deps = [
         "//api/schwab:configuration",
         "//api/schwab:oauth",
+        "//services:database",
         "//services/oauth/proto:auth_service_cc_grpc",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
@@ -81,11 +84,30 @@ cc_binary(
     ],
 )
 
+pkg_tar(
+    name = "server_layer",
+    srcs = [":server"],
+)
+
+oci_image(
+    name = "image",
+    base = "@distroless_cc",
+    entrypoint = ["/services/oauth/server"],
+    tars = [":server_layer"],
+)
+
+oci_load(
+    name = "load",
+    image = ":image",
+    repo_tags = ["howling-oauth:latest"],
+)
+
 cc_test(
     name = "auth_service_test",
     srcs = ["auth_service_test.cc"],
     deps = [
         ":auth_service_lib",
+        "//services:mock_database",
         "//services/oauth/proto:auth_service_cc_grpc",
         "@googletest//:gtest_main",
         "@grpc//:grpc++",

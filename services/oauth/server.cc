@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "absl/log/log.h"
+#include "boost/asio/io_context.hpp"
 #include "environment/init.h"
 #include "grpcpp/grpcpp.h"
 #include "grpcpp/security/server_credentials.h"
@@ -35,7 +36,7 @@ void run_server() {
     ioc.run();
   });
 
-  auth_service service;
+  auth_service service(*db);
   grpc::ServerBuilder builder;
   // TODO: Use secure server credentials.
   builder.AddListeningPort(
