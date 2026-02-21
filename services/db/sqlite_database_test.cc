@@ -75,6 +75,13 @@ protected:
   std::string read_refresh_token(std::string_view service_name) override {
     return _db->read_refresh_token(service_name).get();
   }
+  std::optional<std::chrono::system_clock::time_point>
+  get_last_notified_at(std::string_view service_name) override {
+    return _db->get_last_notified_at(service_name).get();
+  }
+  void update_last_notified_at(std::string_view service_name) override {
+    _db->update_last_notified_at(service_name).get();
+  }
 
   std::unique_ptr<sqlite_database> _db;
 };

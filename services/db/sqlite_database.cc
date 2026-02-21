@@ -528,6 +528,42 @@ std::future<std::string> sqlite_database::read_refresh_token(
   return p.get_future();
 }
 
+std::future<std::optional<system_clock::time_point>>
+sqlite_database::get_last_notified_at(std::string_view service_name) {
+  std::promise<std::optional<system_clock::time_point>> p;
+  try {
+    query q{*_db, query::single_use, R"sql(
+      SELECT last_notified_at
+      FROM auth_tokens
+      WHERE service_name = ?1)sql"};
+    q.bind_all(service_name);
+    if (!q.step()) {
+      p.set_value(std::nullopt);
+    } else {
+      p.set_value(q.read<std::optional<system_clock::time_point>>(0));
+    }
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
+}
+
+std::future<void>
+sqlite_database::update_last_notified_at(std::string_view service_name) {
+  std::promise<void> p;
+  try {
+    query q{*_db, query::single_use, R"sql(
+      INSERT INTO auth_tokens (
+        service_name, refresh_token, last_notified_at, updated_at
+      ) VALUES (?1, '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ON CONFLICT (service_name) DO UPDATE SET
+        last_notified_at = CURRENT_TIMESTAMP,
+        updated_at = CURRENT_TIMESTAMP)sql"};
+    q.bind_all(service_name);
+    while (q.step());
+    p.set_value();
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
+}
+
 void sqlite_database::_check(int code, std::source_location loc) {
   check_sqlite_err(code, _db, std::move(loc));
 }

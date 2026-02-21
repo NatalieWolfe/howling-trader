@@ -532,6 +532,29 @@ postgres_database::postgres_database(postgres_options options)
               SELECT refresh_token
               FROM auth_tokens
               WHERE service_name = $1)sql"));
+
+    // Prepare Last Notification Time SELECT query
+    _implementation->_prepared_queries.emplace(
+        "get_last_notified_at",
+        query::prepare<std::string_view>(
+            *_implementation->_conn,
+            R"sql(
+              SELECT last_notified_at
+              FROM auth_tokens
+              WHERE service_name = $1)sql"));
+
+    // Prepare Notification Sent UPDATE query
+    _implementation->_prepared_queries.emplace(
+        "update_last_notified_at",
+        query::prepare<std::string_view>(
+            *_implementation->_conn,
+            R"sql(
+              INSERT INTO auth_tokens (
+                service_name, refresh_token, last_notified_at, updated_at
+              ) VALUES ($1, '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+              ON CONFLICT (service_name) DO UPDATE SET
+                last_notified_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP)sql"));
   } catch (...) {
     if (_implementation->_conn) {
       PQfinish(_implementation->_conn);
@@ -697,6 +720,36 @@ postgres_database::read_refresh_token(std::string_view service_name) {
       q.read_all(encrypted_token);
       p.set_value(decrypt_token(encrypted_token));
     }
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
+}
+
+std::future<std::optional<system_clock::time_point>>
+postgres_database::get_last_notified_at(std::string_view service_name) {
+  std::promise<std::optional<system_clock::time_point>> p;
+  try {
+    query& q =
+        *_implementation->_prepared_queries.at("get_last_notified_at");
+    q.bind_all(service_name);
+    if (!q.step()) {
+      p.set_value(std::nullopt);
+    } else {
+      std::optional<system_clock::time_point> last_notified;
+      q.read_all(last_notified);
+      p.set_value(last_notified);
+    }
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
+}
+
+std::future<void>
+postgres_database::update_last_notified_at(std::string_view service_name) {
+  std::promise<void> p;
+  try {
+    query& q = *_implementation->_prepared_queries.at("update_last_notified_at");
+    q.bind_all(service_name);
+    while (q.step());
+    p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
   return p.get_future();
 }

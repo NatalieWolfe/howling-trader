@@ -43,6 +43,17 @@ public:
       read_refresh_token,
       (std::string_view service_name),
       (override));
+
+  MOCK_METHOD(
+      (std::future<std::optional<std::chrono::system_clock::time_point>>),
+      get_last_notified_at,
+      (std::string_view service_name),
+      (override));
+  MOCK_METHOD(
+      std::future<void>,
+      update_last_notified_at,
+      (std::string_view service_name),
+      (override));
 };
 
 } // namespace howling

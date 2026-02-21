@@ -26,6 +26,9 @@ protected:
   virtual std::generator<trading::TradeRecord>
   read_trades(stock::Symbol symbol) = 0;
   virtual std::string read_refresh_token(std::string_view service_name) = 0;
+  virtual std::optional<std::chrono::system_clock::time_point>
+  get_last_notified_at(std::string_view service_name) = 0;
+  virtual void update_last_notified_at(std::string_view service_name) = 0;
 };
 
 #define DATABASE_TEST(FIXTURE_CLASS)                                           \
@@ -149,6 +152,15 @@ protected:
   }                                                                            \
   TEST_F(FIXTURE_CLASS, ReadingMissingRefreshTokenReturnsEmpty) {              \
     EXPECT_EQ(read_refresh_token("missing_service"), "");                      \
+  }                                                                            \
+  TEST_F(FIXTURE_CLASS, CanRecordAndReadNotificationTime) {                    \
+    save_refresh_token("schwab", "token");                                     \
+    EXPECT_FALSE(get_last_notified_at("schwab").has_value());                  \
+    update_last_notified_at("schwab");                                         \
+    auto last_notified = get_last_notified_at("schwab");                       \
+    ASSERT_TRUE(last_notified.has_value());                                    \
+    EXPECT_LT(std::chrono::system_clock::now() - *last_notified,               \
+              std::chrono::seconds(10));                                       \
   }
 
 } // namespace howling

@@ -30,6 +30,10 @@ public:
   std::future<std::string>
   read_refresh_token(std::string_view service_name) override;
 
+  std::future<std::optional<std::chrono::system_clock::time_point>>
+  get_last_notified_at(std::string_view service_name) override;
+  std::future<void> update_last_notified_at(std::string_view service_name) override;
+
 private:
   void _check(int code, std::source_location loc = {});
 
