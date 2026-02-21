@@ -8,6 +8,7 @@
 #include <memory>
 #include <mutex>
 #include <ranges>
+#include <thread>
 #include <utility>
 
 #include "containers/circular_buffer.h"
@@ -21,19 +22,32 @@ public:
 
   ~buffered_stream() {
     _running = false;
-    while (!_readers.empty()) {
+    {
       std::lock_guard lock{_readers_mutex};
-      for (const auto& reader : _readers) reader->signal.notify_one();
+      for (const auto& reader : _readers) reader->signal.notify_all();
+    }
+
+    while (true) {
+      {
+        std::lock_guard lock{_readers_mutex};
+        if (_readers.empty()) break;
+      }
+      std::this_thread::yield();
     }
   }
 
-  std::generator<const T&> stream();
+  std::generator<T> stream();
 
   template <typename U>
   void push_back(U&& val) {
     _buffer.push_back(std::forward<U>(val));
     std::lock_guard lock{_readers_mutex};
     for (const auto& reader : _readers) reader->signal.notify_one();
+  }
+
+  [[nodiscard]] size_t reader_count() const {
+    std::lock_guard lock{_readers_mutex};
+    return _readers.size();
   }
 
 private:
@@ -43,21 +57,21 @@ private:
   };
 
   std::atomic_bool _running = true;
-  std::mutex _readers_mutex;
+  mutable std::mutex _readers_mutex;
   std::list<std::shared_ptr<reader_info>> _readers;
   circular_buffer<T> _buffer;
 };
 
 template <typename T>
-std::generator<const T&> buffered_stream<T>::stream() {
+std::generator<T> buffered_stream<T>::stream() {
   auto info = std::make_shared<reader_info>();
   typename std::list<std::shared_ptr<reader_info>>::iterator reader_itr;
   {
     std::lock_guard lock{_readers_mutex};
-    _readers.push_front(info);
-    reader_itr = _readers.begin();
+    reader_itr = _readers.insert(_readers.begin(), info);
   }
-  auto cleanup_callback = [&reader_itr, this](int* x) {
+  // TODO: Create an execute_on_destroy class to wrap this pattern.
+  auto cleanup_callback = [reader_itr, this](int* x) {
     delete x;
     std::lock_guard lock{_readers_mutex};
     _readers.erase(reader_itr);
@@ -66,11 +80,13 @@ std::generator<const T&> buffered_stream<T>::stream() {
       new int, std::move(cleanup_callback));
 
   auto itr = _buffer.begin();
-  while (_running) {
+  while (_running || itr != _buffer.end()) {
     while (itr != _buffer.end()) {
       co_yield *itr;
       ++itr;
     }
+    if (!_running) break;
+
     std::unique_lock lock{info->mutex};
     info->signal.wait(
         lock, [&]() { return itr != _buffer.end() || !_running; });

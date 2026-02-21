@@ -1,13 +1,21 @@
 #pragma once
 
-#include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <mutex>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace howling {
 
+/**
+ * @brief A thread-safe circular buffer.
+ *
+ * This class is internally synchronized and safe for concurrent use by
+ * multiple readers and a single writer.
+ */
 template <typename T>
 class circular_buffer {
 private:
@@ -27,32 +35,35 @@ public:
   class iterator;
   class const_iterator;
 
-  iterator begin() { return iterator{_front_index(), *this}; }
-  const_iterator begin() const { return const_iterator{_front_index(), *this}; }
-  const_iterator cbegin() const { return begin(); }
-  iterator end() { return iterator{END, *this}; }
-  const_iterator end() const { return const_iterator{END, *this}; }
-  const_iterator cend() const { return end(); }
+  [[nodiscard]] iterator begin() {
+    std::lock_guard lock{_mutex};
+    return iterator{_front_index_locked(), *this};
+  }
+  [[nodiscard]] const_iterator begin() const {
+    std::lock_guard lock{_mutex};
+    return const_iterator{_front_index_locked(), *this};
+  }
+  [[nodiscard]] const_iterator cbegin() const { return begin(); }
+  [[nodiscard]] iterator end() { return iterator{END, *this}; }
+  [[nodiscard]] const_iterator end() const { return const_iterator{END, *this}; }
+  [[nodiscard]] const_iterator cend() const { return end(); }
 
-  T& at(uint32_t index) {
+  [[nodiscard]] T at(uint32_t index) const {
+    std::lock_guard lock{_mutex};
     if (index >= _size) {
       throw std::range_error("Out of bounds offset into circular buffer.");
     }
-    return _buffer.at(_circularize(_front_index() + index));
-  }
-  const T& at(uint32_t index) const {
-    if (index >= _size) {
-      throw std::range_error("Out of bounds offset into circular buffer.");
-    }
-    return _buffer.at(_circularize(_front_index() + index));
+    return _buffer[_circularize(_front_index_locked() + index)];
   }
 
-  T& operator[](uint32_t index) {
-    return _buffer[_circularize(_front_index() + index)];
+  [[nodiscard]] T operator[](uint32_t index) const {
+    std::lock_guard lock{_mutex};
+    return _buffer[_circularize(_front_index_locked() + index)];
   }
 
   template <typename U>
   void push_back(U&& val) {
+    std::lock_guard lock{_mutex};
     if (_buffer.size() < _capacity) {
       _buffer.push_back(std::forward<U>(val));
     } else {
@@ -63,6 +74,7 @@ public:
   }
 
   void pop_front() {
+    std::lock_guard lock{_mutex};
     if (_size == 0) {
       throw std::range_error(
           "Circular buffer is empty, cannot pop front element.");
@@ -70,29 +82,48 @@ public:
     --_size;
   }
 
-  T& front() { return _buffer.at(_circularize(_front_index())); }
-  T& back() { return _buffer.at(_circularize(_back_index())); }
-  const T& front() const { return _buffer.at(_circularize(_front_index())); }
-  const T& back() const { return _buffer.at(_circularize(_back_index())); }
+  [[nodiscard]] T front() const {
+    std::lock_guard lock{_mutex};
+    if (_size == 0) throw std::range_error("Circular buffer is empty.");
+    return _buffer[_circularize(_front_index_locked())];
+  }
+  [[nodiscard]] T back() const {
+    std::lock_guard lock{_mutex};
+    if (_size == 0) throw std::range_error("Circular buffer is empty.");
+    return _buffer[_circularize(_back_index_locked())];
+  }
 
-  size_t capacity() const { return _capacity; }
-  size_t size() const { return _size; }
-  bool empty() const { return _size == 0; }
+  [[nodiscard]] size_t capacity() const { return _capacity; }
+  [[nodiscard]] size_t size() const {
+    std::lock_guard lock{_mutex};
+    return _size;
+  }
+  [[nodiscard]] bool empty() const {
+    std::lock_guard lock{_mutex};
+    return _size == 0;
+  }
   void clear() {
+    std::lock_guard lock{_mutex};
     _buffer.clear();
     _size = 0;
     _insert_count = 0;
   }
 
 private:
-  size_t _front_index() const { return _insert_count - _size; }
-  size_t _back_index() const { return _insert_count - 1; }
+  friend class iterator;
+  friend class const_iterator;
+
+  size_t _front_index_locked() const {
+    return _insert_count > _size ? _insert_count - _size : 0;
+  }
+  size_t _back_index_locked() const { return _insert_count - 1; }
   size_t _circularize(size_t index) const { return index % _capacity; }
 
   size_t _capacity;
-  std::atomic_size_t _size = 0;
-  std::atomic_size_t _insert_count = 0;
+  size_t _size = 0;
+  size_t _insert_count = 0;
   std::vector<T> _buffer;
+  mutable std::mutex _mutex;
 };
 
 template <typename T>
@@ -105,8 +136,9 @@ public:
   iterator& operator=(iterator&&) = default;
 
   iterator& operator++() {
+    std::lock_guard lock{_buffer->_mutex};
     ++_index;
-    _jump_to_front();
+    _jump_to_front_locked();
     return *this;
   }
   iterator operator++(int) {
@@ -116,8 +148,9 @@ public:
   }
 
   iterator& operator+=(uint32_t n) {
+    std::lock_guard lock{_buffer->_mutex};
     _index += n;
-    _jump_to_front();
+    _jump_to_front_locked();
     return *this;
   }
 
@@ -126,30 +159,20 @@ public:
     val += n;
     return val;
   }
-  friend iterator operator+(uint32_t n, const iterator& itr) {
-    iterator val = itr;
-    val += n;
-    return val;
-  }
 
   bool operator==(const iterator& other) const {
-    if (_is_end() || other._is_end()) return _is_end() == other._is_end();
+    std::lock_guard lock{_buffer->_mutex};
+    if (_is_end_locked() || other._is_end_locked()) {
+      return _is_end_locked() == other._is_end_locked();
+    }
     return _index == other._index && _buffer == other._buffer;
   }
   bool operator!=(const iterator& other) const { return !(*this == other); }
-  bool operator==(const const_iterator& other) const {
-    if (_is_end() || other._is_end()) return _is_end() == other._is_end();
-    return _index == other._index && _buffer == other._buffer;
-  }
-  bool operator!=(const const_iterator& other) const {
-    return !(*this == other);
-  }
 
-  T& operator*() const {
+  T operator*() const {
+    std::lock_guard lock{_buffer->_mutex};
+    _jump_to_front_locked();
     return _buffer->_buffer[_buffer->_circularize(_index)];
-  }
-  T* operator->() const {
-    return &_buffer->_buffer[_buffer->_circularize(_index)];
   }
 
 private:
@@ -159,17 +182,16 @@ private:
   iterator(size_t index, circular_buffer& buffer)
       : _index{index}, _buffer{&buffer} {}
 
-  void _jump_to_front() {
-    if (_buffer->_insert_count - _index > _buffer->_size) {
-      _index = _buffer->_front_index();
-    }
+  void _jump_to_front_locked() const {
+    size_t front = _buffer->_front_index_locked();
+    if (_index < front) _index = front;
   }
 
-  bool _is_end() const {
-    return _index == circular_buffer::END || _index == _buffer->_insert_count;
+  bool _is_end_locked() const {
+    return _index == circular_buffer::END || _index >= _buffer->_insert_count;
   }
 
-  size_t _index;
+  mutable size_t _index;
   circular_buffer* _buffer;
 };
 
@@ -183,15 +205,11 @@ public:
       : _index{other._index}, _buffer{other._buffer} {}
   const_iterator& operator=(const const_iterator&) = default;
   const_iterator& operator=(const_iterator&&) = default;
-  const_iterator& operator=(const iterator& other) {
-    _index = other._index;
-    _buffer = other._buffer;
-    return *this;
-  }
 
   const_iterator& operator++() {
+    std::lock_guard lock{_buffer->_mutex};
     ++_index;
-    _jump_to_front();
+    _jump_to_front_locked();
     return *this;
   }
   const_iterator operator++(int) {
@@ -200,41 +218,21 @@ public:
     return val;
   }
 
-  const_iterator& operator+=(uint32_t n) {
-    _index += n;
-    _jump_to_front();
-    return *this;
-  }
-
-  friend const_iterator operator+(const const_iterator& itr, uint32_t n) {
-    const_iterator val = itr;
-    val += n;
-    return val;
-  }
-  friend const_iterator operator+(uint32_t n, const const_iterator& itr) {
-    const_iterator val = itr;
-    val += n;
-    return val;
-  }
-
   bool operator==(const const_iterator& other) const {
-    if (_is_end() || other._is_end()) return _is_end() == other._is_end();
+    std::lock_guard lock{_buffer->_mutex};
+    if (_is_end_locked() || other._is_end_locked()) {
+      return _is_end_locked() == other._is_end_locked();
+    }
     return _index == other._index && _buffer == other._buffer;
   }
   bool operator!=(const const_iterator& other) const {
     return !(*this == other);
   }
-  bool operator==(const iterator& other) const {
-    if (_is_end() || other._is_end()) return _is_end() == other._is_end();
-    return _index == other._index && _buffer == other._buffer;
-  }
-  bool operator!=(const iterator& other) const { return !(*this == other); }
 
-  const T& operator*() const {
-    return _buffer->_buffer.at(_buffer->_circularize(_index));
-  }
-  const T* operator->() const {
-    return &_buffer->_buffer.at(_buffer->_circularize(_index));
+  T operator*() const {
+    std::lock_guard lock{_buffer->_mutex};
+    _jump_to_front_locked();
+    return _buffer->_buffer[_buffer->_circularize(_index)];
   }
 
 private:
@@ -244,17 +242,16 @@ private:
   const_iterator(size_t index, const circular_buffer& buffer)
       : _index{index}, _buffer{&buffer} {}
 
-  void _jump_to_front() {
-    if (_buffer->_insert_count - _index > _buffer->_size) {
-      _index = _buffer->_front_index();
-    }
+  void _jump_to_front_locked() const {
+    size_t front = _buffer->_front_index_locked();
+    if (_index < front) _index = front;
   }
 
-  bool _is_end() const {
-    return _index == circular_buffer::END || _index == _buffer->_insert_count;
+  bool _is_end_locked() const {
+    return _index == circular_buffer::END || _index >= _buffer->_insert_count;
   }
 
-  size_t _index;
+  mutable size_t _index;
   const circular_buffer* _buffer;
 };
 

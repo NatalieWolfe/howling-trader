@@ -1,5 +1,6 @@
 #include "containers/buffered_stream.h"
 
+#include <atomic>
 #include <chrono>
 #include <memory>
 #include <thread>
@@ -14,11 +15,13 @@ using namespace std::chrono_literals;
 TEST(BufferedStream, PushAndRetrieve) {
   int counter = 0;
   auto buffer = std::make_unique<buffered_stream<int>>(10000);
-  std::thread writer([&]() {
-    for (int i = 1; i < 9001; ++i) buffer->push_back(i);
-  });
   std::thread reader([&]() {
     for (int i : buffer->stream()) EXPECT_EQ(i, ++counter);
+  });
+  while (buffer->reader_count() < 1) std::this_thread::yield();
+
+  std::thread writer([&]() {
+    for (int i = 1; i < 9001; ++i) buffer->push_back(i);
   });
   writer.join();
   buffer = nullptr;
@@ -42,10 +45,13 @@ TEST(BufferedStream, MultipleReaders) {
     }
     EXPECT_EQ(local_counter, 9000);
   };
+
   std::thread reader_1(reader);
   std::thread reader_2(reader);
   std::thread reader_3(reader);
   std::thread reader_4(reader);
+  while (buffer->reader_count() < 4) std::this_thread::yield();
+
   writer.join();
   buffer = nullptr;
   reader_1.join();
@@ -73,6 +79,8 @@ TEST(BufferedStream, EmptyReadTerminatesCleanly) {
     reader_finished = true;
   });
 
+  while (buffer->reader_count() < 1) std::this_thread::yield();
+
   // Give the reader time to start and wait.
   std::this_thread::sleep_for(20ms);
   buffer = nullptr;
@@ -85,10 +93,12 @@ TEST(BufferedStream, ReadersCatchUpOnBufferedData) {
   auto buffer = std::make_unique<buffered_stream<int>>(100);
   for (int i = 1; i <= 100; ++i) buffer->push_back(i);
 
-  int counter = 0;
+  std::atomic_int counter = 0;
   std::thread reader([&]() {
     for (int i : buffer->stream()) EXPECT_EQ(i, ++counter);
   });
+
+  while (buffer->reader_count() < 1) std::this_thread::yield();
 
   // Give the late reader time to process the existing items.
   std::this_thread::sleep_for(20ms);
@@ -100,9 +110,8 @@ TEST(BufferedStream, ReadersCatchUpOnBufferedData) {
 
 TEST(BufferedStream, SlowReaderLosesData) {
   auto buffer = std::make_unique<buffered_stream<int>>(10);
-  std::atomic_bool reader_started = false;
   std::thread writer([&]() {
-    while (!reader_started) std::this_thread::sleep_for(1ms);
+    while (buffer->reader_count() < 1) std::this_thread::sleep_for(1ms);
 
     for (int i = 1; i <= 100; ++i) {
       buffer->push_back(i);
@@ -110,10 +119,9 @@ TEST(BufferedStream, SlowReaderLosesData) {
     }
   });
 
-  int counter = 0;
+  std::atomic_int counter = 0;
   std::atomic_int last_seen = 0;
   std::thread reader([&]() {
-    reader_started = true;
     for (int i : buffer->stream()) {
       EXPECT_GT(i, last_seen); // Data should still be in increasing order.
       last_seen = i;
@@ -122,11 +130,10 @@ TEST(BufferedStream, SlowReaderLosesData) {
     }
   });
 
+  while (buffer->reader_count() < 1) std::this_thread::yield();
+
   writer.join();
-  int prev = 0;
-  while (last_seen.wait(prev), (prev = last_seen) < 100) {
-    std::this_thread::sleep_for(1ms);
-  }
+  // Wait for the reader to finish processing items up to 100 or exit.
   buffer = nullptr;
   reader.join();
 
@@ -142,19 +149,24 @@ TEST(BufferedStream, ReaderDisconnect) {
   std::atomic_bool writer_done = false;
   std::atomic_bool reader_done = false;
   std::thread writer([&]() {
+    while (buffer->reader_count() < 1) std::this_thread::sleep_for(1ms);
+
     for (int i = 1; i < 1000; ++i) {
       buffer->push_back(i);
-      std::this_thread::sleep_for(10us);
+      std::this_thread::sleep_for(1ms);
     }
     writer_done = true;
   });
 
   std::thread reader([&]() {
     for (int i : buffer->stream()) {
+      std::this_thread::sleep_for(1ms);
       if (i > 100) break;
     }
     reader_done = true;
   });
+
+  while (buffer->reader_count() < 1) std::this_thread::yield();
 
   EXPECT_FALSE(writer_done);
   EXPECT_FALSE(reader_done);
