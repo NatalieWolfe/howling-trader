@@ -8,6 +8,7 @@ cc_library(
     hdrs = ["connect.h"],
     visibility = [
         "//api:__subpackages__",
+        "//services:__pkg__",
         "//services/oauth:__pkg__",
     ],
     deps = [
@@ -27,32 +28,12 @@ cc_library(
 )
 
 cc_library(
-    name = "oauth_internal",
-    srcs = ["oauth_internal.cc"],
-    hdrs = ["oauth_internal.h"],
-    deps = [
-        ":configuration",
-        ":connect",
-        ":oauth",
-        "//environment:runfiles",
-        "//net:connect",
-        "//strings:json",
-        "//strings:trim",
-        "@abseil-cpp//absl/flags:flag",
-        "@abseil-cpp//absl/log",
-        "@abseil-cpp//absl/strings",
-        "@boost.beast",
-        "@boost.url",
-        "@jsoncpp",
-    ],
-)
-
-cc_library(
     name = "oauth",
     srcs = ["oauth.cc"],
     hdrs = ["oauth.h"],
     visibility = [
         "//api:__subpackages__",
+        "//services:__pkg__",
         "//services/oauth:__pkg__",
     ],
     deps = [

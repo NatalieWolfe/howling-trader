@@ -16,7 +16,7 @@
 #include "absl/log/log_entry.h"
 #include "absl/strings/str_cat.h"
 #include "api/schwab/connect.h"
-#include "api/schwab/oauth_internal.h"
+#include "services/authenticate.h"
 #include "boost/asio.hpp"
 #include "boost/asio/ssl.hpp"
 #include "boost/beast.hpp"
@@ -187,7 +187,7 @@ Json::Value get_streamer_info() {
   net::url user_pref_url = make_net_url("/trader/v1/userPreference");
   std::unique_ptr<net::connection> api_conn =
       net::make_connection(user_pref_url);
-  std::string_view bearer_token = get_bearer_token(api_conn);
+  std::string bearer_token = token_manager::get_instance().get_bearer_token();
   Json::Value root = send_request(api_conn, bearer_token, user_pref_url);
   Json::Value streamer_info = Json::nullValue;
 
@@ -235,7 +235,7 @@ vector<Candle> api_connection::get_history(
     stock::Symbol symbol, const get_history_parameters& params) {
   std::vector<Candle> candles;
   net::url url = make_url(symbol, params);
-  std::string_view bearer_token = get_bearer_token(_conn);
+  std::string bearer_token = token_manager::get_instance().get_bearer_token();
 
   Json::Value root = send_request(_conn, bearer_token, url);
   for (const Json::Value& val : root["candles"]) {
@@ -258,7 +258,7 @@ vector<Candle> api_connection::get_history(
 
 std::vector<Account> api_connection::get_accounts() {
   net::url url = make_net_url("/trader/v1/accounts/accountNumbers");
-  std::string_view bearer_token = get_bearer_token(_conn);
+  std::string bearer_token = token_manager::get_instance().get_bearer_token();
 
   Json::Value root = send_request(_conn, bearer_token, url);
   check_json(root.isArray());
@@ -314,7 +314,7 @@ std::vector<stock::Position>
 api_connection::get_account_positions(std::string_view account_id) {
   net::url url = make_net_url(
       absl::StrCat("/trader/v1/accounts/", account_id, "?fields=positions"));
-  std::string_view bearer_token = get_bearer_token(_conn);
+  std::string bearer_token = token_manager::get_instance().get_bearer_token();
 
   Json::Value root = send_request(_conn, bearer_token, url);
   check_json(root.isObject());
@@ -357,7 +357,8 @@ void api_connection::place_buy(const order_parameters& params) {
   LOG(WARNING) << "THIS IS NOT YET TESTED OR VERIFIED!";
   return;
 
-  Json::Value res = send_request(_conn, get_bearer_token(_conn), url, body);
+  Json::Value res = send_request(
+      _conn, token_manager::get_instance().get_bearer_token(), url, body);
 }
 
 void api_connection::place_sell(const order_parameters& params) {
@@ -369,7 +370,8 @@ void api_connection::place_sell(const order_parameters& params) {
   LOG(WARNING) << "THIS IS NOT YET TESTED OR VERIFIED!";
   return;
 
-  Json::Value res = send_request(_conn, get_bearer_token(_conn), url, body);
+  Json::Value res = send_request(
+      _conn, token_manager::get_instance().get_bearer_token(), url, body);
 }
 
 // MARK: stream
@@ -656,7 +658,8 @@ void stream::_login() {
   _conn->stream().text(true);
 
   Json::Value parameters{Json::objectValue};
-  parameters["Authorization"] = std::string{get_bearer_token(/*conn=*/nullptr)};
+  parameters["Authorization"] =
+      token_manager::get_instance().get_bearer_token();
   parameters["SchwabClientChannel"] =
       streamer_info["schwabClientChannel"].asString();
   parameters["SchwabClientFunctionId"] =

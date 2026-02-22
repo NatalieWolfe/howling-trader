@@ -22,4 +22,8 @@ std::string make_schwab_authorize_url(
 oauth_tokens exchange_code_for_tokens(
     net::connection& conn, std::string_view code);
 
+// Refreshes the access token using a refresh token.
+oauth_tokens refresh_tokens(
+    net::connection& conn, std::string_view refresh_token);
+
 } // namespace howling::schwab

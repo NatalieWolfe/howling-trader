@@ -6,6 +6,7 @@
 
 ABSL_DECLARE_FLAG(std::string, schwab_api_key_id);
 ABSL_DECLARE_FLAG(std::string, schwab_api_key_secret);
+ABSL_DECLARE_FLAG(std::string, schwab_oauth_redirect_url);
 
 namespace howling::schwab {
 
