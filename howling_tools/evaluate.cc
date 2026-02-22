@@ -1,3 +1,4 @@
+#include <utility>
 #include <chrono>
 #include <exception>
 #include <filesystem>
@@ -7,7 +8,6 @@
 #include <ranges>
 #include <sstream>
 #include <string>
-#include <utility>
 
 #include "absl/flags/flag.h"
 #include "cli/printing.h"
