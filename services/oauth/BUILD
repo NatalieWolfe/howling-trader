@@ -17,6 +17,18 @@ cc_library(
 )
 
 cc_library(
+    name = "mock_auth_service",
+    testonly = True,
+    hdrs = ["mock_auth_service.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//services/oauth/proto:auth_service_cc_grpc",
+        "@googletest//:gtest",
+        "@grpc//:grpc++",
+    ],
+)
+
+cc_library(
     name = "oauth_exchanger",
     hdrs = ["oauth_exchanger.h"],
     visibility = ["//visibility:public"],

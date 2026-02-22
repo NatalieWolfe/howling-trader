@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
     name = "authenticate",
@@ -6,9 +6,26 @@ cc_library(
     hdrs = ["authenticate.h"],
     visibility = ["//visibility:public"],
     deps = [
+        "//api/schwab:connect",
+        "//api/schwab:oauth",
+        "//net:connect",
+        "//services:database",
+        "//services/db:make_database",
         "//services/oauth/proto:auth_service_cc_grpc",
         "@abseil-cpp//absl/log",
         "@grpc//:grpc++",
+    ],
+)
+
+cc_test(
+    name = "authenticate_test",
+    srcs = ["authenticate_test.cc"],
+    deps = [
+        ":authenticate",
+        ":mock_database",
+        "//services/oauth:mock_auth_service",
+        "//services/oauth/proto:auth_service_cc_grpc",
+        "@googletest//:gtest_main",
     ],
 )
 
