@@ -88,13 +88,6 @@ NOW_EPOCH=$(date +%s)
 SLEEP_SECONDS=$((TARGET_EPOCH - NOW_EPOCH))
 TARGET_READABLE=$(TZ="$LOCAL_TZ" date -d @$TARGET_EPOCH)
 
-# Validate binary exists
-EXEC_BINARY="./bazel-bin/howling_tools/execute"
-if [ ! -f "$EXEC_BINARY" ]; then
-  echo "Building trading bot..."
-  bazel build //howling_tools:execute
-fi
-
 echo "=================================================="
 echo "          Trading Scheduler"
 echo "=================================================="
@@ -129,7 +122,17 @@ done
 printf "\n"
 
 # Execute
-echo "Waking up! Starting trading bot..."
+echo "Building authentication service..."
+bazel run //services/oauth:load
+docker-compose up -d oauth-server
+
+EXEC_BINARY="./bazel-bin/howling_tools/execute"
+if [ ! -f "$EXEC_BINARY" ]; then
+  echo "Building trading bot..."
+  bazel build //howling_tools:execute
+fi
+
+echo "Starting trading bot..."
 $EXEC_BINARY \
   --stocks="$STOCKS" \
   --analyzer="$ANALYZER" \

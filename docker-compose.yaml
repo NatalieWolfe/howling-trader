@@ -1,0 +1,18 @@
+services:
+  oauth-server:
+    image: howling-oauth:latest
+    ports:
+      - "50051:50051"
+      - "8080:8080"
+    volumes:
+      - ./howling.db:/howling.db
+    environment:
+      - SCHWAB_API_KEY_ID=${SCHWAB_API_KEY_ID}
+      - SCHWAB_API_KEY_SECRET=${SCHWAB_API_KEY_SECRET}
+    command: 
+      - "/services/oauth/server"
+      - "--database=sqlite"
+      - "--sqlite_db_path=/howling.db"
+      - "--schwab_api_key_id=${SCHWAB_API_KEY_ID}"
+      - "--schwab_api_key_secret=${SCHWAB_API_KEY_SECRET}"
+      - "--schwab_oauth_redirect_url=http://localhost:8080/callback"
