@@ -10,6 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup GCC 15
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: gcc-15
+      - name: Install clang-format-20
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 20
+          sudo apt-get install -y clang-format-20
+          clang-format-20 --version
       - name: Mount Bazel Cache
         uses: actions/cache@v4
         with:
@@ -19,8 +30,8 @@ jobs:
             bazel-${{ runner.os }}-
       - name: Run All Tests
         run: |
-          export CC=gcc-14
-          export CXX=g++-14
+          export CC=gcc-15
+          export CXX=g++-15
           bazel test //...
       - name: Check Formatting
         run: |
