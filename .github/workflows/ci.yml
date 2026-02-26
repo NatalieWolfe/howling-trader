@@ -33,3 +33,29 @@ jobs:
         run: |
           # Ensure code is formatted according to .clang-format
           find . -name "*.cc" -o -name "*.h" | xargs -r clang-format-20 --dry-run --Werror
+
+  publish:
+    needs: test
+    if: github.ref == 'refs/heads/release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Mount Bazel Cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/bazel
+          key: bazel-${{ runner.os }}-${{ hashFiles('MODULE.bazel', '**/BUILD', '**/BUILD.bazel', '.bazelrc') }}
+      - name: Login to OVHcloud Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.OVH_REGISTRY_URL }}
+          username: ${{ secrets.OVH_REGISTRY_USERNAME }}
+          password: ${{ secrets.OVH_REGISTRY_PASSWORD }}
+      - name: Build and Push Images
+        run: |
+          export CC=gcc-14
+          export CXX=g++-14
+          # Replace placeholder with actual registry URL from secrets
+          find . -name BUILD -exec sed -i "s|OVH_REGISTRY_URL_PLACEHOLDER|${{ secrets.OVH_REGISTRY_URL }}|g" {} +
+          bazel run //services/oauth:push
+          bazel run //howling_tools:push

@@ -1,5 +1,5 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 cc_library(
@@ -112,6 +112,13 @@ oci_load(
     name = "load",
     image = ":image",
     repo_tags = ["howling-oauth:latest"],
+)
+
+oci_push(
+    name = "push",
+    image = ":image",
+    remote_tags = ["latest"],
+    repository = "OVH_REGISTRY_URL_PLACEHOLDER/howling-oauth",
 )
 
 cc_test(

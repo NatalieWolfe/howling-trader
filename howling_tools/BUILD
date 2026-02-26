@@ -113,5 +113,5 @@ oci_push(
     name = "push",
     image = ":executor_image",
     remote_tags = ["latest"],
-    repository = "ghcr.io/nataliewolfe/howling-trader",
+    repository = "OVH_REGISTRY_URL_PLACEHOLDER/howling-executor",
 )
