@@ -10,15 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Clang 20
+      - name: Install GCC 15
         run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          # The script will add the repo and run apt update
-          sudo ./llvm.sh 20
-          sudo apt-get install -y clang-format-20 clang-20 libc++-20-dev libc++abi-20-dev
-          clang-20 --version
-          clang-format-20 --version
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt-get update
+          sudo apt-get install -y gcc-15 g++-15 clang-format-20
+          gcc-15 --version
+          g++-15 --version
       - name: Mount Bazel Cache
         uses: actions/cache@v4
         with:
@@ -28,13 +26,9 @@ jobs:
             bazel-${{ runner.os }}-
       - name: Run All Tests
         run: |
-          export CC=clang-20
-          export CXX=clang++-20
-          export BAZEL_COMPILER=clang
-          bazel test \
-            --cxxopt=-stdlib=libc++ --linkopt=-stdlib=libc++ \
-            --cxxopt=-fexperimental-library --linkopt=-fexperimental-library \
-            //...
+          export CC=gcc-15
+          export CXX=g++-15
+          bazel test //...
       - name: Check Formatting
         run: |
           # Ensure code is formatted according to .clang-format
