@@ -101,6 +101,15 @@ private:
 
   void _process_get() {
     urls::url_view url_view{_request.target()};
+
+    if (url_view.path() == "/status") {
+      _response.result(http::status::ok);
+      _response.set(http::field::content_type, "text/plain");
+      // TODO: Expand this with service stats like memory, call counts, etc.
+      beast::ostream(_response.body()) << "OK\n";
+      return;
+    }
+
     if (url_view.path() != "/callback") {
       _response.result(http::status::not_found);
       _response.set(http::field::content_type, "text/plain");

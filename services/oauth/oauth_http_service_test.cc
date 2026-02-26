@@ -134,5 +134,22 @@ TEST(OauthHttpService, MissingCodeReturnsBadRequest) {
   EXPECT_EQ(res.result(), http::status::bad_request);
 }
 
+TEST(OauthHttpService, StatusReturnsOk) {
+  test_server server;
+  test_client client{server.port};
+
+  http::request<http::string_body> req{http::verb::get, "/status", 11};
+  req.set(http::field::host, "127.0.0.1");
+
+  http::write(client.stream, req);
+
+  beast::flat_buffer buffer;
+  http::response<http::string_body> res;
+  http::read(client.stream, buffer, res);
+
+  EXPECT_EQ(res.result(), http::status::ok);
+  EXPECT_EQ(res.body(), "OK\n");
+}
+
 } // namespace
 } // namespace howling
