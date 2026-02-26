@@ -26,6 +26,8 @@ jobs:
             bazel-${{ runner.os }}-
       - name: Run All Tests
         run: |
+          export CC=gcc-14
+          export CXX=g++-14
           bazel test //...
       - name: Check Formatting
         run: |
