@@ -87,17 +87,23 @@ std::string print_candle(
     suffix = colorize(print_price(candle.close()), color::GRAY);
   }
 
+  auto repeat = [](std::string_view sv, int n) {
+    std::string s;
+    if (n > 0) {
+      s.reserve(sv.size() * n);
+      for (int i = 0; i < n; ++i) s.append(sv);
+    }
+    return s;
+  };
+
   return absl::StrCat(
       prefix,
       std::string(low_wick, ' '),
       colorize(
           absl::StrCat(
-              std::views::repeat(WICK, body_min - low_wick) | std::views::join |
-                  std::ranges::to<std::string>(),
-              std::views::repeat(BLOCK, body_max - body_min) |
-                  std::views::join | std::ranges::to<std::string>(),
-              std::views::repeat(WICK, high_wick - body_max) |
-                  std::views::join | std::ranges::to<std::string>()),
+              repeat(WICK, body_min - low_wick),
+              repeat(BLOCK, body_max - body_min),
+              repeat(WICK, high_wick - body_max)),
           c),
       std::string(static_cast<int>(usable_width) - high_wick, ' '),
       " | ",

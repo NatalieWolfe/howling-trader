@@ -89,8 +89,10 @@ std::generator<day_data> get_days(stock::Symbol symbol) {
   } else {
     fs::path data_directory = runfile(
         get_history_file_path(symbol, /*date=*/"").parent_path().string());
-    auto files = fs::directory_iterator(data_directory) |
-        std::ranges::to<vector<fs::directory_entry>>();
+    vector<fs::directory_entry> files;
+    for (const auto& entry : fs::directory_iterator(data_directory)) {
+      files.push_back(entry);
+    }
     std::ranges::sort(
         files, [](const fs::directory_entry& a, const fs::directory_entry& b) {
           return std::ranges::lexicographical_compare(

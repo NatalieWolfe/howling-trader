@@ -31,7 +31,10 @@ jobs:
           export CC=clang-20
           export CXX=clang++-20
           export BAZEL_COMPILER=clang
-          bazel test --cxxopt=-stdlib=libc++ --linkopt=-stdlib=libc++ //...
+          bazel test \
+            --cxxopt=-stdlib=libc++ --linkopt=-stdlib=libc++ \
+            --cxxopt=-fexperimental-library --linkopt=-fexperimental-library \
+            //...
       - name: Check Formatting
         run: |
           # Ensure code is formatted according to .clang-format

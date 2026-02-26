@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <chrono>
+#include <cstddef>
 #include <exception>
 #include <future>
 #include <limits>
@@ -163,7 +164,7 @@ private:
     check_sqlite_err(sqlite3_bind_double(_statement, index, n), _db);
   }
 
-  void _bind(int index, nullptr_t) {
+  void _bind(int index, std::nullptr_t) {
     check_sqlite_err(sqlite3_bind_null(_statement, index), _db);
   }
 

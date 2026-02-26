@@ -19,8 +19,8 @@
 namespace howling::stock {
 
 bool AbslParseFlag(absl::string_view text, Symbol* symbol, std::string* error) {
-  std::string stock_name = text | std::views::transform(::howling::to_upper) |
-      std::ranges::to<std::string>();
+  std::string stock_name(text);
+  for (char& c : stock_name) c = ::howling::to_upper(c);
   if (Symbol_Parse(stock_name, symbol)) return true;
   *error = absl::StrCat("Unknown stock symbol: ", text);
   return false;
