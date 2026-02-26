@@ -10,8 +10,7 @@ namespace howling {
 class oauth_exchanger {
 public:
   virtual ~oauth_exchanger() = default;
-  virtual schwab::oauth_tokens
-  exchange(std::string_view code) = 0;
+  virtual schwab::oauth_tokens exchange(std::string_view code) = 0;
 };
 
 } // namespace howling

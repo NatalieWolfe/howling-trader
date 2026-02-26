@@ -5,8 +5,8 @@
 #include <string>
 #include <string_view>
 
-#include "gmock/gmock.h"
 #include "services/database.h"
+#include "gmock/gmock.h"
 
 namespace howling {
 

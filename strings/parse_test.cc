@@ -43,13 +43,21 @@ TEST(ParseDuration, ParsesHours) {
 
 // MARK: parse_gap
 
-TEST(ParseGap, ParsesInteger) { EXPECT_EQ(parse_gap("1"), 1000ms); }
-TEST(ParseGap, ParsesFloat) { EXPECT_EQ(parse_gap("1.234"), 1234ms); }
-TEST(ParseGap, ParsesPlusPrefix) { EXPECT_EQ(parse_gap("+1.234"), 1234ms); }
+TEST(ParseGap, ParsesInteger) {
+  EXPECT_EQ(parse_gap("1"), 1000ms);
+}
+TEST(ParseGap, ParsesFloat) {
+  EXPECT_EQ(parse_gap("1.234"), 1234ms);
+}
+TEST(ParseGap, ParsesPlusPrefix) {
+  EXPECT_EQ(parse_gap("+1.234"), 1234ms);
+}
 
 // MARK: parse_int
 
-TEST(ParseInt, ParsesInteger) { EXPECT_EQ(parse_int("1"), 1); }
+TEST(ParseInt, ParsesInteger) {
+  EXPECT_EQ(parse_int("1"), 1);
+}
 
 // MARK: parse_double
 

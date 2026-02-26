@@ -10,8 +10,8 @@
 #include "grpcpp/security/server_credentials.h"
 #include "services/db/make_database.h"
 #include "services/oauth/auth_service.h"
-#include "services/oauth/oauth_http_service.h"
 #include "services/oauth/oauth_exchanger_impl.h"
+#include "services/oauth/oauth_http_service.h"
 
 namespace howling {
 namespace {

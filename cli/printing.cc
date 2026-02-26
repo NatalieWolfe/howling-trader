@@ -1,6 +1,5 @@
 #include "cli/printing.h"
 
-#include <utility>
 #include <algorithm>
 #include <chrono>
 #include <exception>
@@ -10,6 +9,7 @@
 #include <string_view>
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <utility>
 
 #include "absl/strings/str_cat.h"
 #include "cli/colorize.h"

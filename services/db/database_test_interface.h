@@ -159,8 +159,9 @@ protected:
     update_last_notified_at("schwab");                                         \
     auto last_notified = get_last_notified_at("schwab");                       \
     ASSERT_TRUE(last_notified.has_value());                                    \
-    EXPECT_LT(std::chrono::system_clock::now() - *last_notified,               \
-              std::chrono::seconds(10));                                       \
+    EXPECT_LT(                                                                 \
+        std::chrono::system_clock::now() - *last_notified,                     \
+        std::chrono::seconds(10));                                             \
   }
 
 } // namespace howling

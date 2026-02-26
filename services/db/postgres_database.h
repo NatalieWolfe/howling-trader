@@ -41,7 +41,8 @@ public:
 
   std::future<std::optional<std::chrono::system_clock::time_point>>
   get_last_notified_at(std::string_view service_name) override;
-  std::future<void> update_last_notified_at(std::string_view service_name) override;
+  std::future<void>
+  update_last_notified_at(std::string_view service_name) override;
 
 private:
   struct implementation;

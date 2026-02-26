@@ -8,13 +8,27 @@
 #include "services/db/postgres_database.h"
 #include "services/db/sqlite_database.h"
 
-ABSL_FLAG(std::string, database, "sqlite", "Type of database to use (sqlite, postgres)");
+ABSL_FLAG(
+    std::string,
+    database,
+    "sqlite",
+    "Type of database to use (sqlite, postgres)");
 
-ABSL_FLAG(std::string, pg_user, "postgres", "User to connect as to the Postgres database.");
-ABSL_FLAG(std::string, pg_password, "password", "User password to connect to the Postgres database.");
-ABSL_FLAG(std::string, pg_host, "localhost", "Hostname for the Postgres database.");
+ABSL_FLAG(
+    std::string,
+    pg_user,
+    "postgres",
+    "User to connect as to the Postgres database.");
+ABSL_FLAG(
+    std::string,
+    pg_password,
+    "password",
+    "User password to connect to the Postgres database.");
+ABSL_FLAG(
+    std::string, pg_host, "localhost", "Hostname for the Postgres database.");
 ABSL_FLAG(int, pg_port, 5432, "Port to connect to for the Postgres database.");
-ABSL_FLAG(std::string, pg_database, "howling", "Name of the Postgres database.");
+ABSL_FLAG(
+    std::string, pg_database, "howling", "Name of the Postgres database.");
 
 namespace howling {
 

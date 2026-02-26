@@ -511,8 +511,8 @@ sqlite_database::read_trades(stock::Symbol symbol) {
   }
 }
 
-std::future<std::string> sqlite_database::read_refresh_token(
-    std::string_view service_name) {
+std::future<std::string>
+sqlite_database::read_refresh_token(std::string_view service_name) {
   std::promise<std::string> p;
   try {
     query q{*_db, query::single_use, R"sql(

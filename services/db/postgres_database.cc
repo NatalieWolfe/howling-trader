@@ -244,7 +244,9 @@ private:
 
   void _bind_arg(std::string_view val) { _store_param(val.data(), val.size()); }
 
-  void _bind_arg(const bytes& b) { _store_param(b.value.data(), b.value.size()); }
+  void _bind_arg(const bytes& b) {
+    _store_param(b.value.data(), b.value.size());
+  }
 
   void _bind_arg(system_clock::time_point val) {
     microseconds duration =
@@ -728,8 +730,7 @@ std::future<std::optional<system_clock::time_point>>
 postgres_database::get_last_notified_at(std::string_view service_name) {
   std::promise<std::optional<system_clock::time_point>> p;
   try {
-    query& q =
-        *_implementation->_prepared_queries.at("get_last_notified_at");
+    query& q = *_implementation->_prepared_queries.at("get_last_notified_at");
     q.bind_all(service_name);
     if (!q.step()) {
       p.set_value(std::nullopt);
@@ -746,7 +747,8 @@ std::future<void>
 postgres_database::update_last_notified_at(std::string_view service_name) {
   std::promise<void> p;
   try {
-    query& q = *_implementation->_prepared_queries.at("update_last_notified_at");
+    query& q =
+        *_implementation->_prepared_queries.at("update_last_notified_at");
     q.bind_all(service_name);
     while (q.step());
     p.set_value();

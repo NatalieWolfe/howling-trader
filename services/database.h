@@ -21,8 +21,8 @@ public:
   save(stock::Symbol symbol, const Candle& candle) = 0;
   virtual std::future<void> save(const Market& market) = 0;
   virtual std::future<void> save_trade(const trading::TradeRecord& trade) = 0;
-  virtual std::future<void> save_refresh_token(
-      std::string_view service_name, std::string_view token) = 0;
+  virtual std::future<void>
+  save_refresh_token(std::string_view service_name, std::string_view token) = 0;
 
   virtual std::generator<Candle> read_candles(stock::Symbol symbol) = 0;
   virtual std::generator<Market> read_market(stock::Symbol symbol) = 0;

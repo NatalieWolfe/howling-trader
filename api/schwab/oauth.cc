@@ -94,8 +94,8 @@ exchange_code_for_tokens(net::connection& conn, std::string_view code) {
       .expires_in = root["expires_in"].asInt()};
 }
 
-oauth_tokens refresh_tokens(
-    net::connection& conn, std::string_view refresh_token) {
+oauth_tokens
+refresh_tokens(net::connection& conn, std::string_view refresh_token) {
   check_schwab_flags();
 
   net::url oauth_url = make_net_url("/v1/oauth/token");
@@ -140,7 +140,8 @@ oauth_tokens refresh_tokens(
   Json::Value root = to_json(beast::buffers_to_string(res.body().data()));
   return oauth_tokens{
       .access_token = root["access_token"].asString(),
-      .refresh_token = root.get("refresh_token", std::string{refresh_token}).asString(),
+      .refresh_token =
+          root.get("refresh_token", std::string{refresh_token}).asString(),
       .expires_in = root["expires_in"].asInt()};
 }
 

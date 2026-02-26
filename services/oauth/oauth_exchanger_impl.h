@@ -10,8 +10,7 @@ namespace howling {
 
 class oauth_exchanger_impl : public oauth_exchanger {
 public:
-  schwab::oauth_tokens
-  exchange(std::string_view code) override;
+  schwab::oauth_tokens exchange(std::string_view code) override;
 };
 
 using real_oauth_exchanger [[deprecated("Use oauth_exchanger_impl instead")]] =

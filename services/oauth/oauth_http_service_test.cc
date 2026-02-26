@@ -1,5 +1,5 @@
-#include "services/oauth/oauth_http_service.h"
 #include "services/oauth/mock_oauth_exchanger.h"
+#include "services/oauth/oauth_http_service.h"
 
 #include <chrono>
 #include <future>

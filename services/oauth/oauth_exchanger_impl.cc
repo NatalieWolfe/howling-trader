@@ -8,8 +8,7 @@
 
 namespace howling {
 
-schwab::oauth_tokens
-oauth_exchanger_impl::exchange(std::string_view code) {
+schwab::oauth_tokens oauth_exchanger_impl::exchange(std::string_view code) {
   std::unique_ptr<net::connection> conn =
       net::make_connection(schwab::make_net_url("/"));
   return schwab::exchange_code_for_tokens(*conn, code);

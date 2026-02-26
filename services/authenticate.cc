@@ -90,8 +90,9 @@ token_manager::token_manager(
     std::unique_ptr<AuthService::StubInterface> stub,
     std::unique_ptr<database> db,
     std::unique_ptr<token_refresher> refresher)
-    : _implementation(std::make_unique<implementation>(
-          std::move(stub), std::move(db), std::move(refresher))) {}
+    : _implementation(
+          std::make_unique<implementation>(
+              std::move(stub), std::move(db), std::move(refresher))) {}
 
 token_manager::~token_manager() = default;
 

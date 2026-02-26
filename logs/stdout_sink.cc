@@ -11,6 +11,8 @@ void StdoutLogSink::Send(const absl::LogEntry& entry) {
   std::cout << entry.text_message_with_prefix_and_newline();
 }
 
-void StdoutLogSink::Flush() { std::cout << std::flush; }
+void StdoutLogSink::Flush() {
+  std::cout << std::flush;
+}
 
 } // namespace howling

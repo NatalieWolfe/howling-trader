@@ -14,7 +14,8 @@ class database;
 class token_refresher {
 public:
   virtual ~token_refresher() = default;
-  virtual schwab::oauth_tokens refresh_tokens(std::string_view refresh_token) = 0;
+  virtual schwab::oauth_tokens
+  refresh_tokens(std::string_view refresh_token) = 0;
 };
 
 class token_manager {

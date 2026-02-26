@@ -45,7 +45,9 @@ public:
   }
   [[nodiscard]] const_iterator cbegin() const { return begin(); }
   [[nodiscard]] iterator end() { return iterator{END, *this}; }
-  [[nodiscard]] const_iterator end() const { return const_iterator{END, *this}; }
+  [[nodiscard]] const_iterator end() const {
+    return const_iterator{END, *this};
+  }
   [[nodiscard]] const_iterator cend() const { return end(); }
 
   [[nodiscard]] T at(uint32_t index) const {
