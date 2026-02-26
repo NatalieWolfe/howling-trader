@@ -10,17 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install GCC 15
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y software-properties-common
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-          sudo apt-get update
-          # List available gcc packages to debug if it fails
-          apt-cache search gcc-15 || true
-          sudo apt-get install -y gcc-15 g++-15 clang-format-20
-          gcc-15 --version
-          g++-15 --version
       - name: Mount Bazel Cache
         uses: actions/cache@v4
         with:
@@ -30,8 +19,8 @@ jobs:
             bazel-${{ runner.os }}-
       - name: Run All Tests
         run: |
-          export CC=gcc-15
-          export CXX=g++-15
+          export CC=gcc-14
+          export CXX=g++-14
           bazel test //...
       - name: Check Formatting
         run: |

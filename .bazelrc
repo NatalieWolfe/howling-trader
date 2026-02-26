@@ -2,7 +2,6 @@
 build --host_cxxopt='-std=c++23' --color=yes --cxxopt="-std=c++23" --@boost.asio//:ssl=boringssl
 build --incompatible_autoload_externally=+cc_library,+cc_binary,+cc_test,+cc_proto_library,+proto_library,+sh_binary,+sh_library,+sh_test
 
-# Use GCC 15 (preferred via environment)
 build --action_env=CC
 build --action_env=CXX
 build --cxxopt=-fdiagnostics-color=always
