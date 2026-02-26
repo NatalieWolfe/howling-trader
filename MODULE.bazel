@@ -49,6 +49,7 @@ archive_override(
 
 archive_override(
     module_name = "openssl",
+    integrity = "sha256-+Wcz/D3wPUGV22VtG3uMF0wz+V0FL4EfDsyPTk49szI=",
     patch_strip = 1,
     patches = ["//patches:openssl_as_boringssl.patch"],
     strip_prefix = "boringssl-0.20251002.0",

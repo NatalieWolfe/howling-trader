@@ -38,4 +38,4 @@ jobs:
       - name: Check Formatting
         run: |
           # Ensure code is formatted according to .clang-format
-          find . -name "*.cc" -o -name "*.h" | xargs clang-format-20 --dry-run --Werror
+          find . -name "*.cc" -o -name "*.h" | xargs -r clang-format-20 --dry-run --Werror

@@ -2,16 +2,20 @@
 
 #include <charconv>
 #include <chrono>
+#include <cstdio>
 #include <iostream>
-#include <sstream>
+#include <string>
 #include <string_view>
 #include <system_error>
 
 namespace howling {
 namespace {
 
+using ::std::chrono::hours;
 using ::std::chrono::milliseconds;
+using ::std::chrono::minutes;
 using ::std::chrono::system_clock;
+using ::std::chrono::year;
 
 constexpr std::errc NO_ERROR{};
 
@@ -24,10 +28,21 @@ bool from_chars(std::string_view str, T& val) {
 } // namespace
 
 system_clock::time_point parse_timepoint(std::string_view timepoint_str) {
-  std::stringstream stream{std::string{timepoint_str}};
-  system_clock::time_point tp;
-  std::chrono::from_stream(stream, "%F %T", tp);
-  return tp;
+  int y, m, d, h, min, s;
+  if (std::sscanf(
+          std::string{timepoint_str}.c_str(),
+          "%d-%d-%d %d:%d:%d",
+          &y,
+          &m,
+          &d,
+          &h,
+          &min,
+          &s) == 6) {
+    return std::chrono::sys_days{
+               year{y} / static_cast<unsigned>(m) / static_cast<unsigned>(d)} +
+        hours{h} + minutes{min} + std::chrono::seconds{s};
+  }
+  return {};
 }
 
 milliseconds parse_duration(std::string_view duration_str) {
@@ -42,12 +57,12 @@ milliseconds parse_duration(std::string_view duration_str) {
     switch (++chunk_count) {
       case 3: { // Hours
         int64_t val;
-        if (from_chars(chunk, val)) duration += std::chrono::hours{val};
+        if (from_chars(chunk, val)) duration += hours{val};
         break;
       }
       case 2: { // Minutes
         int64_t val;
-        if (from_chars(chunk, val)) duration += std::chrono::minutes{val};
+        if (from_chars(chunk, val)) duration += minutes{val};
         break;
       }
       case 1: { // Seconds

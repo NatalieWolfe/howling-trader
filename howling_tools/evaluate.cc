@@ -1,13 +1,13 @@
-#include <utility>
 #include <chrono>
+#include <cstdio>
 #include <exception>
 #include <filesystem>
 #include <format>
 #include <generator>
 #include <iostream>
 #include <ranges>
-#include <sstream>
 #include <string>
+#include <utility>
 
 #include "absl/flags/flag.h"
 #include "cli/printing.h"
@@ -44,13 +44,15 @@ namespace {
 namespace fs = ::std::filesystem;
 
 using ::std::chrono::system_clock;
+using ::std::chrono::year;
 using ::std::chrono::year_month_day;
 
 year_month_day parse_date(std::string date) {
-  year_month_day ymd;
-  std::stringstream stream{std::move(date)};
-  std::chrono::from_stream(stream, "%F", ymd);
-  return ymd;
+  int y, m, d;
+  if (std::sscanf(date.c_str(), "%d-%d-%d", &y, &m, &d) == 3) {
+    return year{y} / static_cast<unsigned>(m) / static_cast<unsigned>(d);
+  }
+  return {};
 }
 
 year_month_day get_date(system_clock::time_point time) {
