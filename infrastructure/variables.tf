@@ -42,3 +42,8 @@ variable "registry_user_email" {
   type        = string
   description = "The email address associated with the registry user"
 }
+
+variable "state_bucket_name" {
+  type    = string
+  default = "howling-trader-tofu-state"
+}
