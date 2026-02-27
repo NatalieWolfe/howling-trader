@@ -99,6 +99,7 @@ cc_binary(
 pkg_tar(
     name = "server_layer",
     srcs = [":server"],
+    package_dir = "/services/oauth",
 )
 
 oci_image(

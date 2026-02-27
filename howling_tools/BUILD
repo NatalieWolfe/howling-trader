@@ -92,6 +92,7 @@ cc_binary(
 pkg_tar(
     name = "execute_layer",
     srcs = [":execute"],
+    package_dir = "/howling_tools",
 )
 
 oci_image(

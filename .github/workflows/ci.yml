@@ -46,6 +46,8 @@ jobs:
         with:
           path: ~/.cache/bazel
           key: bazel-${{ runner.os }}-${{ hashFiles('MODULE.bazel', '**/BUILD', '**/BUILD.bazel', '.bazelrc') }}
+          restore-keys: |
+            bazel-${{ runner.os }}-
       - name: Login to OVHcloud Registry
         uses: docker/login-action@v3
         with:
@@ -53,10 +55,16 @@ jobs:
           username: ${{ secrets.OVH_REGISTRY_USERNAME }}
           password: ${{ secrets.OVH_REGISTRY_PASSWORD }}
       - name: Build and Push Images
+        env:
+          OVH_REGISTRY_URL: ${{ secrets.OVH_REGISTRY_URL }}
         run: |
           export CC=gcc-14
           export CXX=g++-14
-          # Replace placeholder with actual registry URL from secrets
-          find . -name BUILD -exec sed -i "s|OVH_REGISTRY_URL_PLACEHOLDER|${{ secrets.OVH_REGISTRY_URL }}|g" {} +
+          if [ -z "$OVH_REGISTRY_URL" ]; then
+            echo "Error: OVH_REGISTRY_URL secret is not set."
+            exit 1
+          fi
+          # Replace placeholder only in specific BUILD files to avoid invalidating the entire cache
+          sed -i "s|OVH_REGISTRY_URL_PLACEHOLDER|${OVH_REGISTRY_URL}|g" services/oauth/BUILD howling_tools/BUILD
           bazel run //services/oauth:push
           bazel run //howling_tools:push
