@@ -25,7 +25,7 @@ variable "service_name" {
 
 variable "region" {
   type    = string
-  default = "US-EAST-VA-1"
+  default = "US-EAST-VA"
 }
 
 variable "registry_name" {
