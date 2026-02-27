@@ -9,66 +9,73 @@ provider "ovh" {
 # State Management (Managed by Tofu)
 # ------------------------------------------------------------------------------
 
-# Create a user for Object Storage
-resource "ovh_cloud_project_user" "state_user" {
-  service_name = var.service_name
-  description  = "User for Tofu remote state management"
-  role_names   = ["objectstore_operator"]
-}
-
-# Generate S3 credentials for the user
-resource "ovh_cloud_project_user_s3_credential" "state_s3_creds" {
-  service_name = var.service_name
-  user_id      = ovh_cloud_project_user.state_user.id
-}
-
-# Create the bucket for state storage
-resource "ovh_cloud_project_storage" "state_bucket" {
-  service_name = var.service_name
-  region_name  = var.region
-  name         = var.state_bucket_name
-  versioning = {
-    status = "enabled"
-  }
+module "state" {
+  source            = "./modules/state"
+  service_name      = var.service_name
+  region            = var.region
+  state_bucket_name = var.state_bucket_name
 }
 
 # ------------------------------------------------------------------------------
 # Managed Private Registry
 # ------------------------------------------------------------------------------
 
-# Find the plan ID for the region and desired tier
-data "ovh_cloud_project_capabilities_containerregistry_filter" "registry_capabilities" {
-  service_name = var.service_name
-  plan_name    = var.registry_plan
-  region       = var.region
+module "registry" {
+  source              = "./modules/registry"
+  service_name        = var.service_name
+  region              = var.region
+  registry_name       = var.registry_name
+  registry_plan       = var.registry_plan
+  registry_user_email = var.registry_user_email
 }
 
-# Create the Managed Private Registry
-resource "ovh_cloud_project_containerregistry" "registry" {
-  service_name = var.service_name
-  plan_id      = data.ovh_cloud_project_capabilities_containerregistry_filter.registry_capabilities.id
-  region       = data.ovh_cloud_project_capabilities_containerregistry_filter.registry_capabilities.region
-  name         = var.registry_name
-}
-
-# Create a default user for the registry
-resource "ovh_cloud_project_containerregistry_user" "registry_user" {
-  service_name = var.service_name
-  registry_id  = ovh_cloud_project_containerregistry.registry.id
-  login        = "howling_bot"
-  email        = var.registry_user_email
-}
-
-# Configure the Harbor provider using the credentials created above
+# Configure the Harbor provider using the credentials from the module
 provider "harbor" {
-  url      = ovh_cloud_project_containerregistry.registry.url
-  username = ovh_cloud_project_containerregistry_user.registry_user.login
-  password = ovh_cloud_project_containerregistry_user.registry_user.password
+  url      = module.registry.registry_url
+  username = module.registry.registry_user_login
+  password = module.registry.registry_user_password
 }
 
-# Create a Harbor project named "howling-registry"
-resource "harbor_project" "main_project" {
-  name                   = var.registry_name
-  public                 = false
-  vulnerability_scanning = true
+# Create a Harbor project named after the registry
+module "harbor" {
+  source        = "./modules/harbor"
+  registry_name = var.registry_name
+
+  providers = {
+    harbor = harbor
+  }
+}
+
+# ------------------------------------------------------------------------------
+# Resource Refactoring (Moved Blocks)
+# ------------------------------------------------------------------------------
+
+moved {
+  from = ovh_cloud_project_user.state_user
+  to   = module.state.ovh_cloud_project_user.state_user
+}
+
+moved {
+  from = ovh_cloud_project_user_s3_credential.state_s3_creds
+  to   = module.state.ovh_cloud_project_user_s3_credential.state_s3_creds
+}
+
+moved {
+  from = ovh_cloud_project_storage.state_bucket
+  to   = module.state.ovh_cloud_project_storage.state_bucket
+}
+
+moved {
+  from = ovh_cloud_project_containerregistry.registry
+  to   = module.registry.ovh_cloud_project_containerregistry.registry
+}
+
+moved {
+  from = ovh_cloud_project_containerregistry_user.registry_user
+  to   = module.registry.ovh_cloud_project_containerregistry_user.registry_user
+}
+
+moved {
+  from = harbor_project.main_project
+  to   = module.harbor.harbor_project.main_project
 }
