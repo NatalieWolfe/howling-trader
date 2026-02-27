@@ -119,7 +119,6 @@ oci_push(
     name = "push",
     image = ":image",
     remote_tags = ["latest"],
-    repository = "OVH_REGISTRY_URL_PLACEHOLDER/howling-oauth",
 )
 
 cc_test(
