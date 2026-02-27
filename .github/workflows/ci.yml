@@ -60,11 +60,5 @@ jobs:
         run: |
           export CC=gcc-14
           export CXX=g++-14
-          if [ -z "$OVH_REGISTRY_URL" ]; then
-            echo "Error: OVH_REGISTRY_URL secret is not set."
-            exit 1
-          fi
-          # Replace placeholder only in specific BUILD files to avoid invalidating the entire cache
-          sed -i "s|OVH_REGISTRY_URL_PLACEHOLDER|${OVH_REGISTRY_URL}|g" services/oauth/BUILD howling_tools/BUILD
-          bazel run //services/oauth:push
-          bazel run //howling_tools:push
+          bazel run //services/oauth:push -- ${OVH_REGISTRY_URL}/howling-oauth
+          bazel run //howling_tools:push -- ${OVH_REGISTRY_URL}/howling-executor
