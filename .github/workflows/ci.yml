@@ -5,6 +5,10 @@ on:
     branches: [ master, release ]
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -34,8 +38,23 @@ jobs:
           # Ensure code is formatted according to .clang-format
           find . -name "*.cc" -o -name "*.h" | xargs -r clang-format-20 --dry-run --Werror
 
-  publish:
+  infrastructure-check:
     needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+      - name: OpenTofu Format Check
+        run: tofu fmt -check -recursive infrastructure/
+      - name: OpenTofu Validate
+        run: |
+          cd infrastructure
+          tofu init -backend=false
+          tofu validate
+
+  publish:
+    needs: [test, infrastructure-check]
     if: github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
     environment: Publish Environment
@@ -60,5 +79,31 @@ jobs:
         run: |
           export CC=gcc-14
           export CXX=g++-14
-          bazel run //services/oauth:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/howling-oauth
-          bazel run //howling_tools:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/howling-executor
+          # Replace placeholder with actual registry URL from secrets
+          find . -name BUILD -exec sed -i "s|OVH_REGISTRY_URL_PLACEHOLDER|${{ secrets.OVH_REGISTRY_URL }}|g" {} +
+          bazel run //services/oauth:push
+          bazel run //howling_tools:push
+
+  infrastructure-apply:
+    needs: publish
+    if: github.ref == 'refs/heads/release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+      - name: OpenTofu Apply
+        env:
+          TF_VAR_ovh_application_key: ${{ secrets.OVH_APPLICATION_KEY }}
+          TF_VAR_ovh_application_secret: ${{ secrets.OVH_APPLICATION_SECRET }}
+          TF_VAR_ovh_consumer_key: ${{ secrets.OVH_CONSUMER_KEY }}
+          TF_VAR_service_name: ${{ secrets.OVH_PROJECT_ID }}
+          TF_VAR_registry_user_email: ${{ secrets.REGISTRY_USER_EMAIL }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.STATE_S3_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.STATE_S3_SECRET_KEY }}
+          AWS_DEFAULT_REGION: us-east-va
+          AWS_REGION: us-east-va
+        run: |
+          cd infrastructure
+          tofu init
+          tofu apply -auto-approve

@@ -3,3 +3,5 @@ MODULE.bazel.lock
 secrets*
 .env
 .terraform
+*.tfstate
+*.tfstate.backup
