@@ -97,7 +97,7 @@ pkg_tar(
 
 oci_image(
     name = "executor_image",
-    base = "@distroless_cc_linux_amd64",
+    base = "@distroless_cc",
     entrypoint = ["/howling_tools/execute"],
     tars = [":execute_layer"],
 )

@@ -60,5 +60,5 @@ jobs:
         run: |
           export CC=gcc-14
           export CXX=g++-14
-          bazel run //services/oauth:push -- --repository ${OVH_REGISTRY_URL}/howling-oauth
-          bazel run //howling_tools:push -- --repository ${OVH_REGISTRY_URL}/howling-executor
+          bazel run //services/oauth:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/howling-oauth
+          bazel run //howling_tools:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/howling-executor
