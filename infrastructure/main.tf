@@ -27,3 +27,17 @@ resource "ovh_cloud_project_containerregistry_user" "registry_user" {
   login        = "howling_bot"
   email        = var.registry_user_email
 }
+
+# Configure the Harbor provider using the credentials created above
+provider "harbor" {
+  url      = ovh_cloud_project_containerregistry.registry.url
+  username = ovh_cloud_project_containerregistry_user.registry_user.login
+  password = ovh_cloud_project_containerregistry_user.registry_user.password
+}
+
+# Create a Harbor project named "howling-registry"
+resource "harbor_project" "main_project" {
+  name                   = var.registry_name
+  public                 = false
+  vulnerability_scanning = true
+}

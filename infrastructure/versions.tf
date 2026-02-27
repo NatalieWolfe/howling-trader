@@ -5,5 +5,9 @@ terraform {
       source  = "ovh/ovh"
       version = "~> 2.11"
     }
+    harbor = {
+      source  = "goharbor/harbor"
+      version = "~> 3.10"
+    }
   }
 }
