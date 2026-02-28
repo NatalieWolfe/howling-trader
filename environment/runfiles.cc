@@ -15,24 +15,30 @@ Runfiles* make_runfiles(std::string_view argv0) {
   std::string error;
   Runfiles* runfiles = Runfiles::Create(std::string{argv0}, &error);
   if (runfiles == nullptr) {
-    LOG(FATAL) << "Failed to initialize runfiles: " << error;
+    LOG(WARNING) << "Could not initialize runfiles: " << error;
   }
   return runfiles;
 }
 
-Runfiles& runfiles(std::string_view argv0 = "") {
-  static Runfiles* cached_runfiles = make_runfiles(argv0);
-  return *cached_runfiles;
+Runfiles* get_runfiles(std::string_view argv0 = "") {
+  static std::string cached_argv0{argv0};
+  static Runfiles* cached_runfiles = make_runfiles(cached_argv0);
+  return cached_runfiles;
 }
 
 } // namespace
 
 void initialize_runfiles(std::string_view argv0) {
-  runfiles(argv0);
+  get_runfiles(argv0);
 }
 
 std::string runfile(std::string_view path) {
-  return runfiles().Rlocation(std::string{path});
+  Runfiles* runfiles = get_runfiles();
+  if (runfiles == nullptr) {
+    LOG(FATAL) << "Cannot access runfile at " << path
+               << ". Runfiles not initialized?";
+  }
+  return runfiles->Rlocation(std::string{path});
 }
 
 } // namespace howling
