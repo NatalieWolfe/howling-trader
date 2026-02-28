@@ -5,3 +5,4 @@ secrets*
 .terraform
 *.tfstate
 *.tfstate.backup
+*kubeconfig.yaml

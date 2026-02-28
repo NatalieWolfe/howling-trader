@@ -11,6 +11,14 @@ resource "ovh_cloud_project_database" "postgres" {
     network_id = var.network_id
     subnet_id  = var.subnet_id
   }
+
+  dynamic "ip_restrictions" {
+    for_each = var.authorized_subnets
+    content {
+      ip          = ip_restrictions.value
+      description = "Authorized subnet"
+    }
+  }
 }
 
 resource "ovh_cloud_project_database_database" "main" {
