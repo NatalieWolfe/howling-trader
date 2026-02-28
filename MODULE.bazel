@@ -58,12 +58,12 @@ archive_override(
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(
-    name = "distroless_cc",
-    digest = "sha256:72344f7f909a8bf003c67f55687e6d51a441b49661af8f660aa7b285f00e57df",
-    image = "gcr.io/distroless/cc-debian12",
+    name = "ubuntu_noble",
+    digest = "sha256:72297848457d5d37d11c3670a92730701a9e9527e30692d9bc70ef7309d31074",
+    image = "ubuntu:24.04",
     platforms = [
         "linux/amd64",
         "linux/arm64",
     ],
 )
-use_repo(oci, "distroless_cc", "distroless_cc_linux_amd64", "distroless_cc_linux_arm64")
+use_repo(oci, "ubuntu_noble", "ubuntu_noble_linux_amd64", "ubuntu_noble_linux_arm64")

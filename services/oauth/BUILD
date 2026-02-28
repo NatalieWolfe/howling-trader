@@ -104,7 +104,7 @@ pkg_tar(
 
 oci_image(
     name = "image",
-    base = "@distroless_cc",
+    base = "@ubuntu_noble",
     entrypoint = ["/services/oauth/server"],
     tars = [":server_layer"],
 )
