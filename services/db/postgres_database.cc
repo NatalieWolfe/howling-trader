@@ -421,6 +421,8 @@ postgres_database::postgres_database(postgres_options options)
 
   try {
     check_pgconn_err(*_implementation->_conn);
+    LOG(INFO) << "Postgres connection established. SSL in use: "
+              << (PQsslInUse(_implementation->_conn) ? "yes" : "no");
     upgrade(*_implementation->_conn);
 
     // Prepare Candle INSERT query
