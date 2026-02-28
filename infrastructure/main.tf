@@ -12,7 +12,7 @@ provider "ovh" {
 module "state" {
   source            = "./modules/state"
   service_name      = var.service_name
-  region            = var.region
+  region            = replace(var.region, "-1", "")
   state_bucket_name = var.state_bucket_name
 }
 
@@ -23,7 +23,7 @@ module "state" {
 module "registry" {
   source              = "./modules/registry"
   service_name        = var.service_name
-  region              = var.region
+  region              = replace(var.region, "-1", "")
   registry_name       = var.registry_name
   registry_plan       = var.registry_plan
   registry_user_email = var.registry_user_email
@@ -63,7 +63,7 @@ module "network" {
 module "kube" {
   source             = "./modules/kube"
   service_name       = var.service_name
-  region             = var.region
+  region             = replace(var.region, "-1", "")
   private_network_id = module.network.network_id
 }
 
@@ -91,7 +91,7 @@ provider "helm" {
 module "database" {
   source       = "./modules/database"
   service_name = var.service_name
-  region       = var.region
+  region       = replace(var.region, "-1", "")
   network_id   = module.network.openstack_network_id
   subnet_id    = module.network.subnet_id
 }

@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "containers/vector.h"
+
 namespace howling {
 
 struct metrics {
@@ -11,6 +13,7 @@ struct metrics {
   double assets_value = 0;
   int sales = 0;
   int profitable_sales = 0;
+  vector<double> deltas;
 };
 
 void add_metrics(metrics& lhs, const metrics& rhs);

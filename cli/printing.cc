@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <exception>
+#include <numeric>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -112,7 +114,7 @@ std::string print_candle(
 
 std::string print_metrics(const metrics& m) {
   double profit = m.available_funds + m.assets_value - m.initial_funds;
-  return absl::StrCat(
+  std::string result = absl::StrCat(
       m.name,
       "\n  #Sales: ",
       m.sales,
@@ -124,6 +126,39 @@ std::string print_metrics(const metrics& m) {
           profit > 0.0       ? color::GREEN
               : profit < 0.0 ? color::RED
                              : color::GRAY));
+
+  if (!m.deltas.empty()) {
+    auto sorted_deltas = m.deltas;
+    std::ranges::sort(sorted_deltas);
+
+    double min = sorted_deltas.front();
+    double max = sorted_deltas.back();
+    double median = sorted_deltas.size() % 2 == 0
+        ? (sorted_deltas[sorted_deltas.size() / 2 - 1] +
+           sorted_deltas[sorted_deltas.size() / 2]) /
+            2.0
+        : sorted_deltas[sorted_deltas.size() / 2];
+
+    double sum =
+        std::accumulate(sorted_deltas.begin(), sorted_deltas.end(), 0.0);
+    double mean = sum / sorted_deltas.size();
+    double sq_sum = 0.0;
+    for (double d : sorted_deltas) { sq_sum += (d - mean) * (d - mean); }
+    double stddev = std::sqrt(sq_sum / sorted_deltas.size());
+
+    absl::StrAppend(
+        &result,
+        "\n  Min $Δ: ",
+        print_price(min),
+        "\n  Max $Δ: ",
+        print_price(max),
+        "\n  Med $Δ: ",
+        print_price(median),
+        "\n  Std $Δ: ",
+        print_price(stddev));
+  }
+
+  return result;
 }
 
 } // namespace howling
