@@ -20,9 +20,8 @@ resource "ovh_cloud_project_database_database" "main" {
   name         = "howling"
 }
 
-resource "ovh_cloud_project_database_user" "app_user" {
+resource "ovh_cloud_project_database_postgresql_user" "app_user" {
   service_name = var.service_name
-  engine       = var.db_engine
   cluster_id   = ovh_cloud_project_database.postgres.id
   name         = "howling_app"
 }

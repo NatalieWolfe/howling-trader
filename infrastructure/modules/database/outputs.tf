@@ -10,12 +10,12 @@ output "db_uri" {
 }
 
 output "db_user" {
-  value       = ovh_cloud_project_database_user.app_user.name
+  value       = ovh_cloud_project_database_postgresql_user.app_user.name
   description = "The database username"
 }
 
 output "db_password" {
-  value       = ovh_cloud_project_database_user.app_user.password
+  value       = ovh_cloud_project_database_postgresql_user.app_user.password
   sensitive   = true
   description = "The database password"
 }

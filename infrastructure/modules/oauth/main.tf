@@ -33,34 +33,17 @@ resource "helm_release" "cert_manager" {
 }
 
 # ------------------------------------------------------------------------------
-# Let's Encrypt ClusterIssuer
+# Let's Encrypt ClusterIssuer (via Local Helm Chart)
 # ------------------------------------------------------------------------------
 
-resource "kubernetes_manifest" "letsencrypt_issuer" {
-  manifest = {
-    apiVersion = "cert-manager.io/v1"
-    kind       = "ClusterIssuer"
-    metadata = {
-      name = "letsencrypt-prod"
-    }
-    spec = {
-      acme = {
-        server = "https://acme-v02.api.letsencrypt.org/directory"
-        email  = var.letsencrypt_email
-        privateKeySecretRef = {
-          name = "letsencrypt-prod"
-        }
-        solvers = [
-          {
-            http01 = {
-              ingress = {
-                class = "nginx"
-              }
-            }
-          }
-        ]
-      }
-    }
+resource "helm_release" "letsencrypt_issuer" {
+  name      = "letsencrypt-issuer"
+  chart     = "${path.module}/issuer-chart"
+  namespace = "cert-manager"
+
+  set {
+    name  = "email"
+    value = var.letsencrypt_email
   }
 
   depends_on = [helm_release.cert_manager]
@@ -209,5 +192,5 @@ resource "kubernetes_ingress_v1" "oauth" {
     }
   }
 
-  depends_on = [kubernetes_manifest.letsencrypt_issuer]
+  depends_on = [helm_release.letsencrypt_issuer]
 }
