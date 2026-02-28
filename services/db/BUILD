@@ -32,6 +32,7 @@ cc_library(
         ":sqlite_database",
         "//services:database",
         "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/log",
     ],
 )
 
