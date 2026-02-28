@@ -92,6 +92,7 @@ cc_binary(
 pkg_tar(
     name = "execute_layer",
     srcs = [":execute"],
+    include_runfiles = True,
     package_dir = "/howling_tools",
 )
 
@@ -99,6 +100,9 @@ oci_image(
     name = "executor_image",
     base = "@ubuntu_noble",
     entrypoint = ["/howling_tools/execute"],
+    env = {
+        "RUNFILES_DIR": "/howling_tools/execute.runfiles",
+    },
     tars = [":execute_layer"],
 )
 
