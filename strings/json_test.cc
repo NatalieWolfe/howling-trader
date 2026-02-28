@@ -45,5 +45,42 @@ TEST(ToJson, ThrowsOnEmptyString) {
   EXPECT_THROW(to_json(""), std::runtime_error);
 }
 
+TEST(ToString, SerializesObject) {
+  Json::Value root;
+  root["key"] = "value";
+  root["number"] = 123;
+  root["bool"] = true;
+
+  std::string result = to_string(root);
+  Json::Value back = to_json(result);
+  EXPECT_EQ(back["key"].asString(), "value");
+  EXPECT_EQ(back["number"].asInt(), 123);
+  EXPECT_TRUE(back["bool"].asBool());
+}
+
+TEST(ToString, SerializesArray) {
+  Json::Value root(Json::arrayValue);
+  root.append(1);
+  root.append("two");
+  root.append(false);
+
+  std::string result = to_string(root);
+  Json::Value back = to_json(result);
+  ASSERT_TRUE(back.isArray());
+  EXPECT_EQ(back.size(), 3);
+  EXPECT_EQ(back[0].asInt(), 1);
+  EXPECT_EQ(back[1].asString(), "two");
+  EXPECT_FALSE(back[2].asBool());
+}
+
+TEST(ToString, CompactSerialization) {
+  Json::Value root;
+  root["a"] = 1;
+  root["b"] = 2;
+
+  std::string result = to_string(root);
+  EXPECT_EQ(result, "{\"a\":1,\"b\":2}");
+}
+
 } // namespace
 } // namespace howling
