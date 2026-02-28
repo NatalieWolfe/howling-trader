@@ -58,10 +58,9 @@ variable "db_password" {
   description = "The database password"
 }
 
-variable "admin_password" {
+variable "db_bootstrap_job_name" {
   type        = string
-  sensitive   = true
-  description = "The admin database password"
+  description = "The name of the DB bootstrap job"
 }
 
 variable "letsencrypt_email" {

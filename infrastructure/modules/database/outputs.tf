@@ -30,8 +30,7 @@ output "db_password" {
   description = "The database password"
 }
 
-output "admin_password" {
-  value       = ovh_cloud_project_database_postgresql_user.admin.password
-  sensitive   = true
-  description = "The admin database password"
+output "db_bootstrap_job_name" {
+  value       = kubernetes_job.db_bootstrap.metadata[0].name
+  description = "The name of the DB bootstrap job"
 }
