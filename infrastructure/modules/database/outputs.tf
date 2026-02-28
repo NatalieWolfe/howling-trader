@@ -29,3 +29,9 @@ output "db_password" {
   sensitive   = true
   description = "The database password"
 }
+
+output "admin_password" {
+  value       = ovh_cloud_project_database_postgresql_user.admin.password
+  sensitive   = true
+  description = "The admin database password"
+}

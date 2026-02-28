@@ -113,6 +113,7 @@ module "oauth" {
   db_port           = module.database.db_port
   db_user           = module.database.db_user
   db_password       = module.database.db_password
+  admin_password    = module.database.admin_password
   letsencrypt_email = var.letsencrypt_email
 
   providers = {
