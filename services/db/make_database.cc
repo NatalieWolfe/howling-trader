@@ -4,6 +4,7 @@
 #include <string>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "services/database.h"
 #include "services/db/postgres_database.h"
 #include "services/db/sqlite_database.h"
@@ -35,6 +36,10 @@ namespace howling {
 std::unique_ptr<database> make_database() {
   std::string type = absl::GetFlag(FLAGS_database);
   if (type == "postgres") {
+    LOG(INFO) << "Connecting to postgres database \""
+              << absl::GetFlag(FLAGS_pg_database) << "\" at "
+              << absl::GetFlag(FLAGS_pg_host) << ":"
+              << absl::GetFlag(FLAGS_pg_port);
     return std::make_unique<postgres_database>(postgres_options{
         .host = absl::GetFlag(FLAGS_pg_host),
         .port = std::to_string(absl::GetFlag(FLAGS_pg_port)),

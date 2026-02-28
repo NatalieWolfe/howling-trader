@@ -387,6 +387,7 @@ void upgrade(PGconn& conn) {
       version,
       updater_id,
       update_started_at);
+  LOG(INFO) << "Found schema version " << version;
 
   if (version != db_internal::get_schema_version()) {
     LOG(INFO) << "Upgrading schema from version " << version << " to "
