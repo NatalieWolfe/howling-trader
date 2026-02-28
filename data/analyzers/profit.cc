@@ -17,13 +17,16 @@ decision
 profit_analyzer::analyze(stock::Symbol symbol, const trading_state& data) {
   double current = sale_price(symbol, data);
   double profit_minimum = absl::GetFlag(FLAGS_profit_minimum);
+  auto itr = data.positions.find(symbol);
+  if (itr == data.positions.end()) return NO_ACTION;
+
   const trading_state::position* lowest_position = nullptr;
-  for (const trading_state::position& position : data.positions.at(symbol)) {
+  for (const trading_state::position& position : itr->second) {
     if (!lowest_position || position.price < lowest_position->price) {
       lowest_position = &position;
     }
   }
-  if (!lowest_position || lowest_position->price + profit_minimum < current) {
+  if (!lowest_position || lowest_position->price + profit_minimum > current) {
     return NO_ACTION;
   }
   double profit = current - lowest_position->price;

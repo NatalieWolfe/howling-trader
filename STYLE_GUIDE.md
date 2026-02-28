@@ -158,6 +158,25 @@ void function() {
 }
 ```
 
+## Comments
+All comments should use full sentences with correct grammar, spelling, and
+punctuation.
+
+**Good:**
+```cpp
+// The circular buffer is full. Wrap around to the beginning.
+if (full()) {
+  _head = 0;
+}
+```
+**Bad:**
+```cpp
+// wrap around
+if (full()) {
+  _head = 0;
+}
+```
+
 ## Documentation
 Use Doxygen-style comments with `/** */` for documenting functions.
 
