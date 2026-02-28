@@ -75,6 +75,9 @@ resource "kubernetes_secret" "registry_creds" {
 # DB Bootstrap Job (Grant Ownership)
 # ------------------------------------------------------------------------------
 
+# TODO: Create a dedicated bootstrap binary in //services/db that handles
+# ownership changes and schema upgrades using administrative credentials,
+# replacing this raw psql command.
 resource "kubernetes_job" "db_bootstrap" {
   metadata {
     name = "howling-db-bootstrap"
@@ -91,8 +94,9 @@ resource "kubernetes_job" "db_bootstrap" {
           image   = "postgres:14-alpine"
           command = ["/bin/sh", "-c"]
           args = [
-            "psql \"host=${var.db_host} port=${var.db_port} dbname=postgres user=avnadmin password=${var.admin_password} sslmode=require\" -c \"ALTER DATABASE howling OWNER TO ${var.db_user};\""
+            "psql \"host=${var.db_host} port=${var.db_port} dbname=defaultdb user=avnadmin password=${var.admin_password} sslmode=require\" -c \"ALTER DATABASE howling OWNER TO ${var.db_user};\""
           ]
+
         }
         restart_policy = "OnFailure"
       }
