@@ -16,10 +16,10 @@ terraform {
 # ------------------------------------------------------------------------------
 
 resource "helm_release" "ingress_nginx" {
-  name       = "ingress-nginx"
-  repository = "https://kubernetes.github.io/ingress-nginx"
-  chart      = "ingress-nginx"
-  namespace  = "ingress-nginx"
+  name             = "ingress-nginx"
+  repository       = "https://kubernetes.github.io/ingress-nginx"
+  chart            = "ingress-nginx"
+  namespace        = "ingress-nginx"
   create_namespace = true
 
   set {
@@ -33,10 +33,10 @@ resource "helm_release" "ingress_nginx" {
 # ------------------------------------------------------------------------------
 
 resource "helm_release" "cert_manager" {
-  name       = "cert-manager"
-  repository = "https://charts.jetstack.io"
-  chart      = "cert-manager"
-  namespace  = "cert-manager"
+  name             = "cert-manager"
+  repository       = "https://charts.jetstack.io"
+  chart            = "cert-manager"
+  namespace        = "cert-manager"
   create_namespace = true
 
   set {
@@ -191,9 +191,9 @@ resource "kubernetes_ingress_v1" "oauth" {
   metadata {
     name = "howling-oauth"
     annotations = {
-      "kubernetes.io/ingress.class"                = "nginx"
-      "cert-manager.io/cluster-issuer"             = "letsencrypt-prod"
-      "nginx.ingress.kubernetes.io/ssl-redirect"    = "true"
+      "kubernetes.io/ingress.class"              = "nginx"
+      "cert-manager.io/cluster-issuer"           = "letsencrypt-prod"
+      "nginx.ingress.kubernetes.io/ssl-redirect" = "true"
     }
   }
 

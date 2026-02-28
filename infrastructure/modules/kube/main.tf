@@ -1,8 +1,8 @@
 resource "ovh_cloud_project_kube" "kube_cluster" {
-  service_name = var.service_name
-  name         = var.cluster_name
-  region       = var.region
-  version      = var.kube_version
+  service_name       = var.service_name
+  name               = var.cluster_name
+  region             = var.region
+  version            = var.kube_version
   private_network_id = var.private_network_id
 }
 
