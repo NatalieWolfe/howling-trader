@@ -64,7 +64,7 @@ module "kube" {
   source             = "./modules/kube"
   service_name       = var.service_name
   region             = var.region
-  private_network_id = module.network.network_id
+  private_network_id = module.network.openstack_network_id
 }
 
 # Configure Kubernetes and Helm providers using the cluster outputs
