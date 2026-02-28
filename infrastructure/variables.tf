@@ -43,6 +43,11 @@ variable "registry_user_email" {
   description = "The email address associated with the registry user"
 }
 
+variable "letsencrypt_email" {
+  type        = string
+  description = "The email address for Let's Encrypt certificates"
+}
+
 variable "state_bucket_name" {
   type    = string
   default = "howling-trader-tofu-state"
