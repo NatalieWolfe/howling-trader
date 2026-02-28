@@ -15,9 +15,8 @@ variable "cluster_name" {
 }
 
 variable "kube_version" {
-  type        = string
-  default     = "1.29"
-  description = "The Kubernetes version for the cluster"
+  type    = string
+  default = "1.34"
 }
 
 variable "nodepool_flavor" {
