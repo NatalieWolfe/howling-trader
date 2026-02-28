@@ -37,6 +37,27 @@ variable "db_uri" {
   description = "The database connection URI"
 }
 
+variable "db_host" {
+  type        = string
+  description = "The database hostname"
+}
+
+variable "db_port" {
+  type        = string
+  description = "The database port"
+}
+
+variable "db_user" {
+  type        = string
+  description = "The database username"
+}
+
+variable "db_password" {
+  type        = string
+  sensitive   = true
+  description = "The database password"
+}
+
 variable "letsencrypt_email" {
   type        = string
   description = "The email address for Let's Encrypt"

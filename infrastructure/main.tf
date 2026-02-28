@@ -107,6 +107,10 @@ module "oauth" {
   registry_password = module.registry.registry_user_password
   image_repository  = "${split("/", module.registry.registry_url)[2]}/${var.registry_name}/oauth"
   db_uri            = module.database.db_uri
+  db_host           = module.database.db_host
+  db_port           = module.database.db_port
+  db_user           = module.database.db_user
+  db_password       = module.database.db_password
   letsencrypt_email = var.letsencrypt_email
 
   providers = {

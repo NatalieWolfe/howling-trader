@@ -46,7 +46,8 @@ window blank_window() {
 }
 
 const window* maybe_get_previous(const vector<window>& windows, int offset) {
-  return windows.size() < offset ? nullptr : &windows(-offset);
+  return windows.size() < static_cast<size_t>(offset) ? nullptr
+                                                      : &windows(-offset);
 }
 
 double
@@ -140,7 +141,7 @@ window do_aggregate(
     double diff = new_window.candle.close() - w.moving_average;
     sq_diff_sum += diff * diff;
   }
-  w.stddev = std::sqrt(sq_diff_sum);
+  w.stddev = std::sqrt(sq_diff_sum / one_minute_windows.size());
   w.upper_bollinger_band = w.moving_average + (2.0 * w.stddev);
   w.lower_bollinger_band = w.moving_average - (2.0 * w.stddev);
 
@@ -163,6 +164,12 @@ void add_next_minute(aggregations& aggr, const Candle& candle) {
   // TODO: Calculate sequence counters.
   aggr.one_minute.push_back(
       to_window(candle, maybe_get_previous(aggr.one_minute, 1)));
+
+  // For multi-minute aggregations, we use an offset equal to the window size
+  // (e.g., 5 or 20) when retrieving the previous window for EMA/MACD
+  // calculations. This ensures that the EMA state is updated only once per
+  // "full" window of data, preventing the same minutes from being counted
+  // multiple times in the exponential moving average sequence.
   aggr.five_minute.push_back(do_aggregate(
       aggr.one_minute.last_n(5), maybe_get_previous(aggr.five_minute, 5)));
   aggr.twenty_minute.push_back(do_aggregate(

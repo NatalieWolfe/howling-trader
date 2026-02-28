@@ -3,6 +3,16 @@ output "db_id" {
   description = "The ID of the managed database"
 }
 
+output "db_host" {
+  value       = ovh_cloud_project_database.postgres.endpoints[0].domain
+  description = "The database hostname"
+}
+
+output "db_port" {
+  value       = ovh_cloud_project_database.postgres.endpoints[0].port
+  description = "The database port"
+}
+
 output "db_uri" {
   value       = ovh_cloud_project_database.postgres.endpoints[0].uri
   sensitive   = true

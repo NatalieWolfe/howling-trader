@@ -107,6 +107,17 @@ resource "kubernetes_deployment" "oauth" {
           name  = "oauth-service"
           image = "${var.image_repository}:${var.image_tag}"
 
+          args = [
+            "--database=postgres",
+            "--pg_host=${var.db_host}",
+            "--pg_port=${var.db_port}",
+            "--pg_user=${var.db_user}",
+            "--pg_password=${var.db_password}",
+            "--pg_database=howling",
+            "--schwab_oauth_redirect_url=https://${var.domain_name}/callback",
+            "--logging_mode=json",
+          ]
+
           port {
             container_port = 8080 # HTTP
             name           = "http"
@@ -117,9 +128,22 @@ resource "kubernetes_deployment" "oauth" {
             name           = "grpc"
           }
 
-          env {
-            name  = "DATABASE_URL"
-            value = var.db_uri
+          readiness_probe {
+            http_get {
+              path = "/status"
+              port = "http"
+            }
+            initial_delay_seconds = 5
+            period_seconds        = 10
+          }
+
+          liveness_probe {
+            http_get {
+              path = "/status"
+              port = "http"
+            }
+            initial_delay_seconds = 15
+            period_seconds        = 20
           }
         }
       }
@@ -192,5 +216,8 @@ resource "kubernetes_ingress_v1" "oauth" {
     }
   }
 
-  depends_on = [helm_release.letsencrypt_issuer]
+  depends_on = [
+    helm_release.letsencrypt_issuer,
+    helm_release.ingress_nginx,
+  ]
 }
