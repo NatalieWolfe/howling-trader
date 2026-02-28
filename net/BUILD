@@ -17,7 +17,7 @@ exports_files(
         "local.wolfe.dev.crt",
         "local.wolfe.dev.key",
     ],
-    visibility = ["//api:__subpackages__"],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
