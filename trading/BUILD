@@ -21,6 +21,7 @@ cc_library(
     srcs = ["metrics.cc"],
     hdrs = ["metrics.h"],
     visibility = ["//visibility:public"],
+    deps = ["//containers:vector"],
 )
 
 cc_library(

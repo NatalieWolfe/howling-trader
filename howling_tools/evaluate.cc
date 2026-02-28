@@ -163,6 +163,8 @@ void run() {
       } else if (d.act == action::SELL && !state.positions[symbol].empty()) {
         for (const trading_state::position& p : state.positions[symbol]) {
           ++day_metrics.sales;
+          double delta = candle.close() - p.price;
+          day_metrics.deltas.push_back(delta);
           if (p.price < candle.close()) ++day_metrics.profitable_sales;
           state.available_funds += candle.close() * p.quantity;
         }
