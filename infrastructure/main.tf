@@ -89,12 +89,14 @@ provider "helm" {
 # ------------------------------------------------------------------------------
 
 module "database" {
-  source       = "./modules/database"
-  service_name = var.service_name
-  region       = replace(var.region, "-1", "")
-  network_id   = module.network.openstack_network_id
-  subnet_id    = module.network.subnet_id
+  source             = "./modules/database"
+  service_name       = var.service_name
+  region             = replace(var.region, "-1", "")
+  network_id         = module.network.openstack_network_id
+  subnet_id          = module.network.subnet_id
+  authorized_subnets = [module.network.subnet_cidr]
 }
+
 
 # ------------------------------------------------------------------------------
 # OAuth Service Deployment

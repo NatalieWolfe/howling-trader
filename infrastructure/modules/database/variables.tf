@@ -47,3 +47,9 @@ variable "subnet_id" {
   type        = string
   description = "The ID of the private subnet"
 }
+
+variable "authorized_subnets" {
+  type        = list(string)
+  default     = []
+  description = "List of subnets authorized to access the database"
+}

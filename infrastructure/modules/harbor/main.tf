@@ -16,3 +16,8 @@ resource "harbor_retention_policy" "main_retention" {
     untagged_artifacts   = true
   }
 }
+
+resource "harbor_garbage_collection" "main_gc" {
+  schedule        = "Daily"
+  delete_untagged = true
+}
