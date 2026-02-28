@@ -57,7 +57,11 @@ void run_server() {
 } // namespace howling
 
 int main(int argc, char** argv) {
-  howling::init(argc, argv);
-  howling::run_server();
+  try {
+    howling::init(argc, argv);
+    howling::run_server();
+  } catch (const std::exception& e) {
+    LOG(FATAL) << "Unhandled exception: " << e.what();
+  }
   return 0;
 }
