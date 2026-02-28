@@ -4,7 +4,7 @@ output "db_id" {
 }
 
 output "db_host" {
-  value       = ovh_cloud_project_database.postgres.endpoints[0].host
+  value       = ovh_cloud_project_database.postgres.endpoints[0].domain
   description = "The database hostname"
 }
 
