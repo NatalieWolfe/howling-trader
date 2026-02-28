@@ -63,7 +63,7 @@ module "network" {
 module "kube" {
   source             = "./modules/kube"
   service_name       = var.service_name
-  region             = replace(var.region, "-1", "")
+  region             = var.region
   private_network_id = module.network.network_id
 }
 
