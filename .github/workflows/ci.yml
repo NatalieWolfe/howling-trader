@@ -41,7 +41,7 @@ jobs:
         run: |
           export CC=gcc-14
           export CXX=g++-14
-          bazel test //...
+          bazel test --config=ci //...
 
   infrastructure-check:
     runs-on: ubuntu-latest
@@ -83,8 +83,8 @@ jobs:
         run: |
           export CC=gcc-14
           export CXX=g++-14
-          bazel run //services/oauth:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/howling-oauth
-          bazel run //howling_tools:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/howling-executor
+          bazel run --config=ci //services/oauth:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/howling-oauth
+          bazel run --config=ci //howling_tools:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/howling-executor
 
   infrastructure-apply:
     needs: publish
