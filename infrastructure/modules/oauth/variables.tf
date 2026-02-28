@@ -58,6 +58,12 @@ variable "db_password" {
   description = "The database password"
 }
 
+variable "admin_password" {
+  type        = string
+  sensitive   = true
+  description = "The admin database password"
+}
+
 variable "letsencrypt_email" {
   type        = string
   description = "The email address for Let's Encrypt"

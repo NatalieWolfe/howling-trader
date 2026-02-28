@@ -72,6 +72,43 @@ resource "kubernetes_secret" "registry_creds" {
 }
 
 # ------------------------------------------------------------------------------
+# DB Bootstrap Job (Grant Ownership)
+# ------------------------------------------------------------------------------
+
+resource "kubernetes_job" "db_bootstrap" {
+  metadata {
+    name = "howling-db-bootstrap"
+  }
+
+  spec {
+    template {
+      metadata {
+        name = "howling-db-bootstrap"
+      }
+      spec {
+        container {
+          name    = "bootstrap"
+          image   = "postgres:14-alpine"
+          command = ["/bin/sh", "-c"]
+          args = [
+            "psql \"host=${var.db_host} port=${var.db_port} dbname=postgres user=avnadmin password=${var.admin_password} sslmode=require\" -c \"ALTER DATABASE howling OWNER TO ${var.db_user};\""
+          ]
+        }
+        restart_policy = "OnFailure"
+      }
+    }
+    backoff_limit = 4
+  }
+
+  wait_for_completion = true
+
+  timeouts {
+    create = "2m"
+    update = "2m"
+  }
+}
+
+# ------------------------------------------------------------------------------
 # OAuth Service Deployment
 # ------------------------------------------------------------------------------
 

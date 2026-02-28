@@ -99,6 +99,7 @@ cc_binary(
 pkg_tar(
     name = "server_layer",
     srcs = [":server"],
+    include_runfiles = True,
     package_dir = "/services/oauth",
 )
 
@@ -106,6 +107,9 @@ oci_image(
     name = "image",
     base = "@ubuntu_noble",
     entrypoint = ["/services/oauth/server"],
+    env = {
+        "RUNFILES_DIR": "/services/oauth/server.runfiles",
+    },
     tars = [":server_layer"],
 )
 

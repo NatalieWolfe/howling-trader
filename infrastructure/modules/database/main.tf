@@ -33,3 +33,9 @@ resource "ovh_cloud_project_database_postgresql_user" "app_user" {
   cluster_id   = ovh_cloud_project_database.postgres.id
   name         = "howling_app"
 }
+
+resource "ovh_cloud_project_database_postgresql_user" "admin" {
+  service_name = var.service_name
+  cluster_id   = ovh_cloud_project_database.postgres.id
+  name         = "avnadmin"
+}
