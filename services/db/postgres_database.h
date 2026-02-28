@@ -18,6 +18,7 @@ struct postgres_options {
   std::string_view user;
   std::string_view password;
   std::string_view dbname;
+  std::string_view sslmode;
 };
 
 class postgres_database : public database {

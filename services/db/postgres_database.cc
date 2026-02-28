@@ -409,14 +409,15 @@ struct postgres_database::implementation {
 
 postgres_database::postgres_database(postgres_options options)
     : _implementation{std::make_unique<implementation>()} {
-  _implementation->_conn = PQsetdbLogin(
-      options.host.data(),
-      options.port.data(),
-      /*options=*/nullptr,
-      /*tty=*/nullptr,
-      options.dbname.data(),
-      options.user.data(),
-      options.password.data());
+  std::string connection_parameters = std::format(
+      "host={} port={} dbname={} user={} password={} sslmode={}",
+      options.host,
+      options.port,
+      options.dbname,
+      options.user,
+      options.password,
+      options.sslmode);
+  _implementation->_conn = PQconnectdb(connection_parameters.c_str());
 
   try {
     check_pgconn_err(*_implementation->_conn);

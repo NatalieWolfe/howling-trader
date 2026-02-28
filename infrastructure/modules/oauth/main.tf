@@ -114,6 +114,7 @@ resource "kubernetes_deployment" "oauth" {
             "--pg_user=${var.db_user}",
             "--pg_password=${var.db_password}",
             "--pg_database=howling",
+            "--pg_enable_encryption",
             "--schwab_oauth_redirect_url=https://${var.domain_name}/callback",
             "--logging_mode=json",
           ]

@@ -54,19 +54,20 @@ protected:
         .port = _port_str,
         .user = absl::GetFlag(FLAGS_pg_user),
         .password = absl::GetFlag(FLAGS_pg_password),
-        .dbname = absl::GetFlag(FLAGS_pg_database)});
+        .dbname = absl::GetFlag(FLAGS_pg_database),
+        .sslmode = "disable"});
     _clear_database();
   }
 
   void _clear_database() {
-    PGconn* conn = PQsetdbLogin(
-        absl::GetFlag(FLAGS_pg_host).c_str(),
-        _port_str.c_str(),
-        /*options=*/nullptr,
-        /*tty=*/nullptr,
-        absl::GetFlag(FLAGS_pg_database).c_str(),
-        absl::GetFlag(FLAGS_pg_user).c_str(),
-        absl::GetFlag(FLAGS_pg_password).c_str());
+    std::string connection_parameters = std::format(
+        "host={} port={} dbname={} user={} password={} sslmode=disable",
+        absl::GetFlag(FLAGS_pg_host),
+        _port_str,
+        absl::GetFlag(FLAGS_pg_database),
+        absl::GetFlag(FLAGS_pg_user),
+        absl::GetFlag(FLAGS_pg_password));
+    PGconn* conn = PQconnectdb(connection_parameters.c_str());
     ASSERT_EQ(PQstatus(conn), CONNECTION_OK) << PQerrorMessage(conn);
     PGresult* res = PQexec(
         conn,
@@ -126,14 +127,14 @@ TEST_F(PostgresDatabaseTest, SavedRefreshTokenIsEncryptedAtRest) {
   save_refresh_token("schwab", secret_token);
 
   // Open a raw connection to verify the data in the database.
-  PGconn* conn = PQsetdbLogin(
-      absl::GetFlag(FLAGS_pg_host).c_str(),
-      _port_str.c_str(),
-      /*options=*/nullptr,
-      /*tty=*/nullptr,
-      absl::GetFlag(FLAGS_pg_database).c_str(),
-      absl::GetFlag(FLAGS_pg_user).c_str(),
-      absl::GetFlag(FLAGS_pg_password).c_str());
+  std::string connection_parameters = std::format(
+      "host={} port={} dbname={} user={} password={} sslmode=disable",
+      absl::GetFlag(FLAGS_pg_host),
+      _port_str,
+      absl::GetFlag(FLAGS_pg_database),
+      absl::GetFlag(FLAGS_pg_user),
+      absl::GetFlag(FLAGS_pg_password));
+  PGconn* conn = PQconnectdb(connection_parameters.c_str());
   ASSERT_EQ(PQstatus(conn), CONNECTION_OK) << PQerrorMessage(conn);
 
   PGresult* res = PQexec(
