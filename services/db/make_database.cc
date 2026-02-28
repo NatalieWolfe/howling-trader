@@ -30,22 +30,30 @@ ABSL_FLAG(
 ABSL_FLAG(int, pg_port, 5432, "Port to connect to for the Postgres database.");
 ABSL_FLAG(
     std::string, pg_database, "howling", "Name of the Postgres database.");
+ABSL_FLAG(
+    bool,
+    pg_enable_encryption,
+    false,
+    "Enable encryption for the Postgres connection.");
 
 namespace howling {
 
 std::unique_ptr<database> make_database() {
   std::string type = absl::GetFlag(FLAGS_database);
   if (type == "postgres") {
+    bool encrypt = absl::GetFlag(FLAGS_pg_enable_encryption);
     LOG(INFO) << "Connecting to postgres database \""
               << absl::GetFlag(FLAGS_pg_database) << "\" at "
               << absl::GetFlag(FLAGS_pg_host) << ":"
-              << absl::GetFlag(FLAGS_pg_port);
+              << absl::GetFlag(FLAGS_pg_port)
+              << (encrypt ? " (encrypted)" : " (unencrypted)");
     return std::make_unique<postgres_database>(postgres_options{
         .host = absl::GetFlag(FLAGS_pg_host),
         .port = std::to_string(absl::GetFlag(FLAGS_pg_port)),
         .user = absl::GetFlag(FLAGS_pg_user),
         .password = absl::GetFlag(FLAGS_pg_password),
-        .dbname = absl::GetFlag(FLAGS_pg_database)});
+        .dbname = absl::GetFlag(FLAGS_pg_database),
+        .sslmode = encrypt ? "require" : "disable"});
   }
   return std::make_unique<sqlite_database>();
 }
