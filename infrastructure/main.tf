@@ -47,6 +47,75 @@ module "harbor" {
 }
 
 # ------------------------------------------------------------------------------
+# Network Infrastructure (vRack)
+# ------------------------------------------------------------------------------
+
+module "network" {
+  source       = "./modules/network"
+  service_name = var.service_name
+  region       = var.region
+}
+
+# ------------------------------------------------------------------------------
+# Managed Kubernetes Cluster
+# ------------------------------------------------------------------------------
+
+module "kube" {
+  source             = "./modules/kube"
+  service_name       = var.service_name
+  region             = var.region
+  private_network_id = module.network.network_id
+}
+
+# Configure Kubernetes and Helm providers using the cluster outputs
+provider "kubernetes" {
+  host                   = module.kube.kubeconfig_attributes[0].host
+  client_certificate     = base64decode(module.kube.kubeconfig_attributes[0].client_certificate)
+  client_key             = base64decode(module.kube.kubeconfig_attributes[0].client_key)
+  cluster_ca_certificate = base64decode(module.kube.kubeconfig_attributes[0].cluster_ca_certificate)
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.kube.kubeconfig_attributes[0].host
+    client_certificate     = base64decode(module.kube.kubeconfig_attributes[0].client_certificate)
+    client_key             = base64decode(module.kube.kubeconfig_attributes[0].client_key)
+    cluster_ca_certificate = base64decode(module.kube.kubeconfig_attributes[0].cluster_ca_certificate)
+  }
+}
+
+# ------------------------------------------------------------------------------
+# Managed Database (Postgres)
+# ------------------------------------------------------------------------------
+
+module "database" {
+  source       = "./modules/database"
+  service_name = var.service_name
+  region       = var.region
+  network_id   = module.network.openstack_network_id
+  subnet_id    = module.network.subnet_id
+}
+
+# ------------------------------------------------------------------------------
+# OAuth Service Deployment
+# ------------------------------------------------------------------------------
+
+module "oauth" {
+  source            = "./modules/oauth"
+  registry_server   = split("/", module.registry.registry_url)[2]
+  registry_username = module.registry.registry_user_login
+  registry_password = module.registry.registry_user_password
+  image_repository  = "${split("/", module.registry.registry_url)[2]}/${var.registry_name}/oauth"
+  db_uri            = module.database.db_uri
+  letsencrypt_email = var.letsencrypt_email
+
+  providers = {
+    kubernetes = kubernetes
+    helm       = helm
+  }
+}
+
+# ------------------------------------------------------------------------------
 # Resource Refactoring (Moved Blocks)
 # ------------------------------------------------------------------------------
 

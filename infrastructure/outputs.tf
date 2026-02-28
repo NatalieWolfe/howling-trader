@@ -29,3 +29,13 @@ output "state_bucket_endpoint" {
   value       = module.state.bucket_endpoint
   description = "The S3 endpoint for the state bucket"
 }
+
+output "oauth_ingress_ip" {
+  value       = module.oauth.ingress_ip
+  description = "The public IP address for the OAuth service"
+}
+
+output "kube_cluster_id" {
+  value       = module.kube.cluster_id
+  description = "The ID of the Managed Kubernetes cluster"
+}
