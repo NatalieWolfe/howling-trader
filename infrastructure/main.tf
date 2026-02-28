@@ -105,7 +105,7 @@ module "oauth" {
   registry_server   = split("/", module.registry.registry_url)[2]
   registry_username = module.registry.registry_user_login
   registry_password = module.registry.registry_user_password
-  image_repository  = "${split("/", module.registry.registry_url)[2]}/${var.registry_name}/oauth"
+  image_repository  = "${split("/", module.registry.registry_url)[2]}/${var.registry_name}/howling-oauth"
   db_uri            = module.database.db_uri
   db_host           = module.database.db_host
   db_port           = module.database.db_port

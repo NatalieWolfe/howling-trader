@@ -122,3 +122,18 @@ jobs:
           tofu output oauth_ingress_ip
           tofu output registry_url
           tofu output kube_cluster_id
+      - name: Debug Kubernetes Failures
+        if: failure()
+        run: |
+          cd infrastructure
+          # Extract the kubeconfig from the tofu state
+          tofu output -raw kubeconfig > kubeconfig.yaml
+          export KUBECONFIG=$(pwd)/kubeconfig.yaml
+          echo "=== POD STATUS ==="
+          kubectl get pods -A
+          echo "=== DEPLOYMENT DESCRIPTION ==="
+          kubectl describe deployment howling-oauth -n default
+          echo "=== RECENT EVENTS ==="
+          kubectl get events --sort-by='.lastTimestamp'
+          echo "=== POD LOGS ==="
+          kubectl logs -l app=howling-oauth --all-containers --tail=100

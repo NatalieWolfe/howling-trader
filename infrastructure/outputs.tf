@@ -39,3 +39,9 @@ output "kube_cluster_id" {
   value       = module.kube.cluster_id
   description = "The ID of the Managed Kubernetes cluster"
 }
+
+output "kubeconfig" {
+  value       = module.kube.kubeconfig
+  sensitive   = true
+  description = "The Kubeconfig for the cluster"
+}
