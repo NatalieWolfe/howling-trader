@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+
 #include "containers/vector.h"
 
 namespace howling {
