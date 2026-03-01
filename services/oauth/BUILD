@@ -132,6 +132,7 @@ cc_library(
     deps = [
         ":oauth_exchanger",
         ":oauth_exchanger_impl",
+        "//api:schwab",
         "//api/schwab:oauth",
         "//net:connect",
         "//services:database",

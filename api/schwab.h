@@ -18,6 +18,8 @@
 
 namespace howling::schwab {
 
+// TODO: Introduce a virtual base interface for this class to enable mocking and
+// facilitate unit testing of services that depend on it.
 class api_connection {
 public:
   api_connection();

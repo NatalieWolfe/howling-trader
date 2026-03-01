@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "absl/log/log.h"
+#include "api/schwab.h"
 #include "api/schwab/oauth.h"
 #include "boost/asio/basic_waitable_timer.hpp"
 #include "boost/asio/io_context.hpp"
@@ -103,20 +104,53 @@ private:
     urls::url_view url_view{_request.target()};
 
     if (url_view.path() == "/status") {
+      _get_status();
+      return;
+    }
+
+    if (url_view.path() == "/schwab/status") {
+      _get_schwab_status();
+      return;
+    }
+
+    if (url_view.path() == "/schwab/oauth-callback") {
+      _get_schwab_oauth_callback(url_view);
+      return;
+    }
+
+    _response.result(http::status::not_found);
+    _response.set(http::field::content_type, "text/plain");
+    beast::ostream(_response.body()) << "File not found.\n";
+  }
+
+  void _get_status() {
+    _response.result(http::status::ok);
+    _response.set(http::field::content_type, "text/plain");
+    // TODO: Expand this with service stats like memory, call counts, etc.
+    beast::ostream(_response.body()) << "OK\n";
+  }
+
+  void _get_schwab_status() {
+    try {
+      schwab::api_connection schwab_api;
+      std::vector<Account> accounts = schwab_api.get_accounts();
+
       _response.result(http::status::ok);
       _response.set(http::field::content_type, "text/plain");
-      // TODO: Expand this with service stats like memory, call counts, etc.
-      beast::ostream(_response.body()) << "OK\n";
-      return;
-    }
-
-    if (url_view.path() != "/callback") {
-      _response.result(http::status::not_found);
+      auto&& body = beast::ostream(_response.body());
+      for (const auto& account : accounts) {
+        body << "Account " << account.name() << ": $"
+             << account.available_funds() << "\n";
+      }
+    } catch (const std::exception& e) {
+      LOG(WARNING) << "Schwab status check failed: " << e.what();
+      _response.result(http::status::ok);
       _response.set(http::field::content_type, "text/plain");
-      beast::ostream(_response.body()) << "File not found.\n";
-      return;
+      beast::ostream(_response.body()) << "Authentication Required\n";
     }
+  }
 
+  void _get_schwab_oauth_callback(const urls::url_view& url_view) {
     auto code_itr = url_view.params().find("code");
     if (code_itr == url_view.params().end() || (*code_itr).value.empty()) {
       _response.result(http::status::bad_request);
