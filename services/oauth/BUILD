@@ -82,6 +82,7 @@ cc_library(
     deps = [
         "//net:connect",
         "//net:url",
+        "//strings:format",
         "//strings:json",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",

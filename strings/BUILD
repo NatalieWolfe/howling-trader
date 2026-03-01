@@ -8,6 +8,15 @@ cc_library(
     hdrs = ["format.h"],
 )
 
+cc_test(
+    name = "format_test",
+    srcs = ["format_test.cc"],
+    deps = [
+        ":format",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_library(
     name = "json",
     srcs = ["json.cc"],
