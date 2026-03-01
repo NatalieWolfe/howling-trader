@@ -130,6 +130,8 @@ module "oauth" {
   letsencrypt_email     = var.letsencrypt_email
   telegram_bot_token    = var.telegram_bot_token
   telegram_chat_id      = var.telegram_chat_id
+  schwab_api_key        = var.schwab_api_key
+  schwab_api_secret     = var.schwab_api_secret
 
   providers = {
     kubernetes = kubernetes
