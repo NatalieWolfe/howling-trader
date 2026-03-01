@@ -78,3 +78,13 @@ variable "telegram_chat_id" {
   type        = string
   description = "The Telegram chat ID"
 }
+
+variable "schwab_api_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "schwab_api_secret" {
+  type      = string
+  sensitive = true
+}
