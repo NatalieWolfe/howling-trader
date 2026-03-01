@@ -73,3 +73,9 @@ variable "schwab_api_secret" {
   type      = string
   sensitive = true
 }
+
+variable "image_tag" {
+  type        = string
+  default     = "latest"
+  description = "The tag to use for all service images"
+}
