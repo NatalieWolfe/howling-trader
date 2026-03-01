@@ -104,6 +104,7 @@ module "database" {
   registry_username  = module.registry.registry_user_login
   registry_password  = module.registry.registry_user_password
   image_repository   = "${local.registry_server}/${var.registry_name}/schema-upgrade"
+  image_tag          = var.image_tag
 
   providers = {
     kubernetes = kubernetes
@@ -121,6 +122,7 @@ module "oauth" {
   registry_username     = module.registry.registry_user_login
   registry_password     = module.registry.registry_user_password
   image_repository      = "${local.registry_server}/${var.registry_name}/howling-oauth"
+  image_tag             = var.image_tag
   db_uri                = module.database.db_uri
   db_host               = module.database.db_host
   db_port               = module.database.db_port
