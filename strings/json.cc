@@ -6,6 +6,7 @@
 #include <string_view>
 
 #include "json/reader.h"
+#include "json/writer.h"
 
 namespace howling {
 
@@ -18,6 +19,16 @@ Json::Value to_json(std::string_view str) {
     throw std::runtime_error("Failed to parse JSON string: " + err);
   }
   return root;
+}
+
+std::string to_string(const Json::Value& json) {
+  static const Json::StreamWriterBuilder builder = ([]() {
+    Json::StreamWriterBuilder builder;
+    builder["commentStyle"] = "None";
+    builder["indentation"] = "";
+    return builder;
+  })();
+  return Json::writeString(builder, json);
 }
 
 } // namespace howling

@@ -100,6 +100,17 @@ sh_test(
     ],
 )
 
+cc_binary(
+    name = "schema_upgrade",
+    srcs = ["schema_upgrade.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":make_database",
+        "//environment:init",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
 cc_library(
     name = "sqlite_database",
     srcs = ["sqlite_database.cc"],

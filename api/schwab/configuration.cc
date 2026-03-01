@@ -10,7 +10,7 @@ ABSL_FLAG(std::string, schwab_api_key_secret, "", "API secret for Schwab.");
 ABSL_FLAG(
     std::string,
     schwab_oauth_redirect_url,
-    "https://howling-auth.wolfe.dev/callback",
+    "https://howling-oauth.wolfe.dev/schwab/oauth-callback",
     "Redirect URL for Schwab OAuth.");
 
 namespace howling::schwab {

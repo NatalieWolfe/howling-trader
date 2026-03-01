@@ -7,6 +7,8 @@
 #include <string>
 #include <thread>
 
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 #include "api/schwab/oauth.h"
 #include "boost/asio.hpp"
 #include "boost/beast.hpp"
@@ -15,6 +17,8 @@
 #include "services/mock_database.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
+ABSL_DECLARE_FLAG(absl::Duration, schwab_auth_timeout);
 
 namespace howling {
 namespace {
@@ -77,7 +81,9 @@ struct test_client {
   beast::tcp_stream stream;
 };
 
-TEST(OauthHttpService, CallbackReturnsOkAndStoresToken) {
+// MARK: GET /schwab/oauth-callback
+
+TEST(SchwabOauthCallback, ReturnsOkAndStoresToken) {
   test_server server;
   test_client client{server.port};
 
@@ -99,7 +105,7 @@ TEST(OauthHttpService, CallbackReturnsOkAndStoresToken) {
       });
 
   http::request<http::string_body> req{
-      http::verb::get, "/callback?code=test_code", 11};
+      http::verb::get, "/schwab/oauth-callback?code=test_code", 11};
   req.set(http::field::host, "127.0.0.1");
   req.set(http::field::user_agent, "test-client");
 
@@ -118,11 +124,12 @@ TEST(OauthHttpService, CallbackReturnsOkAndStoresToken) {
       save_future.wait_for(std::chrono::seconds(1)), std::future_status::ready);
 }
 
-TEST(OauthHttpService, MissingCodeReturnsBadRequest) {
+TEST(SchwabOauthCallback, MissingCodeReturnsBadRequest) {
   test_server server;
   test_client client{server.port};
 
-  http::request<http::string_body> req{http::verb::get, "/callback", 11};
+  http::request<http::string_body> req{
+      http::verb::get, "/schwab/oauth-callback", 11};
   req.set(http::field::host, "127.0.0.1");
 
   http::write(client.stream, req);
@@ -134,7 +141,9 @@ TEST(OauthHttpService, MissingCodeReturnsBadRequest) {
   EXPECT_EQ(res.result(), http::status::bad_request);
 }
 
-TEST(OauthHttpService, StatusReturnsOk) {
+// MARK: GET /status
+
+TEST(Status, ReturnsOk) {
   test_server server;
   test_client client{server.port};
 
@@ -149,6 +158,27 @@ TEST(OauthHttpService, StatusReturnsOk) {
 
   EXPECT_EQ(res.result(), http::status::ok);
   EXPECT_EQ(res.body(), "OK\n");
+}
+
+// MARK: GET /schwab/status
+
+TEST(SchwabStatus, ReturnsAuthenticationRequiredWhenNoToken) {
+  test_server server;
+  test_client client{server.port};
+
+  ::absl::SetFlag(&FLAGS_schwab_auth_timeout, ::absl::Seconds(2));
+
+  http::request<http::string_body> req{http::verb::get, "/schwab/status", 11};
+  req.set(http::field::host, "127.0.0.1");
+
+  http::write(client.stream, req);
+
+  beast::flat_buffer buffer;
+  http::response<http::string_body> res;
+  http::read(client.stream, buffer, res);
+
+  EXPECT_EQ(res.result(), http::status::ok);
+  EXPECT_EQ(res.body(), "Authentication Required\n");
 }
 
 } // namespace

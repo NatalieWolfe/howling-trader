@@ -4,5 +4,9 @@ terraform {
       source  = "ovh/ovh"
       version = "~> 2.11"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.0"
+    }
   }
 }

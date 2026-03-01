@@ -58,13 +58,23 @@ variable "db_password" {
   description = "The database password"
 }
 
-variable "admin_password" {
+variable "db_bootstrap_job_name" {
   type        = string
-  sensitive   = true
-  description = "The admin database password"
+  description = "The name of the DB bootstrap job"
 }
 
 variable "letsencrypt_email" {
   type        = string
   description = "The email address for Let's Encrypt"
+}
+
+variable "telegram_bot_token" {
+  type        = string
+  sensitive   = true
+  description = "The Telegram bot token"
+}
+
+variable "telegram_chat_id" {
+  type        = string
+  description = "The Telegram chat ID"
 }

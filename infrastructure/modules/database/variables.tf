@@ -53,3 +53,30 @@ variable "authorized_subnets" {
   default     = []
   description = "List of subnets authorized to access the database"
 }
+
+variable "registry_server" {
+  type        = string
+  description = "The registry server URL"
+}
+
+variable "registry_username" {
+  type        = string
+  description = "The registry username"
+}
+
+variable "registry_password" {
+  type        = string
+  sensitive   = true
+  description = "The registry password"
+}
+
+variable "image_repository" {
+  type        = string
+  description = "The repository URL for the schema upgrade image"
+}
+
+variable "image_tag" {
+  type        = string
+  default     = "latest"
+  description = "The tag for the schema upgrade image"
+}

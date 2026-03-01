@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "absl/log/log_entry.h"
 #include "absl/strings/str_cat.h"
@@ -33,6 +34,13 @@
 #include "strings/parse.h"
 #include "time/conversion.h"
 #include "json/json.h"
+
+ABSL_FLAG(
+    absl::Duration,
+    schwab_auth_timeout,
+    absl::Minutes(10),
+    "The maximum amount of time to wait for Schwab authentication to "
+    "complete.");
 
 namespace howling::schwab {
 namespace {
@@ -258,7 +266,10 @@ vector<Candle> api_connection::get_history(
 
 std::vector<Account> api_connection::get_accounts() {
   net::url url = make_net_url("/trader/v1/accounts/accountNumbers");
-  std::string bearer_token = token_manager::get_instance().get_bearer_token();
+  std::string bearer_token = token_manager::get_instance().get_bearer_token(
+      false,
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          to_std_chrono(absl::GetFlag(FLAGS_schwab_auth_timeout))));
 
   Json::Value root = send_request(_conn, bearer_token, url);
   check_json(root.isArray());

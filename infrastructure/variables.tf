@@ -52,3 +52,14 @@ variable "state_bucket_name" {
   type    = string
   default = "howling-trader-tofu-state"
 }
+
+variable "telegram_bot_token" {
+  type        = string
+  sensitive   = true
+  description = "The Telegram bot token"
+}
+
+variable "telegram_chat_id" {
+  type        = string
+  description = "The Telegram chat ID"
+}
