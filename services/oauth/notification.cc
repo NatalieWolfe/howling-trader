@@ -11,6 +11,7 @@
 #include "boost/beast/version.hpp"
 #include "net/connect.h"
 #include "net/url.h"
+#include "strings/format.h"
 #include "strings/json.h"
 
 ABSL_FLAG(
@@ -53,7 +54,7 @@ void send_notification(std::string_view message) {
 
     Json::Value body;
     body["chat_id"] = std::move(chat_id);
-    body["text"] = std::string{message};
+    body["text"] = escape_markdown_v2(message);
     body["parse_mode"] = std::string{MESSAGE_MODE};
 
     std::string body_str = to_string(body);

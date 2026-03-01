@@ -22,8 +22,7 @@ TEST(NotificationTest, SendNotificationSendsCorrectSSLRequest) {
   mock_telegram_server server;
   server.start();
 
-  const std::string message = "Hello Telegram SSL!";
-  EXPECT_NO_THROW(send_notification(message));
+  EXPECT_NO_THROW(send_notification("Hello Telegram SSL!"));
 
   EXPECT_EQ(
       server.last_request_target(),
@@ -31,7 +30,7 @@ TEST(NotificationTest, SendNotificationSendsCorrectSSLRequest) {
 
   Json::Value body = to_json(server.last_request_body());
   EXPECT_EQ(body["chat_id"].asString(), mock_telegram_server::CHAT_ID);
-  EXPECT_EQ(body["text"].asString(), message);
+  EXPECT_EQ(body["text"].asString(), "Hello Telegram SSL\\!");
 }
 
 TEST(NotificationTest, ThrowsOnMissingConfig) {
