@@ -85,6 +85,7 @@ jobs:
           export CXX=g++-14
           bazel run --config=ci //services/oauth:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/howling-oauth
           bazel run --config=ci //howling_tools:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/howling-executor
+          bazel run --config=ci //services/db:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/schema-upgrade
 
   infrastructure-apply:
     needs: publish
