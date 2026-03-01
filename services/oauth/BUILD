@@ -65,6 +65,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//environment:runfiles",
+        "@abseil-cpp//absl/flags:flag",
         "@boost.asio",
         "@boost.beast",
     ],

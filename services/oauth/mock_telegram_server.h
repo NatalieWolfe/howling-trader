@@ -12,7 +12,10 @@ namespace howling::oauth {
 
 class mock_telegram_server {
 public:
-  mock_telegram_server();
+  static constexpr std::string_view BOT_TOKEN = "test_bot_token";
+  static constexpr std::string_view CHAT_ID = "test_chat_id";
+
+  explicit mock_telegram_server(bool configure_flags = true);
   ~mock_telegram_server();
 
   void start();
