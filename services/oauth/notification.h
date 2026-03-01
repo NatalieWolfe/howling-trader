@@ -5,7 +5,7 @@
 namespace howling::oauth {
 
 /**
- * @brief Sends a notification via Telegram using configured bot_token and chat_id flags.
+ * @brief Sends the given message as a notification to the user.
  */
 void send_notification(std::string_view message);
 
