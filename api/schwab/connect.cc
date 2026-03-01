@@ -26,9 +26,7 @@ std::string get_schwab_host() {
 
 net::url make_net_url(std::string target) {
   return {
-      .service = "https",
-      .host = get_schwab_host(),
-      .target = std::move(target)};
+      .service = "443", .host = get_schwab_host(), .target = std::move(target)};
 }
 
 } // namespace howling::schwab
