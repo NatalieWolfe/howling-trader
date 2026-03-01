@@ -1,6 +1,7 @@
 #include "services/oauth/auth_service.h"
 
 #include <chrono>
+#include <format>
 #include <string>
 #include <string_view>
 
@@ -10,6 +11,7 @@
 #include "api/schwab/oauth.h"
 #include "grpcpp/server_context.h"
 #include "grpcpp/support/status.h"
+#include "services/oauth/notification.h"
 
 namespace howling {
 namespace {
@@ -39,27 +41,36 @@ grpc::Status auth_service::RequestLogin(
     return grpc::Status::OK;
   }
 
+  std::string login_url;
   if (request->service_name() == "schwab") {
     try {
       schwab::check_schwab_flags();
     } catch (const std::exception& e) {
       return grpc::Status(grpc::StatusCode::FAILED_PRECONDITION, e.what());
     }
-    std::string url = schwab::make_schwab_authorize_url(
+    login_url = schwab::make_schwab_authorize_url(
         absl::GetFlag(FLAGS_schwab_api_key_id),
         absl::GetFlag(FLAGS_schwab_oauth_redirect_url));
-    LOG(INFO) << "Generated Schwab OAuth URL: " << url;
   } else {
     return grpc::Status(
         grpc::StatusCode::INVALID_ARGUMENT, "Unsupported service name");
   }
 
-  // TODO: Send notification to user with the link.
+  try {
+    std::string message = std::format(
+        "Authentication required for {}: {}",
+        request->service_name(),
+        login_url);
+
+    oauth::send_notification(message);
+  } catch (const std::exception& e) {
+    LOG(ERROR) << "Failed to dispatch notification: " << e.what();
+    return grpc::Status(grpc::StatusCode::INTERNAL, e.what());
+  }
 
   // After successfully sending notification:
   _db.update_last_notified_at(request->service_name()).get();
-  return grpc::Status(
-      grpc::StatusCode::UNIMPLEMENTED, "Notification not implemented yet");
+  return grpc::Status::OK;
 }
 
 } // namespace howling

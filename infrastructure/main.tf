@@ -128,6 +128,8 @@ module "oauth" {
   db_password           = module.database.db_password
   db_bootstrap_job_name = module.database.db_bootstrap_job_name
   letsencrypt_email     = var.letsencrypt_email
+  telegram_bot_token    = var.telegram_bot_token
+  telegram_chat_id      = var.telegram_chat_id
 
   providers = {
     kubernetes = kubernetes

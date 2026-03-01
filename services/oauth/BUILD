@@ -7,6 +7,7 @@ cc_library(
     srcs = ["auth_service.cc"],
     hdrs = ["auth_service.h"],
     deps = [
+        ":notification",
         "//api/schwab:configuration",
         "//api/schwab:oauth",
         "//services:database",
@@ -21,8 +22,10 @@ cc_test(
     srcs = ["auth_service_test.cc"],
     deps = [
         ":auth_service_lib",
+        ":mock_telegram_server",
         "//services:mock_database",
         "//services/oauth/proto:auth_service_cc_grpc",
+        "@abseil-cpp//absl/flags:flag",
         "@googletest//:gtest_main",
         "@grpc//:grpc++",
     ],

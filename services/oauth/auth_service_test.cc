@@ -12,6 +12,7 @@
 #include "grpcpp/support/channel_arguments.h"
 #include "grpcpp/support/status.h"
 #include "services/mock_database.h"
+#include "services/oauth/mock_telegram_server.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 #include "services/oauth/proto/auth_service.pb.h"
 #include "gtest/gtest.h"
@@ -27,6 +28,10 @@ protected:
   void SetUp() override {
     absl::SetFlag(&FLAGS_schwab_api_key_id, "test_id");
     absl::SetFlag(&FLAGS_schwab_api_key_secret, "test_secret");
+    absl::SetFlag(
+        &FLAGS_schwab_oauth_redirect_url,
+        "https://howling-auth.wolfe.dev/callback");
+
     _service = std::make_unique<auth_service>(_db);
     grpc::ServerBuilder builder;
     builder.RegisterService(_service.get());
@@ -60,7 +65,10 @@ TEST_F(AuthServiceTest, RequestLoginSkipsIfNotifiedRecently) {
   EXPECT_TRUE(status.ok());
 }
 
-TEST_F(AuthServiceTest, RequestLoginReturnsUnimplementedOnFirstAttempt) {
+TEST_F(AuthServiceTest, RequestLoginDispatchesNotificationOnFirstAttempt) {
+  oauth::mock_telegram_server telegram_server;
+  telegram_server.start();
+
   LoginRequest request;
   request.set_service_name("schwab");
   google::protobuf::Empty response;
@@ -78,7 +86,7 @@ TEST_F(AuthServiceTest, RequestLoginReturnsUnimplementedOnFirstAttempt) {
 
   grpc::Status status = _stub->RequestLogin(&context, request, &response);
 
-  EXPECT_EQ(status.error_code(), grpc::StatusCode::UNIMPLEMENTED);
+  EXPECT_TRUE(status.ok());
 }
 
 } // namespace

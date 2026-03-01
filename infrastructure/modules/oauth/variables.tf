@@ -67,3 +67,14 @@ variable "letsencrypt_email" {
   type        = string
   description = "The email address for Let's Encrypt"
 }
+
+variable "telegram_bot_token" {
+  type        = string
+  sensitive   = true
+  description = "The Telegram bot token"
+}
+
+variable "telegram_chat_id" {
+  type        = string
+  description = "The Telegram chat ID"
+}

@@ -103,6 +103,8 @@ jobs:
           TF_VAR_service_name: ${{ secrets.OVH_PROJECT_ID }}
           TF_VAR_registry_user_email: ${{ secrets.REGISTRY_USER_EMAIL }}
           TF_VAR_letsencrypt_email: ${{ secrets.TLS_CERTIFICATE_EMAIL }}
+          TF_VAR_telegram_bot_token: ${{ secrets.TELEGRAM_BOT_API_KEY }}
+          TF_VAR_telegram_chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
           AWS_ACCESS_KEY_ID: ${{ secrets.STATE_S3_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.STATE_S3_SECRET_KEY }}
           AWS_DEFAULT_REGION: us-east-va
