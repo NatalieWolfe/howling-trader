@@ -97,6 +97,9 @@ jobs:
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
       - name: OpenTofu Apply
+        # TODO: Migrate the following runtime secrets to OpenBao and retrieve
+        # them via the howling::security::bao_client at startup for improved
+        # security and central management.
         env:
           TF_VAR_ovh_application_key: ${{ secrets.OVH_APPLICATION_KEY }}
           TF_VAR_ovh_application_secret: ${{ secrets.OVH_APPLICATION_SECRET }}
@@ -127,11 +130,9 @@ jobs:
           cd infrastructure
           echo "### Infrastructure Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "* **OAuth Ingress IP:** $(tofu output -raw oauth_ingress_ip)" >> $GITHUB_STEP_SUMMARY
-          echo "* **Registry URL:** $(tofu output -raw registry_url)" >> $GITHUB_STEP_SUMMARY
           echo "* **Kube Cluster ID:** $(tofu output -raw kube_cluster_id)" >> $GITHUB_STEP_SUMMARY
 
           tofu output oauth_ingress_ip
-          tofu output registry_url
           tofu output kube_cluster_id
       - name: Debug Kubernetes Failures
         if: failure()

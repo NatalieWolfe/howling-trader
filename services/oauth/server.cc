@@ -41,7 +41,8 @@ void run_server() {
 
   auth_service service(*db);
   grpc::ServerBuilder builder;
-  // TODO: Use secure server credentials.
+  // TODO: Use secure server credentials. Use the howling::security::bao_client
+  // to retrieve and manage TLS certificates sourced from OpenBao.
   builder.AddListeningPort(
       std::string{GRPC_ADDRESS}, grpc::InsecureServerCredentials());
   builder.RegisterService(&service);

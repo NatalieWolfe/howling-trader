@@ -45,7 +45,9 @@ public:
 struct token_manager::implementation {
   implementation() {
     // TODO: Take in the auth service hostname/ip and port on the command line.
-    // TODO: Use secure channel credentials for communication.
+    // TODO: Use secure channel credentials for communication. Use the
+    // howling::security::bao_client to retrieve and manage TLS certificates
+    // sourced from OpenBao.
     std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(
         "localhost:50051", grpc::InsecureChannelCredentials());
     stub = AuthService::NewStub(channel);
