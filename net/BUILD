@@ -25,3 +25,16 @@ cc_library(
     hdrs = ["url.h"],
     visibility = ["//visibility:public"],
 )
+
+cc_library(
+    name = "request",
+    srcs = ["request.cc"],
+    hdrs = ["request.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":connect",
+        "//strings:json",
+        "@boost.beast",
+        "@jsoncpp",
+    ],
+)
