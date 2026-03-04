@@ -1,19 +1,48 @@
+#include <fstream>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <stdexcept>
+#include <string>
 
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
 #include "services/security/bao_client.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include "services/security/mock_bao_server.h"
+
+ABSL_DECLARE_FLAG(std::string, bao_token_file);
 
 namespace howling::security {
 
 using ::testing::HasSubstr;
 using ::testing::ThrowsMessage;
 
-TEST(BaoClientLoginTest, ThrowsNotImplemented) {
+TEST(BaoClientLoginTest, Success) {
+  // Create a temporary token file.
+  std::string token_path = "test_token.txt";
+  {
+    std::ofstream token_file(token_path);
+    token_file << "test_jwt_token";
+  }
+  absl::SetFlag(&FLAGS_bao_token_file, token_path);
+
+  mock_bao_server server;
+  server.start();
+
+  bao_client client;
+  EXPECT_NO_THROW(client.login());
+
+  // Clean up.
+  std::remove(token_path.c_str());
+}
+
+TEST(BaoClientLoginTest, ThrowsOnMissingTokenFile) {
+  absl::SetFlag(&FLAGS_bao_token_file, "/non/existent/file");
+
   bao_client client;
   EXPECT_THAT(
       [&] { client.login(); },
-      ThrowsMessage<std::runtime_error>(HasSubstr("Not implemented yet.")));
+      ThrowsMessage<std::runtime_error>(
+          HasSubstr("Failed to open file: /non/existent/file")));
 }
 
 TEST(BaoClientGetSecretTest, ThrowsNotImplemented) {
