@@ -1,5 +1,6 @@
 #include "services/security/bao_client.h"
 
+#include <memory>
 #include <stdexcept>
 #include <string_view>
 
@@ -8,11 +9,11 @@
 #include "boost/beast.hpp"
 #include "boost/url.hpp"
 #include "files/files.h"
+#include "json/value.h"
 #include "net/connect.h"
 #include "net/request.h"
 #include "net/url.h"
 #include "strings/json.h"
-#include "json/value.h"
 
 ABSL_FLAG(
     std::string,
@@ -39,6 +40,10 @@ namespace http = ::boost::beast::http;
 namespace urls = ::boost::urls;
 
 bao_client::bao_client() {}
+
+void bao_client::wait_for_ready(std::chrono::milliseconds timeout) {
+  throw std::runtime_error("Not implemented yet.");
+}
 
 void bao_client::login() {
   std::string jwt = files::read_file(absl::GetFlag(FLAGS_bao_token_file));

@@ -35,6 +35,14 @@ TEST(BaoClientLoginTest, Success) {
   std::remove(token_path.c_str());
 }
 
+TEST(BaoClientWaitForReadyTest, ThrowsNotImplemented) {
+  using namespace std::chrono_literals;
+  bao_client client;
+  EXPECT_THAT(
+      [&] { client.wait_for_ready(100ms); },
+      ThrowsMessage<std::runtime_error>(HasSubstr("Not implemented yet.")));
+}
+
 TEST(BaoClientLoginTest, ThrowsOnMissingTokenFile) {
   absl::SetFlag(&FLAGS_bao_token_file, "/non/existent/file");
 

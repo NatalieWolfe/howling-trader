@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <string>
 #include <string_view>
 
@@ -10,13 +11,26 @@ namespace howling::security {
 /**
  * @brief Client for interacting with the OpenBao API.
  *
- * This client provides methods for authenticating with OpenBao using Kubernetes
- * ServiceAccount tokens, retrieving secrets from the KV-v2 engine, and
- * performing encryption/decryption operations using the Transit engine.
+ * This client provides methods for interacting with the OpenBao Proxy sidecar,
+ * retrieving secrets from the KV-v2 engine, and performing
+ * encryption/decryption operations using the Transit engine.
  */
 class bao_client {
 public:
   bao_client();
+
+  /**
+   * @brief Blocks until the OpenBao proxy is ready to handle requests.
+   *
+   * This method probes the OpenBao health endpoint and retries with exponential
+   * backoff until the proxy is unsealed and ready or the timeout is reached.
+   *
+   * @param timeout The maximum amount of time to wait.
+   *
+   * @throws std::runtime_error if the timeout is reached before the proxy is
+   * ready.
+   */
+  void wait_for_ready(std::chrono::milliseconds timeout);
 
   /**
    * @brief Exchanges a Kubernetes ServiceAccount token for an OpenBao token.
