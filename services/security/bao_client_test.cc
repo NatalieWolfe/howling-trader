@@ -31,11 +31,13 @@ TEST(BaoClientWaitForReadyTest, Timeout) {
           HasSubstr("Timed out waiting for OpenBao proxy to be ready.")));
 }
 
-TEST(BaoClientGetSecretTest, ThrowsNotImplemented) {
+TEST(BaoClientGetSecretTest, Success) {
+  mock_bao_server server(/*configure_flags=*/true, /*use_ssl=*/false);
+  server.start();
+
   bao_client client;
-  EXPECT_THAT(
-      [&] { (void)client.get_secret("test/path"); },
-      ThrowsMessage<std::runtime_error>(HasSubstr("Not implemented yet.")));
+  Json::Value secret = client.get_secret("howling/prod/telegram");
+  EXPECT_EQ(secret["key"].asString(), "value");
 }
 
 TEST(BaoClientEncryptTest, ThrowsNotImplemented) {

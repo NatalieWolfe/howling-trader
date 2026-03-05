@@ -39,6 +39,8 @@ void handle_request(Stream& stream, std::string* last_request_body) {
 
   if (req.target() == "/v1/sys/health") {
     res.body() = "{\"initialized\": true, \"sealed\": false}";
+  } else if (req.target().starts_with("/v1/secret/data/")) {
+    res.body() = R"json({"data":{"data":{"key":"value"}}})json";
   } else {
     res.body() = absl::StrCat(
         "{\"auth\": {\"client_token\": \"",
