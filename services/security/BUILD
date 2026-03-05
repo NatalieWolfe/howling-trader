@@ -51,6 +51,7 @@ cc_library(
     deps = [
         "//environment:runfiles",
         "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/strings",
         "@boost.asio",
         "@boost.beast",
     ],

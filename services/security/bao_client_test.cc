@@ -5,18 +5,30 @@
 #include <string>
 
 #include "services/security/bao_client.h"
+#include "services/security/mock_bao_server.h"
 
 namespace howling::security {
 
 using ::testing::HasSubstr;
 using ::testing::ThrowsMessage;
 
-TEST(BaoClientWaitForReadyTest, ThrowsNotImplemented) {
+TEST(BaoClientWaitForReadyTest, Success) {
   using namespace std::chrono_literals;
+  mock_bao_server server(/*configure_flags=*/true, /*use_ssl=*/false);
+  server.start();
+
+  bao_client client;
+  EXPECT_NO_THROW(client.wait_for_ready(1s));
+}
+
+TEST(BaoClientWaitForReadyTest, Timeout) {
+  using namespace std::chrono_literals;
+  // We don't start the server, so it should timeout.
   bao_client client;
   EXPECT_THAT(
-      [&] { client.wait_for_ready(100ms); },
-      ThrowsMessage<std::runtime_error>(HasSubstr("Not implemented yet.")));
+      [&] { client.wait_for_ready(200ms); },
+      ThrowsMessage<std::runtime_error>(
+          HasSubstr("Timed out waiting for OpenBao proxy to be ready.")));
 }
 
 TEST(BaoClientGetSecretTest, ThrowsNotImplemented) {

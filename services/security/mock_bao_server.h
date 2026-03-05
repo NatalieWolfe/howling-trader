@@ -14,7 +14,7 @@ class mock_bao_server {
 public:
   static constexpr std::string_view CLIENT_TOKEN = "test_client_token";
 
-  explicit mock_bao_server(bool configure_flags = true);
+  explicit mock_bao_server(bool configure_flags = true, bool use_ssl = true);
   ~mock_bao_server();
 
   void start();
@@ -26,9 +26,10 @@ private:
   boost::asio::io_context _ioc;
   boost::asio::ip::tcp::acceptor _acceptor;
   boost::asio::ssl::context _ssl_ctx;
+  bool _use_ssl;
   unsigned short _port;
   std::string _last_request_body;
-  std::jthread _server_thread;
+  std::thread _server_thread;
 };
 
 } // namespace howling::security
