@@ -12,7 +12,7 @@
 ABSL_FLAG(
     std::string,
     bao_address,
-    "http://openbao.security.svc:8200",
+    "http://127.0.0.1:8200",
     "OpenBao server address.");
 
 namespace howling::security {
