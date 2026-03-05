@@ -33,13 +33,6 @@ public:
   void wait_for_ready(std::chrono::milliseconds timeout);
 
   /**
-   * @brief Exchanges a Kubernetes ServiceAccount token for an OpenBao token.
-   *
-   * @throws std::runtime_error on failure.
-   */
-  void login();
-
-  /**
    * @brief Retrieves a secret from the KV-v2 engine.
    *
    * @param path The path to the secret (e.g., "howling/prod/telegram").
@@ -72,9 +65,6 @@ public:
    */
   [[nodiscard]] std::string
   decrypt(std::string_view key_name, std::string_view ciphertext);
-
-private:
-  std::string _token;
 };
 
 } // namespace howling::security

@@ -13,7 +13,6 @@
 #include "environment/runfiles.h"
 
 ABSL_DECLARE_FLAG(std::string, bao_address);
-ABSL_DECLARE_FLAG(std::string, bao_auth_path);
 
 namespace howling::security {
 
@@ -34,7 +33,6 @@ mock_bao_server::mock_bao_server(bool configure_flags)
   if (configure_flags) {
     absl::SetFlag(
         &FLAGS_bao_address, "https://127.0.0.1:" + std::to_string(_port));
-    absl::SetFlag(&FLAGS_bao_auth_path, "auth/kubernetes/login");
   }
 }
 
