@@ -63,7 +63,7 @@ http::response<http::string_body> post(
 }
 
 http::response<http::string_body>
-get(connection& conn, std::string_view host, std::string_view target) {
+get(insecure_connection& conn, std::string_view host, std::string_view target) {
   http::request<http::empty_body> req{http::verb::get, target, 11};
   req.set(http::field::host, host);
   req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);

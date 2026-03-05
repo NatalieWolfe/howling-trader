@@ -37,6 +37,6 @@ boost::beast::http::response<boost::beast::http::string_body> post(
  * @throws std::runtime_error on failure.
  */
 boost::beast::http::response<boost::beast::http::string_body>
-get(connection& conn, std::string_view host, std::string_view target);
+get(insecure_connection& conn, std::string_view host, std::string_view target);
 
 } // namespace howling::net
