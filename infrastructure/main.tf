@@ -14,8 +14,9 @@ locals {
   registry_server = split("/", module.registry.registry_url)[2]
 
   # Decoded Vault secrets
-  registry_creds = jsondecode(vault_generic_secret.registry.data_json)
-  database_creds = jsondecode(vault_generic_secret.database.data_json)
+  registry_creds       = jsondecode(vault_generic_secret.registry.data_json)
+  database_creds       = jsondecode(vault_generic_secret.database.data_json)
+  database_admin_creds = jsondecode(vault_generic_secret.database_admin.data_json)
 }
 
 # ------------------------------------------------------------------------------
@@ -150,6 +151,15 @@ resource "vault_generic_secret" "database" {
   data_json = jsonencode({
     username = module.database.db_user
     password = module.database.db_password
+  })
+  depends_on = [module.security]
+}
+
+resource "vault_generic_secret" "database_admin" {
+  path = "secret/howling/prod/database/admin"
+  data_json = jsonencode({
+    username = module.database.db_admin_user
+    password = module.database.db_admin_password
   })
   depends_on = [module.security]
 }
