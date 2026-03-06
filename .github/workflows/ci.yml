@@ -97,20 +97,14 @@ jobs:
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
       - name: OpenTofu Apply
-        # TODO: Migrate the following runtime secrets to OpenBao and retrieve
-        # them via the howling::security::bao_client at startup for improved
-        # security and central management.
+        # Infrastructure secrets for cluster management. Runtime secrets are
+        # retrieved via the howling::security::bao_client at startup.
         env:
           TF_VAR_ovh_application_key: ${{ secrets.OVH_APPLICATION_KEY }}
           TF_VAR_ovh_application_secret: ${{ secrets.OVH_APPLICATION_SECRET }}
           TF_VAR_ovh_consumer_key: ${{ secrets.OVH_CONSUMER_KEY }}
           TF_VAR_service_name: ${{ secrets.OVH_PROJECT_ID }}
           TF_VAR_registry_user_email: ${{ secrets.REGISTRY_USER_EMAIL }}
-          TF_VAR_letsencrypt_email: ${{ secrets.TLS_CERTIFICATE_EMAIL }}
-          TF_VAR_telegram_bot_token: ${{ secrets.TELEGRAM_BOT_API_KEY }}
-          TF_VAR_telegram_chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TF_VAR_schwab_api_key: ${{ secrets.SCHWAB_API_KEY }}
-          TF_VAR_schwab_api_secret: ${{ secrets.SCHWAB_API_SECRET }}
           TF_VAR_image_tag: ${{ github.sha }}
           AWS_ACCESS_KEY_ID: ${{ secrets.STATE_S3_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.STATE_S3_SECRET_KEY }}
