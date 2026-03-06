@@ -4,6 +4,7 @@
 #include <string>
 #include <string_view>
 
+#include "services/security.h"
 #include "json/value.h"
 
 namespace howling::security {
@@ -15,7 +16,7 @@ namespace howling::security {
  * retrieving secrets from the KV-v2 engine, and performing
  * encryption/decryption operations using the Transit engine.
  */
-class bao_client {
+class bao_client : public howling::security_client {
 public:
   bao_client();
 
@@ -30,7 +31,7 @@ public:
    * @throws std::runtime_error if the timeout is reached before the proxy is
    * ready.
    */
-  void wait_for_ready(std::chrono::milliseconds timeout);
+  void wait_for_ready(std::chrono::milliseconds timeout) override;
 
   /**
    * @brief Retrieves a secret from the KV-v2 engine.
@@ -40,7 +41,7 @@ public:
    *
    * @throws std::runtime_error on failure.
    */
-  [[nodiscard]] Json::Value get_secret(std::string_view path);
+  [[nodiscard]] Json::Value get_secret(std::string_view path) override;
 
   /**
    * @brief Encrypts data using the Transit engine.
@@ -52,7 +53,7 @@ public:
    * @throws std::runtime_error on failure.
    */
   [[nodiscard]] std::string
-  encrypt(std::string_view key_name, std::string_view plaintext);
+  encrypt(std::string_view key_name, std::string_view plaintext) override;
 
   /**
    * @brief Decrypts data using the Transit engine.
@@ -64,7 +65,7 @@ public:
    * @throws std::runtime_error on failure.
    */
   [[nodiscard]] std::string
-  decrypt(std::string_view key_name, std::string_view ciphertext);
+  decrypt(std::string_view key_name, std::string_view ciphertext) override;
 };
 
 } // namespace howling::security

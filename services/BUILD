@@ -67,3 +67,21 @@ cc_library(
         "@abseil-cpp//absl/flags:flag",
     ],
 )
+
+cc_library(
+    name = "security",
+    hdrs = ["security.h"],
+    visibility = ["//visibility:public"],
+    deps = ["@jsoncpp"],
+)
+
+cc_library(
+    name = "mock_security",
+    testonly = True,
+    hdrs = ["mock_security.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":security",
+        "@googletest//:gtest",
+    ],
+)

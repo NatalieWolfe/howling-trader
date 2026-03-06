@@ -10,6 +10,7 @@ cc_library(
         "//net:connect",
         "//net:request",
         "//net:url",
+        "//services:security",
         "//strings:json",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
