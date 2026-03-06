@@ -176,11 +176,8 @@ module "oauth" {
   registry_password     = local.registry_creds["password"]
   image_repository      = "${local.registry_server}/${var.registry_name}/howling-oauth"
   image_tag             = var.image_tag
-  db_uri                = module.database.db_uri
   db_host               = module.database.db_host
   db_port               = module.database.db_port
-  db_user               = module.database.db_user
-  db_password           = local.database_creds["password"]
   db_bootstrap_job_name = module.database.db_bootstrap_job_name
   letsencrypt_email     = data.vault_generic_secret.common.data["letsencrypt_email"]
 

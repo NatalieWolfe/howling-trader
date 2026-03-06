@@ -31,12 +31,6 @@ variable "registry_password" {
   description = "The registry password"
 }
 
-variable "db_uri" {
-  type        = string
-  sensitive   = true
-  description = "The database connection URI"
-}
-
 variable "db_host" {
   type        = string
   description = "The database hostname"
@@ -45,17 +39,6 @@ variable "db_host" {
 variable "db_port" {
   type        = string
   description = "The database port"
-}
-
-variable "db_user" {
-  type        = string
-  description = "The database username"
-}
-
-variable "db_password" {
-  type        = string
-  sensitive   = true
-  description = "The database password"
 }
 
 variable "db_bootstrap_job_name" {
