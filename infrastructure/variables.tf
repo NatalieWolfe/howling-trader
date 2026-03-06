@@ -43,39 +43,13 @@ variable "registry_user_email" {
   description = "The email address associated with the registry user"
 }
 
-variable "letsencrypt_email" {
-  type        = string
-  description = "The email address for Let's Encrypt certificates"
-}
-
 variable "state_bucket_name" {
   type    = string
   default = "howling-trader-tofu-state"
 }
 
-variable "telegram_bot_token" {
-  type        = string
-  sensitive   = true
-  description = "The Telegram bot token"
-}
-
-variable "telegram_chat_id" {
-  type        = string
-  description = "The Telegram chat ID"
-}
-
-variable "schwab_api_key" {
-  type      = string
-  sensitive = true
-}
-
-variable "schwab_api_secret" {
-  type      = string
-  sensitive = true
-}
-
 variable "image_tag" {
   type        = string
   default     = "latest"
-  description = "The tag to use for all service images"
+  description = "The tag for the container images"
 }

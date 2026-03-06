@@ -24,6 +24,7 @@ cc_library(
     visibility = ["//services/db:__subpackages__"],
     deps = [
         "//environment:runfiles",
+        "//files",
         "//strings:parse",
         "//strings:trim",
     ],

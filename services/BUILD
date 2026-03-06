@@ -12,6 +12,7 @@ cc_library(
         "//services:database",
         "//services/db:make_database",
         "//services/oauth/proto:auth_service_cc_grpc",
+        "//services/security:bao_client",
         "@abseil-cpp//absl/log",
         "@grpc//:grpc++",
     ],
@@ -23,6 +24,7 @@ cc_test(
     deps = [
         ":authenticate",
         ":mock_database",
+        ":mock_security",
         "//services/oauth:mock_auth_service",
         "//services/oauth/proto:auth_service_cc_grpc",
         "@googletest//:gtest_main",
@@ -65,5 +67,23 @@ cc_library(
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
         "@abseil-cpp//absl/flags:flag",
+    ],
+)
+
+cc_library(
+    name = "security",
+    hdrs = ["security.h"],
+    visibility = ["//visibility:public"],
+    deps = ["@jsoncpp"],
+)
+
+cc_library(
+    name = "mock_security",
+    testonly = True,
+    hdrs = ["mock_security.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":security",
+        "@googletest//:gtest",
     ],
 )

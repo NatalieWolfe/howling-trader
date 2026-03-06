@@ -133,6 +133,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":stock_cc_proto",
+        "//files",
         "//strings:format",
         "@abseil-cpp//absl/strings",
         "@protobuf",

@@ -97,6 +97,13 @@ resource "kubernetes_deployment" "oauth" {
         labels = {
           app = "howling-oauth"
         }
+        annotations = {
+          "vault.hashicorp.com/agent-inject"       = "true"
+          "vault.hashicorp.com/role"               = "howling-role"
+          "vault.hashicorp.com/agent-proxy-enable" = "true"
+          "vault.hashicorp.com/agent-init-first"   = "true"
+          "vault.hashicorp.com/agent-image"        = "openbao/openbao-agent:latest"
+        }
       }
 
       spec {
@@ -112,14 +119,8 @@ resource "kubernetes_deployment" "oauth" {
             "--database=postgres",
             "--pg_host=${var.db_host}",
             "--pg_port=${var.db_port}",
-            "--pg_user=${var.db_user}",
-            "--pg_password=${var.db_password}",
             "--pg_database=howling",
             "--pg_enable_encryption",
-            "--schwab_api_key_id=${var.schwab_api_key}",
-            "--schwab_api_key_secret=${var.schwab_api_secret}",
-            "--telegram_bot_token=${var.telegram_bot_token}",
-            "--telegram_chat_id=${var.telegram_chat_id}",
             "--logging_mode=json",
           ]
 

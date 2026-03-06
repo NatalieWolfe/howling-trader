@@ -5,9 +5,18 @@ provider "ovh" {
   consumer_key       = var.ovh_consumer_key
 }
 
+provider "vault" {
+  address = "http://127.0.0.1:8200"
+}
+
 locals {
   clean_region    = replace(var.region, "-1", "")
   registry_server = split("/", module.registry.registry_url)[2]
+
+  # Decoded Vault secrets
+  registry_creds       = jsondecode(vault_generic_secret.registry.data_json)
+  database_creds       = jsondecode(vault_generic_secret.database.data_json)
+  database_admin_creds = jsondecode(vault_generic_secret.database_admin.data_json)
 }
 
 # ------------------------------------------------------------------------------
@@ -34,11 +43,20 @@ module "registry" {
   registry_user_email = var.registry_user_email
 }
 
+resource "vault_generic_secret" "registry" {
+  path = "secret/howling/prod/registry"
+  data_json = jsonencode({
+    username = module.registry.registry_user_login
+    password = module.registry.registry_user_password
+  })
+  depends_on = [module.security]
+}
+
 # Configure the Harbor provider using the credentials from the module
 provider "harbor" {
   url      = module.registry.registry_url
   username = module.registry.registry_user_login
-  password = module.registry.registry_user_password
+  password = local.registry_creds["password"]
 }
 
 # Create a Harbor project named after the registry
@@ -90,6 +108,23 @@ provider "helm" {
 }
 
 # ------------------------------------------------------------------------------
+# OpenBao Secret Management
+# ------------------------------------------------------------------------------
+
+module "security" {
+  source = "./modules/security"
+
+  providers = {
+    helm = helm
+  }
+}
+
+data "vault_generic_secret" "certificates" {
+  path       = "secret/howling/prod/certificates"
+  depends_on = [module.security]
+}
+
+# ------------------------------------------------------------------------------
 # Managed Database (Postgres)
 # ------------------------------------------------------------------------------
 
@@ -101,14 +136,32 @@ module "database" {
   subnet_id          = module.network.subnet_id
   authorized_subnets = [module.network.subnet_cidr]
   registry_server    = local.registry_server
-  registry_username  = module.registry.registry_user_login
-  registry_password  = module.registry.registry_user_password
+  registry_username  = local.registry_creds["username"]
+  registry_password  = local.registry_creds["password"]
   image_repository   = "${local.registry_server}/${var.registry_name}/schema-upgrade"
   image_tag          = var.image_tag
 
   providers = {
     kubernetes = kubernetes
   }
+}
+
+resource "vault_generic_secret" "database" {
+  path = "secret/howling/prod/database"
+  data_json = jsonencode({
+    username = module.database.db_user
+    password = module.database.db_password
+  })
+  depends_on = [module.security]
+}
+
+resource "vault_generic_secret" "database_admin" {
+  path = "secret/howling/prod/database/admin"
+  data_json = jsonencode({
+    username = module.database.db_admin_user
+    password = module.database.db_admin_password
+  })
+  depends_on = [module.security]
 }
 
 
@@ -119,21 +172,14 @@ module "database" {
 module "oauth" {
   source                = "./modules/oauth"
   registry_server       = local.registry_server
-  registry_username     = module.registry.registry_user_login
-  registry_password     = module.registry.registry_user_password
+  registry_username     = local.registry_creds["username"]
+  registry_password     = local.registry_creds["password"]
   image_repository      = "${local.registry_server}/${var.registry_name}/howling-oauth"
   image_tag             = var.image_tag
-  db_uri                = module.database.db_uri
   db_host               = module.database.db_host
   db_port               = module.database.db_port
-  db_user               = module.database.db_user
-  db_password           = module.database.db_password
   db_bootstrap_job_name = module.database.db_bootstrap_job_name
-  letsencrypt_email     = var.letsencrypt_email
-  telegram_bot_token    = var.telegram_bot_token
-  telegram_chat_id      = var.telegram_chat_id
-  schwab_api_key        = var.schwab_api_key
-  schwab_api_secret     = var.schwab_api_secret
+  letsencrypt_email     = data.vault_generic_secret.certificates.data["letsencrypt_email"]
 
   providers = {
     kubernetes = kubernetes

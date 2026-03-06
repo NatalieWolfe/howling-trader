@@ -2,7 +2,10 @@
 
 #include "boost/asio/ssl.hpp"
 #include "boost/beast.hpp"
+#include "boost/beast/core/stream_traits.hpp"
 #include "net/url.h"
+#include "openssl/err.h"
+#include "openssl/ssl.h"
 
 namespace howling::net {
 namespace {
@@ -15,6 +18,9 @@ namespace beast = ::boost::beast;
 connection::connection()
     : _io_context{}, _ssl_context{asio::ssl::context::tls_client},
       _stream{_io_context, _ssl_context} {}
+
+insecure_connection::insecure_connection()
+    : _io_context{}, _stream{_io_context} {}
 
 websocket::websocket()
     : _io_context{}, _ssl_context{asio::ssl::context::tls_client},
@@ -37,6 +43,18 @@ std::unique_ptr<connection> make_connection(const url& u) {
 
   beast::get_lowest_layer(conn->_stream).connect(host_resolution);
   conn->_stream.handshake(asio::ssl::stream_base::client);
+
+  return conn;
+}
+
+std::unique_ptr<insecure_connection> make_insecure_connection(const url& u) {
+  std::unique_ptr<insecure_connection> conn{new insecure_connection()};
+
+  asio::ip::tcp::resolver tcp_resolver(conn->_io_context);
+  asio::ip::tcp::resolver::results_type host_resolution =
+      tcp_resolver.resolve(u.host, u.service);
+
+  conn->_stream.connect(host_resolution);
 
   return conn;
 }

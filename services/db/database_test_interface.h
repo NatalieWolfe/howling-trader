@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <memory>
 #include <string>
 
 #include "data/candle.pb.h"
@@ -8,27 +9,54 @@
 #include "data/stock.pb.h"
 #include "google/protobuf/duration.pb.h"
 #include "google/protobuf/timestamp.pb.h"
+#include "services/database.h"
+#include "services/db/constants.h"
+#include "services/mock_security.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace howling {
 
-class DatabaseTest : public ::testing::Test {
+class DatabaseTest : public testing::Test {
 protected:
-  virtual void save_candle(stock::Symbol symbol, const Candle& candle) = 0;
-  virtual void save_market(const Market& market) = 0;
-  virtual void save_trade(const trading::TradeRecord& trade) = 0;
-  virtual void
-  save_refresh_token(std::string_view service_name, std::string_view token) = 0;
+  void SetUp() override { clear_database(); }
 
-  virtual std::generator<Candle> read_candles(stock::Symbol symbol) = 0;
-  virtual std::generator<Market> read_market(stock::Symbol symbol) = 0;
-  virtual std::generator<trading::TradeRecord>
-  read_trades(stock::Symbol symbol) = 0;
-  virtual std::string read_refresh_token(std::string_view service_name) = 0;
-  virtual std::optional<std::chrono::system_clock::time_point>
-  get_last_notified_at(std::string_view service_name) = 0;
-  virtual void update_last_notified_at(std::string_view service_name) = 0;
+  virtual database& db() = 0;
+  virtual void clear_database() = 0;
+
+  void save_candle(stock::Symbol symbol, const Candle& candle) {
+    db().save(symbol, candle).get();
+  }
+  void save_market(const Market& market) { db().save(market).get(); }
+  void save_trade(const trading::TradeRecord& trade) {
+    db().save_trade(trade).get();
+  }
+  void
+  save_refresh_token(std::string_view service_name, std::string_view token) {
+    db().save_refresh_token(service_name, token).get();
+  }
+
+  std::generator<Candle> read_candles(stock::Symbol symbol) {
+    return db().read_candles(symbol);
+  }
+  std::generator<Market> read_market(stock::Symbol symbol) {
+    return db().read_market(symbol);
+  }
+  std::generator<trading::TradeRecord> read_trades(stock::Symbol symbol) {
+    return db().read_trades(symbol);
+  }
+  std::string read_refresh_token(std::string_view service_name) {
+    return db().read_refresh_token(service_name).get();
+  }
+  std::optional<std::chrono::system_clock::time_point>
+  get_last_notified_at(std::string_view service_name) {
+    return db().get_last_notified_at(service_name).get();
+  }
+  void update_last_notified_at(std::string_view service_name) {
+    db().update_last_notified_at(service_name).get();
+  }
+
+  mock_security_client* _mock_security = nullptr;
 };
 
 #define DATABASE_TEST(FIXTURE_CLASS)                                           \
@@ -50,23 +78,23 @@ protected:
       ++count;                                                                 \
       EXPECT_THAT(                                                             \
           found_candle,                                                        \
-          ::testing::AllOf(                                                    \
-              ::testing::Property("open", &Candle::open, candle.open()),       \
-              ::testing::Property("close", &Candle::close, candle.close()),    \
-              ::testing::Property("high", &Candle::high, candle.high()),       \
-              ::testing::Property("low", &Candle::low, candle.low()),          \
-              ::testing::Property("volume", &Candle::volume, candle.volume()), \
-              ::testing::Property(                                             \
+          testing::AllOf(                                                      \
+              testing::Property("open", &Candle::open, candle.open()),         \
+              testing::Property("close", &Candle::close, candle.close()),      \
+              testing::Property("high", &Candle::high, candle.high()),         \
+              testing::Property("low", &Candle::low, candle.low()),            \
+              testing::Property("volume", &Candle::volume, candle.volume()),   \
+              testing::Property(                                               \
                   "opened_at",                                                 \
                   &Candle::opened_at,                                          \
-                  ::testing::Property(                                         \
+                  testing::Property(                                           \
                       "seconds",                                               \
                       &::google::protobuf::Timestamp::seconds,                 \
                       candle.opened_at().seconds())),                          \
-              ::testing::Property(                                             \
+              testing::Property(                                               \
                   "duration",                                                  \
                   &Candle::duration,                                           \
-                  ::testing::Property(                                         \
+                  testing::Property(                                           \
                       "seconds",                                               \
                       &::google::protobuf::Duration::seconds,                  \
                       candle.duration().seconds()))));                         \
@@ -92,20 +120,20 @@ protected:
       ++count;                                                                 \
       EXPECT_THAT(                                                             \
           found_market,                                                        \
-          ::testing::AllOf(                                                    \
-              ::testing::Property("bid", &Market::bid, market.bid()),          \
-              ::testing::Property(                                             \
+          testing::AllOf(                                                      \
+              testing::Property("bid", &Market::bid, market.bid()),            \
+              testing::Property(                                               \
                   "bid_lots", &Market::bid_lots, market.bid_lots()),           \
-              ::testing::Property("ask", &Market::ask, market.ask()),          \
-              ::testing::Property(                                             \
+              testing::Property("ask", &Market::ask, market.ask()),            \
+              testing::Property(                                               \
                   "ask_lots", &Market::ask_lots, market.ask_lots()),           \
-              ::testing::Property("last", &Market::last, market.last()),       \
-              ::testing::Property(                                             \
+              testing::Property("last", &Market::last, market.last()),         \
+              testing::Property(                                               \
                   "last_lots", &Market::last_lots, market.last_lots()),        \
-              ::testing::Property(                                             \
+              testing::Property(                                               \
                   "emitted_at",                                                \
                   &Market::emitted_at,                                         \
-                  ::testing::Property(                                         \
+                  testing::Property(                                           \
                       "seconds",                                               \
                       &::google::protobuf::Timestamp::seconds,                 \
                       market.emitted_at().seconds()))));                       \
@@ -147,17 +175,27 @@ protected:
     EXPECT_NO_THROW(save_refresh_token("schwab", "token"));                    \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, SavedRefreshTokenIsReadable) {                         \
-    save_refresh_token("schwab", "my_secret_token");                           \
-    EXPECT_EQ(read_refresh_token("schwab"), "my_secret_token");                \
+    std::string service = "schwab";                                            \
+    std::string token = "my_secret_token";                                     \
+    std::string encrypted = "vault:v1:encrypted";                              \
+    EXPECT_CALL(*_mock_security, encrypt(HOWLING_DB_KEY, token))               \
+        .WillOnce(testing::Return(encrypted));                                 \
+    EXPECT_CALL(*_mock_security, decrypt(HOWLING_DB_KEY, encrypted))           \
+        .WillOnce(testing::Return(token));                                     \
+    save_refresh_token(service, token);                                        \
+    EXPECT_EQ(read_refresh_token(service), token);                             \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, ReadingMissingRefreshTokenReturnsEmpty) {              \
     EXPECT_EQ(read_refresh_token("missing_service"), "");                      \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, CanRecordAndReadNotificationTime) {                    \
-    save_refresh_token("schwab", "token");                                     \
-    EXPECT_FALSE(get_last_notified_at("schwab").has_value());                  \
-    update_last_notified_at("schwab");                                         \
-    auto last_notified = get_last_notified_at("schwab");                       \
+    std::string service = "schwab";                                            \
+    EXPECT_CALL(*_mock_security, encrypt(HOWLING_DB_KEY, "token"))             \
+        .WillOnce(testing::Return("encrypted"));                               \
+    save_refresh_token(service, "token");                                      \
+    EXPECT_FALSE(get_last_notified_at(service).has_value());                   \
+    update_last_notified_at(service);                                          \
+    auto last_notified = get_last_notified_at(service);                        \
     ASSERT_TRUE(last_notified.has_value());                                    \
     EXPECT_LT(                                                                 \
         std::chrono::system_clock::now() - *last_notified,                     \

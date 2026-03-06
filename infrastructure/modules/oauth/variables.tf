@@ -31,12 +31,6 @@ variable "registry_password" {
   description = "The registry password"
 }
 
-variable "db_uri" {
-  type        = string
-  sensitive   = true
-  description = "The database connection URI"
-}
-
 variable "db_host" {
   type        = string
   description = "The database hostname"
@@ -47,17 +41,6 @@ variable "db_port" {
   description = "The database port"
 }
 
-variable "db_user" {
-  type        = string
-  description = "The database username"
-}
-
-variable "db_password" {
-  type        = string
-  sensitive   = true
-  description = "The database password"
-}
-
 variable "db_bootstrap_job_name" {
   type        = string
   description = "The name of the DB bootstrap job"
@@ -66,25 +49,4 @@ variable "db_bootstrap_job_name" {
 variable "letsencrypt_email" {
   type        = string
   description = "The email address for Let's Encrypt"
-}
-
-variable "telegram_bot_token" {
-  type        = string
-  sensitive   = true
-  description = "The Telegram bot token"
-}
-
-variable "telegram_chat_id" {
-  type        = string
-  description = "The Telegram chat ID"
-}
-
-variable "schwab_api_key" {
-  type      = string
-  sensitive = true
-}
-
-variable "schwab_api_secret" {
-  type      = string
-  sensitive = true
 }

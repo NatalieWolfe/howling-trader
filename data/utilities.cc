@@ -1,10 +1,8 @@
 #include "data/utilities.h"
 
 #include <filesystem>
-#include <fstream>
 #include <generator>
 #include <ranges>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -13,6 +11,7 @@
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
 #include "data/stock.pb.h"
+#include "files/files.h"
 #include "google/protobuf/text_format.h"
 #include "strings/format.h"
 
@@ -70,12 +69,8 @@ stock::History read_history(const fs::path& path) {
     throw std::runtime_error(absl::StrCat("No data found at ", path.string()));
   }
 
-  std::ifstream stream(path);
-  std::stringstream data;
-  data << stream.rdbuf();
-
   stock::History history;
-  if (!TextFormat::ParseFromString(data.str(), &history)) {
+  if (!TextFormat::ParseFromString(files::read_file(path), &history)) {
     throw std::runtime_error(
         absl::StrCat("Failed to parse contents of ", path.string()));
   }

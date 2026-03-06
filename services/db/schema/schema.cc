@@ -5,13 +5,12 @@
 #include <exception>
 #include <filesystem>
 #include <format>
-#include <fstream>
 #include <generator>
-#include <sstream>
 #include <string>
 #include <string_view>
 
 #include "environment/runfiles.h"
+#include "files/files.h"
 #include "strings/parse.h"
 #include "strings/trim.h"
 
@@ -33,9 +32,7 @@ std::string load_full_schema() {
   if (!fs::exists(schema_path)) {
     throw std::runtime_error("Full schema file missing!");
   }
-  std::stringstream schema_stream;
-  schema_stream << std::ifstream(schema_path).rdbuf();
-  return std::move(schema_stream).str();
+  return files::read_file(schema_path);
 }
 
 std::generator<std::string> split_commands(std::string schema) {
@@ -89,12 +86,7 @@ std::generator<std::string> get_schema_update(int from_version) {
         runfile((SCHEMA_DIR / std::format("update_{}.sql", v)).string());
     if (!fs::exists(update_path)) continue;
 
-    std::ifstream update_stream(update_path);
-    std::string update_sql(
-        (std::istreambuf_iterator<char>(update_stream)),
-        (std::istreambuf_iterator<char>()));
-
-    for (std::string command : split_commands(std::move(update_sql))) {
+    for (std::string command : split_commands(files::read_file(update_path))) {
       co_yield command;
     }
   }
