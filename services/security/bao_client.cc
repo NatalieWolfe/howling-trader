@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <format>
 #include <memory>
 #include <ratio>
 #include <stdexcept>
@@ -9,6 +10,7 @@
 #include <thread>
 
 #include "absl/flags/flag.h"
+#include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "boost/beast/http.hpp"
 #include "boost/url/parse.hpp"
@@ -36,17 +38,39 @@ using ::std::chrono::steady_clock;
 
 constexpr milliseconds MAX_DELAY{2000};
 
-http::response<http::string_body> get_bao(std::string_view target) {
+net::url make_bao_url() {
   urls::url url = urls::parse_uri(absl::GetFlag(FLAGS_bao_address)).value();
-  net::url bao_host_url;
-  bao_host_url.host = url.host();
-  bao_host_url.service = url.port();
-  if (bao_host_url.service.empty()) {
-    bao_host_url.service = url.scheme() == "https" ? "443" : "80";
+  net::url bao_url{.service = url.port(), .host = url.host()};
+  if (bao_url.service.empty()) {
+    bao_url.service = url.scheme() == "https" ? "443" : "80";
   }
+  return bao_url;
+}
 
-  auto conn = net::make_insecure_connection(bao_host_url);
-  return net::get(*conn, bao_host_url.host, target);
+http::response<http::string_body> get_bao(std::string_view target) {
+  net::url bao_url = make_bao_url();
+  // TODO: Check the url scheme and use a secure connection if it is https.
+  auto conn = net::make_insecure_connection(bao_url);
+  return net::get(*conn, bao_url.host, target);
+}
+
+http::response<http::string_body>
+post_bao(std::string_view target, const Json::Value& body) {
+  net::url bao_url = make_bao_url();
+  auto conn = net::make_insecure_connection(bao_url);
+  return net::post(*conn, bao_url.host, target, body);
+}
+
+void check_response(
+    const http::response<http::string_body>& res, std::string_view action) {
+  if (res.result() != http::status::ok) {
+    throw std::runtime_error(
+        std::format(
+            "Failed to {} via OpenBao: {} {}",
+            action,
+            static_cast<int>(res.result()),
+            res.body()));
+  }
 }
 
 } // namespace
@@ -55,7 +79,7 @@ bao_client::bao_client() {}
 
 void bao_client::wait_for_ready(milliseconds timeout) {
   const steady_clock::time_point start_time = steady_clock::now();
-  milliseconds delay{10};
+  milliseconds delay{1};
 
   while (true) {
     try {
@@ -76,28 +100,35 @@ void bao_client::wait_for_ready(milliseconds timeout) {
 
 Json::Value bao_client::get_secret(std::string_view path) {
   auto res = get_bao(absl::StrCat("/v1/secret/data/", path));
-
-  if (res.result() != http::status::ok) {
-    throw std::runtime_error(
-        absl::StrCat(
-            "Failed to retrieve secret from OpenBao: ",
-            static_cast<int>(res.result()),
-            " ",
-            res.body()));
-  }
-
+  check_response(res, "retrieve secret");
   Json::Value response = to_json(res.body());
   return response["data"]["data"];
 }
 
 std::string
 bao_client::encrypt(std::string_view key_name, std::string_view plaintext) {
-  throw std::runtime_error("Not implemented yet.");
+  Json::Value body;
+  body["plaintext"] = absl::Base64Escape(plaintext);
+  auto res = post_bao(absl::StrCat("/v1/transit/encrypt/", key_name), body);
+  check_response(res, "encrypt data");
+  Json::Value response = to_json(res.body());
+  return response["data"]["ciphertext"].asString();
 }
 
 std::string
 bao_client::decrypt(std::string_view key_name, std::string_view ciphertext) {
-  throw std::runtime_error("Not implemented yet.");
+  Json::Value body;
+  body["ciphertext"] = std::string(ciphertext);
+  auto res = post_bao(absl::StrCat("/v1/transit/decrypt/", key_name), body);
+  check_response(res, "decrypt data");
+
+  Json::Value response = to_json(res.body());
+  std::string plaintext;
+  if (!absl::Base64Unescape(
+          response["data"]["plaintext"].asString(), &plaintext)) {
+    throw std::runtime_error("Failed to base64 decode plaintext from OpenBao.");
+  }
+  return plaintext;
 }
 
 } // namespace howling::security

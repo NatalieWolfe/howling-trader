@@ -41,6 +41,12 @@ void handle_request(Stream& stream, std::string* last_request_body) {
     res.body() = "{\"initialized\": true, \"sealed\": false}";
   } else if (req.target().starts_with("/v1/secret/data/")) {
     res.body() = R"json({"data":{"data":{"key":"value"}}})json";
+  } else if (req.target().starts_with("/v1/transit/encrypt/")) {
+    res.body() =
+        R"json({"data":{"ciphertext":"vault:v1:test_ciphertext"}})json";
+  } else if (req.target().starts_with("/v1/transit/decrypt/")) {
+    // "test_plaintext" in base64
+    res.body() = R"json({"data":{"plaintext":"dGVzdF9wbGFpbnRleHQ="}})json";
   } else {
     res.body() = absl::StrCat(
         "{\"auth\": {\"client_token\": \"",

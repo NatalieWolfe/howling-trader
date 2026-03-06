@@ -40,18 +40,23 @@ TEST(BaoClientGetSecretTest, Success) {
   EXPECT_EQ(secret["key"].asString(), "value");
 }
 
-TEST(BaoClientEncryptTest, ThrowsNotImplemented) {
+TEST(BaoClientEncryptTest, Success) {
+  mock_bao_server server(/*configure_flags=*/true, /*use_ssl=*/false);
+  server.start();
+
   bao_client client;
-  EXPECT_THAT(
-      [&] { (void)client.encrypt("test-key", "plaintext"); },
-      ThrowsMessage<std::runtime_error>(HasSubstr("Not implemented yet.")));
+  std::string ciphertext = client.encrypt("test-key", "test_plaintext");
+  EXPECT_EQ(ciphertext, "vault:v1:test_ciphertext");
 }
 
-TEST(BaoClientDecryptTest, ThrowsNotImplemented) {
+TEST(BaoClientDecryptTest, Success) {
+  mock_bao_server server(/*configure_flags=*/true, /*use_ssl=*/false);
+  server.start();
+
   bao_client client;
-  EXPECT_THAT(
-      [&] { (void)client.decrypt("test-key", "ciphertext"); },
-      ThrowsMessage<std::runtime_error>(HasSubstr("Not implemented yet.")));
+  std::string plaintext =
+      client.decrypt("test-key", "vault:v1:test_ciphertext");
+  EXPECT_EQ(plaintext, "test_plaintext");
 }
 
 } // namespace howling::security
