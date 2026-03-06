@@ -21,10 +21,9 @@ namespace howling::schwab {
 void fetch_schwab_secrets(security_client& security) {
   LOG(INFO) << "Fetching secrets from OpenBao...";
   Json::Value schwab_secret = security.get_secret("howling/prod/schwab");
+  absl::SetFlag(&FLAGS_schwab_api_key_id, schwab_secret["api_key"].asString());
   absl::SetFlag(
-      &FLAGS_schwab_api_key_id, schwab_secret["api_key_id"].asString());
-  absl::SetFlag(
-      &FLAGS_schwab_api_key_secret, schwab_secret["api_key_secret"].asString());
+      &FLAGS_schwab_api_key_secret, schwab_secret["api_secret"].asString());
 }
 
 void check_schwab_flags() {

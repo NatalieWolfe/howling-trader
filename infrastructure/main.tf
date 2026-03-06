@@ -119,8 +119,8 @@ module "security" {
   }
 }
 
-data "vault_generic_secret" "common" {
-  path       = "secret/howling/prod/common"
+data "vault_generic_secret" "certificates" {
+  path       = "secret/howling/prod/certificates"
   depends_on = [module.security]
 }
 
@@ -179,7 +179,7 @@ module "oauth" {
   db_host               = module.database.db_host
   db_port               = module.database.db_port
   db_bootstrap_job_name = module.database.db_bootstrap_job_name
-  letsencrypt_email     = data.vault_generic_secret.common.data["letsencrypt_email"]
+  letsencrypt_email     = data.vault_generic_secret.certificates.data["letsencrypt_email"]
 
   providers = {
     kubernetes = kubernetes
