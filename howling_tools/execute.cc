@@ -24,6 +24,7 @@
 #include "services/database.h"
 #include "services/db/make_database.h"
 #include "services/market_watch.h"
+#include "services/security/bao_client.h"
 #include "time/conversion.h"
 #include "trading/executor.h"
 #include "trading/trading_state.h"
@@ -179,7 +180,8 @@ void run() {
   executor e{state};
 
   auto watcher = std::make_unique<market_watch>();
-  std::unique_ptr<database> db = make_database();
+  std::unique_ptr<database> db =
+      make_database(std::make_unique<security::bao_client>());
 
   std::thread candle_streamer([&]() {
     auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));

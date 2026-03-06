@@ -8,6 +8,7 @@
 #include "services/database.h"
 #include "services/db/postgres_database.h"
 #include "services/db/sqlite_database.h"
+#include "services/security.h"
 
 ABSL_FLAG(
     std::string,
@@ -38,7 +39,8 @@ ABSL_FLAG(
 
 namespace howling {
 
-std::unique_ptr<database> make_database() {
+std::unique_ptr<database>
+make_database(std::unique_ptr<security_client> security) {
   std::string type = absl::GetFlag(FLAGS_database);
   if (type == "postgres") {
     bool encrypt = absl::GetFlag(FLAGS_pg_enable_encryption);
@@ -47,15 +49,17 @@ std::unique_ptr<database> make_database() {
               << absl::GetFlag(FLAGS_pg_host) << ":"
               << absl::GetFlag(FLAGS_pg_port)
               << (encrypt ? " (encrypted)" : " (unencrypted)");
-    return std::make_unique<postgres_database>(postgres_options{
-        .host = absl::GetFlag(FLAGS_pg_host),
-        .port = std::to_string(absl::GetFlag(FLAGS_pg_port)),
-        .user = absl::GetFlag(FLAGS_pg_user),
-        .password = absl::GetFlag(FLAGS_pg_password),
-        .dbname = absl::GetFlag(FLAGS_pg_database),
-        .sslmode = encrypt ? "require" : "disable"});
+    return std::make_unique<postgres_database>(
+        postgres_options{
+            .host = absl::GetFlag(FLAGS_pg_host),
+            .port = std::to_string(absl::GetFlag(FLAGS_pg_port)),
+            .user = absl::GetFlag(FLAGS_pg_user),
+            .password = absl::GetFlag(FLAGS_pg_password),
+            .dbname = absl::GetFlag(FLAGS_pg_database),
+            .sslmode = encrypt ? "require" : "disable"},
+        std::move(security));
   }
-  return std::make_unique<sqlite_database>();
+  return std::make_unique<sqlite_database>(std::move(security));
 }
 
 } // namespace howling

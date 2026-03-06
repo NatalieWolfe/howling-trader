@@ -19,6 +19,7 @@
 #include "services/db/make_database.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 #include "services/oauth/proto/auth_service.pb.h"
+#include "services/security/bao_client.h"
 
 namespace howling {
 namespace {
@@ -51,7 +52,7 @@ struct token_manager::implementation {
     std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(
         "localhost:50051", grpc::InsecureChannelCredentials());
     stub = AuthService::NewStub(channel);
-    db = make_database();
+    db = make_database(std::make_unique<security::bao_client>());
     refresher = std::make_unique<real_token_refresher>();
   }
 

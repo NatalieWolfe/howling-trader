@@ -2,19 +2,21 @@
 
 #include <future>
 #include <generator>
+#include <memory>
 #include <source_location>
 
 #include "data/candle.pb.h"
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "services/database.h"
+#include "services/security.h"
 #include "sqlite3.h"
 
 namespace howling {
 
 class sqlite_database : public database {
 public:
-  sqlite_database();
+  sqlite_database(std::unique_ptr<security_client> security);
   ~sqlite_database();
 
   std::future<void> save(stock::Symbol symbol, const Candle& candle) override;
@@ -39,6 +41,7 @@ private:
   void _check(int code, std::source_location loc = {});
 
   sqlite3* _db = nullptr;
+  std::unique_ptr<security_client> _security;
 };
 
 } // namespace howling

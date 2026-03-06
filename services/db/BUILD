@@ -4,24 +4,8 @@ load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 cc_library(
-    name = "crypto",
-    srcs = ["crypto.cc"],
-    hdrs = ["crypto.h"],
-    deps = [
-        "@abseil-cpp//absl/flags:flag",
-        "@abseil-cpp//absl/strings",
-        "@openssl//:ssl",
-    ],
-)
-
-cc_test(
-    name = "crypto_test",
-    srcs = ["crypto_test.cc"],
-    deps = [
-        ":crypto",
-        "@abseil-cpp//absl/flags:flag",
-        "@googletest//:gtest_main",
-    ],
+    name = "constants",
+    hdrs = ["constants.h"],
 )
 
 cc_library(
@@ -33,6 +17,7 @@ cc_library(
         ":postgres_database",
         ":sqlite_database",
         "//services:database",
+        "//services:security",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
     ],
@@ -43,11 +28,12 @@ cc_library(
     srcs = ["postgres_database.cc"],
     hdrs = ["postgres_database.h"],
     deps = [
-        ":crypto",
+        ":constants",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
         "//services:database",
+        "//services:security",
         "//services/db/schema",
         "//time:conversion",
         "@abseil-cpp//absl/log",
@@ -60,10 +46,13 @@ cc_library(
     testonly = True,
     hdrs = ["database_test_interface.h"],
     deps = [
+        ":constants",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
         "//data:trade_cc_proto",
+        "//services:database",
+        "//services:mock_security",
         "@googletest//:gtest",
         "@protobuf//:duration_cc_proto",
         "@protobuf//:timestamp_cc_proto",
@@ -80,6 +69,7 @@ cc_binary(
         "//data:candle_cc_proto",
         "//data:stock_cc_proto",
         "//data:trade_cc_proto",
+        "//services:mock_security",
         "//time:conversion",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
@@ -109,6 +99,7 @@ cc_binary(
     deps = [
         ":make_database",
         "//environment:init",
+        "//services/security:bao_client",
         "@abseil-cpp//absl/log",
     ],
 )
@@ -118,11 +109,12 @@ cc_library(
     srcs = ["sqlite_database.cc"],
     hdrs = ["sqlite_database.h"],
     deps = [
-        ":crypto",
+        ":constants",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
         "//services:database",
+        "//services:security",
         "//services/db/schema",
         "//strings:format",
         "//strings:parse",
@@ -143,6 +135,7 @@ cc_test(
         "//data:candle_cc_proto",
         "//data:stock_cc_proto",
         "//data:trade_cc_proto",
+        "//services:mock_security",
         "//time:conversion",
         "@abseil-cpp//absl/random",
         "@googletest//:gtest_main",

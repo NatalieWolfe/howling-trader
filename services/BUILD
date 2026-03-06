@@ -12,6 +12,7 @@ cc_library(
         "//services:database",
         "//services/db:make_database",
         "//services/oauth/proto:auth_service_cc_grpc",
+        "//services/security:bao_client",
         "@abseil-cpp//absl/log",
         "@grpc//:grpc++",
     ],
@@ -23,6 +24,7 @@ cc_test(
     deps = [
         ":authenticate",
         ":mock_database",
+        ":mock_security",
         "//services/oauth:mock_auth_service",
         "//services/oauth/proto:auth_service_cc_grpc",
         "@googletest//:gtest_main",

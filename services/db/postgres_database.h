@@ -9,6 +9,7 @@
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "services/database.h"
+#include "services/security.h"
 
 namespace howling {
 
@@ -23,7 +24,8 @@ struct postgres_options {
 
 class postgres_database : public database {
 public:
-  postgres_database(postgres_options options);
+  postgres_database(
+      postgres_options options, std::unique_ptr<security_client> security);
   ~postgres_database();
 
   std::future<void> save(stock::Symbol symbol, const Candle& candle) override;

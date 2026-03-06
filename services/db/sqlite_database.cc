@@ -6,6 +6,7 @@
 #include <exception>
 #include <future>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <source_location>
 #include <string>
@@ -19,7 +20,7 @@
 #include "data/candle.pb.h"
 #include "data/stock.pb.h"
 #include "google/protobuf/util/time_util.h"
-#include "services/db/crypto.h"
+#include "services/db/constants.h"
 #include "services/db/schema/schema.h"
 #include "sqlite3.h"
 #include "strings/format.h"
@@ -113,6 +114,7 @@ public:
   bool step() {
     int res = sqlite3_step(_statement);
     if (res == SQLITE_BUSY) {
+      // TODO: Handle SQLITE_BUSY by retrying with exponential backoff.
       throw std::runtime_error("Handling query try currently unsupported.");
     } else if (res == SQLITE_DONE) {
       // TODO: Handle query reset logic.
@@ -323,7 +325,8 @@ void upgrade(sqlite3& db) {
 
 // TODO: Configure the sqlite logging system to use absl LOG.
 
-sqlite_database::sqlite_database() {
+sqlite_database::sqlite_database(std::unique_ptr<security_client> security)
+    : _security(std::move(security)) {
   try {
     _check(sqlite3_open(absl::GetFlag(FLAGS_sqlite_db_path).c_str(), &_db));
     upgrade(*_db);
@@ -425,7 +428,7 @@ std::future<void> sqlite_database::save_refresh_token(
       ON CONFLICT (service_name) DO UPDATE SET
         refresh_token = excluded.refresh_token,
         updated_at = CURRENT_TIMESTAMP)sql"};
-    q.bind_all(service_name, encrypt_token(token));
+    q.bind_all(service_name, _security->encrypt(HOWLING_DB_KEY, token));
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
@@ -523,7 +526,7 @@ sqlite_database::read_refresh_token(std::string_view service_name) {
     if (!q.step()) {
       p.set_value("");
     } else {
-      p.set_value(decrypt_token(q.read<std::string>(0)));
+      p.set_value(_security->decrypt(HOWLING_DB_KEY, q.read<std::string>(0)));
     }
   } catch (...) { p.set_exception(std::current_exception()); }
   return p.get_future();

@@ -23,7 +23,7 @@
 #include "data/stock.pb.h"
 #include "google/protobuf/util/time_util.h"
 #include "libpq/libpq-fe.h"
-#include "services/db/crypto.h"
+#include "services/db/constants.h"
 #include "services/db/schema/schema.h"
 #include "time/conversion.h"
 
@@ -86,13 +86,6 @@ template <>
 unsigned int pg_type_id<int64_t>() {
   return 20;
 }
-
-/*
-template <>
-unsigned int pg_type_id<int16_t>() {
-  return 21;
-}
-*/
 
 template <>
 unsigned int pg_type_id<int32_t>() {
@@ -404,11 +397,14 @@ void upgrade(PGconn& conn) {
 
 struct postgres_database::implementation {
   PGconn* _conn;
+  std::unique_ptr<security_client> _security;
   std::map<std::string, std::unique_ptr<query>> _prepared_queries;
 };
 
-postgres_database::postgres_database(postgres_options options)
+postgres_database::postgres_database(
+    postgres_options options, std::unique_ptr<security_client> security)
     : _implementation{std::make_unique<implementation>()} {
+  _implementation->_security = std::move(security);
   std::string connection_parameters = std::format(
       "host={} port={} dbname={} user={} password={} sslmode={}",
       options.host,
@@ -642,7 +638,9 @@ std::future<void> postgres_database::save_refresh_token(
   std::promise<void> p;
   try {
     query& q = *_implementation->_prepared_queries.at("refresh_token_insert");
-    q.bind_all(service_name, bytes{encrypt_token(token)});
+    q.bind_all(
+        service_name,
+        bytes{_implementation->_security->encrypt(HOWLING_DB_KEY, token)});
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
@@ -724,7 +722,8 @@ postgres_database::read_refresh_token(std::string_view service_name) {
     } else {
       std::string encrypted_token;
       q.read_all(encrypted_token);
-      p.set_value(decrypt_token(encrypted_token));
+      p.set_value(
+          _implementation->_security->decrypt(HOWLING_DB_KEY, encrypted_token));
     }
   } catch (...) { p.set_exception(std::current_exception()); }
   return p.get_future();

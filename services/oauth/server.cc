@@ -12,6 +12,7 @@
 #include "services/oauth/auth_service.h"
 #include "services/oauth/oauth_exchanger_impl.h"
 #include "services/oauth/oauth_http_service.h"
+#include "services/security/bao_client.h"
 
 namespace howling {
 namespace {
@@ -26,7 +27,8 @@ void run_server() {
   // TODO: Add a database connection pool. The pool should check that
   // connections are still valid before passing them to callers. The connection
   // should auto-release back to the pool upon destruction.
-  std::unique_ptr<database> db = make_database();
+  std::unique_ptr<database> db =
+      make_database(std::make_unique<security::bao_client>());
   LOG(INFO) << "Database connection established.";
 
   boost::asio::io_context ioc{/*concurrency_hint=*/1};

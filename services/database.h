@@ -2,6 +2,7 @@
 
 #include <future>
 #include <generator>
+#include <memory>
 #include <string>
 #include <string_view>
 
@@ -10,6 +11,7 @@
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "data/trade.pb.h"
+#include "services/security.h"
 
 namespace howling {
 
