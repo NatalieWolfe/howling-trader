@@ -119,8 +119,6 @@ resource "kubernetes_deployment" "oauth" {
             "--database=postgres",
             "--pg_host=${var.db_host}",
             "--pg_port=${var.db_port}",
-            "--pg_user=${var.db_user}",
-            "--pg_password=${var.db_password}",
             "--pg_database=howling",
             "--pg_enable_encryption",
             "--logging_mode=json",

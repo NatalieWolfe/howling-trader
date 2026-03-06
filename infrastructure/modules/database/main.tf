@@ -75,6 +75,13 @@ resource "kubernetes_job" "db_bootstrap" {
     template {
       metadata {
         name = "howling-db-bootstrap"
+        annotations = {
+          "vault.hashicorp.com/agent-inject"       = "true"
+          "vault.hashicorp.com/role"               = "howling-role"
+          "vault.hashicorp.com/agent-proxy-enable" = "true"
+          "vault.hashicorp.com/agent-init-first"   = "true"
+          "vault.hashicorp.com/agent-image"        = "openbao/openbao-agent:latest"
+        }
       }
       spec {
         image_pull_secrets {
@@ -89,8 +96,6 @@ resource "kubernetes_job" "db_bootstrap" {
             "--pg_host=${ovh_cloud_project_database.postgres.endpoints[0].domain}",
             "--pg_port=${ovh_cloud_project_database.postgres.endpoints[0].port}",
             "--pg_database=howling",
-            "--pg_user=avnadmin",
-            "--pg_password=${ovh_cloud_project_database_postgresql_user.admin.password}",
             "--pg_enable_encryption=true",
             "--logging_mode=json",
           ]
