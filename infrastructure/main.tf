@@ -5,6 +5,10 @@ provider "ovh" {
   consumer_key       = var.ovh_consumer_key
 }
 
+provider "vault" {
+  address = "http://127.0.0.1:8200"
+}
+
 locals {
   clean_region    = replace(var.region, "-1", "")
   registry_server = split("/", module.registry.registry_url)[2]
@@ -101,6 +105,11 @@ module "security" {
   }
 }
 
+data "vault_generic_secret" "common" {
+  path       = "secret/howling/prod/common"
+  depends_on = [module.security]
+}
+
 # ------------------------------------------------------------------------------
 # Managed Database (Postgres)
 # ------------------------------------------------------------------------------
@@ -141,11 +150,7 @@ module "oauth" {
   db_user               = module.database.db_user
   db_password           = module.database.db_password
   db_bootstrap_job_name = module.database.db_bootstrap_job_name
-  letsencrypt_email     = var.letsencrypt_email
-  telegram_bot_token    = var.telegram_bot_token
-  telegram_chat_id      = var.telegram_chat_id
-  schwab_api_key        = var.schwab_api_key
-  schwab_api_secret     = var.schwab_api_secret
+  letsencrypt_email     = data.vault_generic_secret.common.data["letsencrypt_email"]
 
   providers = {
     kubernetes = kubernetes

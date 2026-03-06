@@ -116,10 +116,6 @@ resource "kubernetes_deployment" "oauth" {
             "--pg_password=${var.db_password}",
             "--pg_database=howling",
             "--pg_enable_encryption",
-            "--schwab_api_key_id=${var.schwab_api_key}",
-            "--schwab_api_key_secret=${var.schwab_api_secret}",
-            "--telegram_bot_token=${var.telegram_bot_token}",
-            "--telegram_chat_id=${var.telegram_chat_id}",
             "--logging_mode=json",
           ]
 
