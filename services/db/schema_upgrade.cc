@@ -11,8 +11,13 @@ namespace howling {
 namespace {
 
 void run() {
+  using namespace std::chrono_literals;
+
+  LOG(INFO) << "Waiting for security client to be ready...";
+  auto security = std::make_unique<security::bao_client>();
+  security->wait_for_ready(30s);
   LOG(INFO) << "Starting schema upgrade...";
-  auto db = make_database(std::make_unique<security::bao_client>());
+  auto db = make_database(use_admin_database_account, std::move(security));
   LOG(INFO) << "Schema upgrade completed successfully.";
 }
 
