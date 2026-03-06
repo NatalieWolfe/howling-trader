@@ -97,6 +97,13 @@ resource "kubernetes_deployment" "oauth" {
         labels = {
           app = "howling-oauth"
         }
+        annotations = {
+          "vault.hashicorp.com/agent-inject"       = "true"
+          "vault.hashicorp.com/role"               = "howling-role"
+          "vault.hashicorp.com/agent-proxy-enable" = "true"
+          "vault.hashicorp.com/agent-init-first"   = "true"
+          "vault.hashicorp.com/agent-image"        = "openbao/openbao-agent:latest"
+        }
       }
 
       spec {

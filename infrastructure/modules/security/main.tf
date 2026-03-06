@@ -19,4 +19,10 @@ resource "helm_release" "openbao" {
     name  = "server.ha.raft.enabled"
     value = "true"
   }
+
+  # Enable the Agent Injector for sidecar support
+  set {
+    name  = "injector.enabled"
+    value = "true"
+  }
 }
