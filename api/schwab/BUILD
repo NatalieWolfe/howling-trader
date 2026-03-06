@@ -23,7 +23,10 @@ cc_library(
     hdrs = ["configuration.h"],
     visibility = ["//visibility:public"],
     deps = [
+        "//services:security",
         "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/log",
+        "@jsoncpp",
     ],
 )
 

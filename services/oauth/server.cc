@@ -3,7 +3,9 @@
 #include <string_view>
 #include <thread>
 
+#include "absl/flags/flag.h"
 #include "absl/log/log.h"
+#include "api/schwab/configuration.h"
 #include "boost/asio/io_context.hpp"
 #include "environment/init.h"
 #include "grpcpp/grpcpp.h"
@@ -14,8 +16,13 @@
 #include "services/oauth/oauth_http_service.h"
 #include "services/security/bao_client.h"
 
+ABSL_DECLARE_FLAG(std::string, telegram_bot_token);
+ABSL_DECLARE_FLAG(std::string, telegram_chat_id);
+
 namespace howling {
 namespace {
+
+using namespace std::chrono_literals;
 
 // TODO: Take the port from a flag.
 constexpr std::string_view GRPC_ADDRESS = "0.0.0.0:50051";
@@ -24,11 +31,18 @@ constexpr unsigned short HTTP_PORT = 8080;
 void run_server() {
   LOG(INFO) << "Oauth server starting...";
 
+  LOG(INFO) << "Waiting for security client to be ready...";
+  auto security = std::make_unique<security::bao_client>();
+  security->wait_for_ready(30s);
+  schwab::fetch_schwab_secrets(*security);
+  Json::Value telegram_secret = security->get_secret("howling/prod/telegram");
+  absl::SetFlag(&FLAGS_telegram_bot_token, telegram_secret["token"].asString());
+  absl::SetFlag(&FLAGS_telegram_chat_id, telegram_secret["chat_id"].asString());
+
   // TODO: Add a database connection pool. The pool should check that
   // connections are still valid before passing them to callers. The connection
   // should auto-release back to the pool upon destruction.
-  std::unique_ptr<database> db =
-      make_database(std::make_unique<security::bao_client>());
+  std::unique_ptr<database> db = make_database(std::move(security));
   LOG(INFO) << "Database connection established.";
 
   boost::asio::io_context ioc{/*concurrency_hint=*/1};
