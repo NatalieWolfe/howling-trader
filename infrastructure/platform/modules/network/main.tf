@@ -14,3 +14,12 @@ resource "ovh_cloud_project_network_private_subnet" "private_subnet" {
   network      = var.subnet_cidr
   dhcp         = true
 }
+
+resource "ovh_cloud_project_gateway" "gateway" {
+  service_name = var.service_name
+  name         = "howling-gateway"
+  model        = "s"
+  region       = var.region
+  network_id   = tolist(ovh_cloud_project_network_private.private_net.regions_attributes[*].openstackid)[0]
+  subnet_id    = ovh_cloud_project_network_private_subnet.private_subnet.id
+}
