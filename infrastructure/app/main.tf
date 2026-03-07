@@ -1,3 +1,10 @@
+provider "ovh" {
+  endpoint           = var.ovh_endpoint
+  application_key    = var.ovh_application_key
+  application_secret = var.ovh_application_secret
+  consumer_key       = var.ovh_consumer_key
+}
+
 provider "vault" {
   address = "http://127.0.0.1:8200"
 }
@@ -49,17 +56,6 @@ provider "helm" {
 }
 
 # ------------------------------------------------------------------------------
-# State Management (Managed by Tofu)
-# ------------------------------------------------------------------------------
-
-module "state" {
-  source            = "./modules/state"
-  service_name      = var.service_name
-  region            = local.clean_region
-  state_bucket_name = var.state_bucket_name
-}
-
-# ------------------------------------------------------------------------------
 # Registry Secret in OpenBao
 # ------------------------------------------------------------------------------
 
@@ -94,6 +90,7 @@ module "database" {
 
   providers = {
     kubernetes = kubernetes
+    ovh        = ovh
   }
 }
 

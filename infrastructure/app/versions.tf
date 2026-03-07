@@ -30,5 +30,9 @@ terraform {
       source  = "hashicorp/vault"
       version = "~> 4.0"
     }
+    ovh = {
+      source  = "ovh/ovh"
+      version = "~> 2.11"
+    }
   }
 }
