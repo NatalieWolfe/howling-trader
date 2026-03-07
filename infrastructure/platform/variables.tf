@@ -48,8 +48,7 @@ variable "state_bucket_name" {
   default = "howling-trader-tofu-state"
 }
 
-variable "image_tag" {
+variable "letsencrypt_email" {
   type        = string
-  default     = "latest"
-  description = "The tag for the container images"
+  description = "The email address for Let's Encrypt"
 }

@@ -3,7 +3,7 @@ terraform {
 
   backend "s3" {
     bucket       = "howling-trader-tofu-state"
-    key          = "terraform.tfstate"
+    key          = "platform.tfstate"
     region       = "us-east-va"
     use_lockfile = false # OVH S3 does not support conditional PUTs required for native locking
 
@@ -33,10 +33,6 @@ terraform {
     helm = {
       source  = "hashicorp/helm"
       version = "~> 2.0"
-    }
-    vault = {
-      source  = "hashicorp/vault"
-      version = "~> 4.0"
     }
   }
 }
