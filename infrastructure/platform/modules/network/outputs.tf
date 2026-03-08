@@ -4,13 +4,18 @@ output "network_id" {
 }
 
 output "subnet_id" {
-  value       = ovh_cloud_project_network_private_subnet.private_subnet.id
-  description = "The ID of the private subnet"
+  value       = ovh_cloud_project_network_private_subnet.nodes_subnet.id
+  description = "The ID of the private subnet used for nodes"
+}
+
+output "lb_subnet_id" {
+  value       = ovh_cloud_project_network_private_subnet.lb_subnet.id
+  description = "The ID of the private subnet used for load balancers"
 }
 
 output "subnet_cidr" {
-  value       = var.subnet_cidr
-  description = "The CIDR block of the private subnet"
+  value       = "192.168.100.0/24"
+  description = "The CIDR block of the node subnet"
 }
 
 output "openstack_network_id" {

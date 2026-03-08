@@ -47,3 +47,13 @@ variable "private_network_id" {
   type        = string
   description = "The ID of the private network to associate with the cluster"
 }
+
+variable "nodes_subnet_id" {
+  type        = string
+  description = "The ID of the private subnet to use for nodes"
+}
+
+variable "lb_subnet_id" {
+  type        = string
+  description = "The ID of the private subnet to use for Load Balancers"
+}

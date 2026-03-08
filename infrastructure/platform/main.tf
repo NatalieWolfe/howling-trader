@@ -69,6 +69,8 @@ module "kube" {
   service_name       = var.service_name
   region             = var.region
   private_network_id = module.network.openstack_network_id
+  nodes_subnet_id    = module.network.subnet_id
+  lb_subnet_id       = module.network.lb_subnet_id
 }
 
 # Configure Kubernetes and Helm providers using the cluster outputs
@@ -99,6 +101,23 @@ module "security" {
 
   providers = {
     helm = helm
+  }
+}
+
+# ------------------------------------------------------------------------------
+# Self-Hosted GitHub Runner (ARC)
+# ------------------------------------------------------------------------------
+
+module "runner" {
+  source                     = "./modules/runner"
+  github_app_id              = var.github_app_id
+  github_app_installation_id = var.github_app_installation_id
+  github_app_private_key     = var.github_app_private_key
+  github_repo_url            = var.github_repo_url
+
+  providers = {
+    kubernetes = kubernetes
+    helm       = helm
   }
 }
 

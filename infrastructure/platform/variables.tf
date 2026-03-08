@@ -52,3 +52,27 @@ variable "letsencrypt_email" {
   type        = string
   description = "The email address for Let's Encrypt"
 }
+
+variable "github_app_id" {
+  type        = string
+  default     = "3029744"
+  description = "The GitHub App ID for ARC"
+}
+
+variable "github_app_installation_id" {
+  type        = string
+  default     = "114599649"
+  description = "The GitHub App Installation ID for ARC"
+}
+
+variable "github_app_private_key" {
+  type        = string
+  sensitive   = true
+  description = "The GitHub App Private Key (PEM format)"
+}
+
+variable "github_repo_url" {
+  type        = string
+  default     = "https://github.com/NatalieWolfe/howling-trader"
+  description = "The URL of the GitHub repository to register the runner to"
+}
