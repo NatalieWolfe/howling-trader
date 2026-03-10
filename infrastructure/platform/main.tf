@@ -6,31 +6,27 @@ provider "ovh" {
 }
 
 locals {
-  clean_region = replace(var.region, "-1", "")
+  clean_region     = replace(var.region, "-1", "")
+  kubeconfig_attrs = module.kube.kubeconfig_attributes[0]
 }
 
-# ------------------------------------------------------------------------------
-# State Management (Managed by Tofu)
-# ------------------------------------------------------------------------------
+# MARK: Tofu State
 
 module "state" {
-  source            = "./modules/state"
-  service_name      = var.service_name
-  region            = local.clean_region
-  state_bucket_name = var.state_bucket_name
+  source                 = "./modules/state"
+  ovh_project_id         = var.ovh_project_id
+  region                 = local.clean_region
+  tofu_state_bucket_name = var.tofu_state_bucket_name
 }
 
-# ------------------------------------------------------------------------------
-# Managed Private Registry
-# ------------------------------------------------------------------------------
+# MARK: Private Registry
 
 module "registry" {
-  source              = "./modules/registry"
-  service_name        = var.service_name
-  region              = local.clean_region
-  registry_name       = var.registry_name
-  registry_plan       = var.registry_plan
-  registry_user_email = var.registry_user_email
+  source         = "./modules/registry"
+  ovh_project_id = var.ovh_project_id
+  region         = local.clean_region
+  registry_name  = var.registry_name
+  registry_plan  = var.registry_plan
 }
 
 # Configure the Harbor provider using the credentials from the module
@@ -50,49 +46,43 @@ module "harbor" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# Network Infrastructure (vRack)
-# ------------------------------------------------------------------------------
+# MARK: Network Infrastructure
 
 module "network" {
-  source       = "./modules/network"
-  service_name = var.service_name
-  region       = var.region
+  source         = "./modules/network"
+  ovh_project_id = var.ovh_project_id
+  region         = var.region
 }
 
-# ------------------------------------------------------------------------------
-# Managed Kubernetes Cluster
-# ------------------------------------------------------------------------------
+# MARK: Kubernetes
 
 module "kube" {
   source             = "./modules/kube"
-  service_name       = var.service_name
+  ovh_project_id     = var.ovh_project_id
   region             = var.region
   private_network_id = module.network.openstack_network_id
   nodes_subnet_id    = module.network.subnet_id
-  lb_subnet_id       = module.network.lb_subnet_id
+  lb_subnet_id       = "" # module.network.lb_subnet_id
 }
 
 # Configure Kubernetes and Helm providers using the cluster outputs
 provider "kubernetes" {
-  host                   = module.kube.kubeconfig_attributes[0].host
-  client_certificate     = base64decode(module.kube.kubeconfig_attributes[0].client_certificate)
-  client_key             = base64decode(module.kube.kubeconfig_attributes[0].client_key)
-  cluster_ca_certificate = base64decode(module.kube.kubeconfig_attributes[0].cluster_ca_certificate)
+  host                   = local.kubeconfig_attrs.host
+  client_certificate     = base64decode(local.kubeconfig_attrs.client_certificate)
+  client_key             = base64decode(local.kubeconfig_attrs.client_key)
+  cluster_ca_certificate = base64decode(local.kubeconfig_attrs.cluster_ca_certificate)
 }
 
 provider "helm" {
   kubernetes {
-    host                   = module.kube.kubeconfig_attributes[0].host
-    client_certificate     = base64decode(module.kube.kubeconfig_attributes[0].client_certificate)
-    client_key             = base64decode(module.kube.kubeconfig_attributes[0].client_key)
-    cluster_ca_certificate = base64decode(module.kube.kubeconfig_attributes[0].cluster_ca_certificate)
+    host                   = local.kubeconfig_attrs.host
+    client_certificate     = base64decode(local.kubeconfig_attrs.client_certificate)
+    client_key             = base64decode(local.kubeconfig_attrs.client_key)
+    cluster_ca_certificate = base64decode(local.kubeconfig_attrs.cluster_ca_certificate)
   }
 }
 
-# ------------------------------------------------------------------------------
-# OpenBao Secret Management
-# ------------------------------------------------------------------------------
+# MARK: OpenBao
 
 module "security" {
   source = "./modules/security"
@@ -104,9 +94,7 @@ module "security" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# Self-Hosted GitHub Runner (ARC)
-# ------------------------------------------------------------------------------
+# MARK: GitHub Runner (ARC)
 
 module "runner" {
   source                     = "./modules/runner"
@@ -119,38 +107,4 @@ module "runner" {
     kubernetes = kubernetes
     helm       = helm
   }
-}
-
-# ------------------------------------------------------------------------------
-# Resource Refactoring (Moved Blocks)
-# ------------------------------------------------------------------------------
-
-moved {
-  from = ovh_cloud_project_user.state_user
-  to   = module.state.ovh_cloud_project_user.state_user
-}
-
-moved {
-  from = ovh_cloud_project_user_s3_credential.state_s3_creds
-  to   = module.state.ovh_cloud_project_user_s3_credential.state_s3_creds
-}
-
-moved {
-  from = ovh_cloud_project_storage.state_bucket
-  to   = module.state.ovh_cloud_project_storage.state_bucket
-}
-
-moved {
-  from = ovh_cloud_project_containerregistry.registry
-  to   = module.registry.ovh_cloud_project_containerregistry.registry
-}
-
-moved {
-  from = ovh_cloud_project_containerregistry_user.registry_user
-  to   = module.registry.ovh_cloud_project_containerregistry_user.registry_user
-}
-
-moved {
-  from = harbor_project.main_project
-  to   = module.harbor.harbor_project.main_project
 }

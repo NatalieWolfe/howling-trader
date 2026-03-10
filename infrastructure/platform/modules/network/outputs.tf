@@ -8,13 +8,13 @@ output "subnet_id" {
   description = "The ID of the private subnet used for nodes"
 }
 
-output "lb_subnet_id" {
-  value       = ovh_cloud_project_network_private_subnet.lb_subnet.id
-  description = "The ID of the private subnet used for load balancers"
-}
+# output "lb_subnet_id" {
+#   value       = ovh_cloud_project_network_private_subnet.lb_subnet.id
+#   description = "The ID of the private subnet used for load balancers"
+# }
 
 output "subnet_cidr" {
-  value       = "192.168.100.0/24"
+  value       = "10.0.0.0/16"
   description = "The CIDR block of the node subnet"
 }
 

@@ -1,18 +1,18 @@
-resource "ovh_cloud_project_user" "state_user" {
-  service_name = var.service_name
+resource "ovh_cloud_project_user" "tofu_state_user" {
+  service_name = var.ovh_project_id
   description  = "User for Tofu remote state management"
   role_names   = ["objectstore_operator"]
 }
 
-resource "ovh_cloud_project_user_s3_credential" "state_s3_creds" {
-  service_name = var.service_name
-  user_id      = ovh_cloud_project_user.state_user.id
+resource "ovh_cloud_project_user_s3_credential" "tofu_state_s3_creds" {
+  service_name = var.ovh_project_id
+  user_id      = ovh_cloud_project_user.tofu_state_user.id
 }
 
-resource "ovh_cloud_project_storage" "state_bucket" {
-  service_name = var.service_name
+resource "ovh_cloud_project_storage" "tofu_state_bucket" {
+  service_name = var.ovh_project_id
   region_name  = var.region
-  name         = var.state_bucket_name
+  name         = var.tofu_state_bucket_name
   versioning = {
     status = "enabled"
   }

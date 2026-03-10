@@ -1,4 +1,4 @@
-variable "service_name" {
+variable "ovh_project_id" {
   type        = string
   description = "The Public Cloud Project ID"
 }

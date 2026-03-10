@@ -1,4 +1,4 @@
-variable "service_name" {
+variable "ovh_project_id" {
   type        = string
   description = "The Public Cloud Project ID"
 }
@@ -16,7 +16,7 @@ variable "network_name" {
 
 variable "vlan_id" {
   type        = number
-  default     = 100
+  default     = 0
   description = "The VLAN ID for the private network"
 }
 
