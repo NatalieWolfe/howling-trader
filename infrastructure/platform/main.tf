@@ -57,7 +57,9 @@ module "network" {
 # MARK: Kubernetes
 
 module "kube" {
-  source             = "./modules/kube"
+  source     = "./modules/kube"
+  depends_on = [module.network]
+
   ovh_project_id     = var.ovh_project_id
   region             = var.region
   private_network_id = module.network.openstack_network_id

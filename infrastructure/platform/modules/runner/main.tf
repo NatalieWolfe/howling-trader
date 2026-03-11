@@ -1,6 +1,10 @@
-# ------------------------------------------------------------------------------
-# Namespaces for ARC
-# ------------------------------------------------------------------------------
+
+locals {
+  runner_namespace = kubernetes_namespace.arc_runners.metadata[0].name
+  system_namespace = kubernetes_namespace.arc_systems.metadata[0].name
+}
+
+# MARK: Namespace
 
 resource "kubernetes_namespace" "arc_systems" {
   metadata {
@@ -14,14 +18,12 @@ resource "kubernetes_namespace" "arc_runners" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# GitHub App Authentication Secret
-# ------------------------------------------------------------------------------
+# MARK: Github Secrets
 
 resource "kubernetes_secret" "github_app_creds" {
   metadata {
     name      = "github-app-creds"
-    namespace = kubernetes_namespace.arc_runners.metadata[0].name
+    namespace = local.runner_namespace
   }
 
   type = "Opaque"
@@ -33,27 +35,23 @@ resource "kubernetes_secret" "github_app_creds" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# Actions Runner Controller (Controller)
-# ------------------------------------------------------------------------------
+# MARK: ARC Controller
 
 resource "helm_release" "arc_controller" {
   name       = "arc-controller"
   repository = "oci://ghcr.io/actions/actions-runner-controller-charts"
   chart      = "gha-runner-scale-set-controller"
-  namespace  = kubernetes_namespace.arc_systems.metadata[0].name
+  namespace  = local.system_namespace
   version    = "0.9.3"
 }
 
-# ------------------------------------------------------------------------------
-# ARC Runner Scale Set
-# ------------------------------------------------------------------------------
+# MARK: ARC Runner
 
 resource "helm_release" "arc_runner_set" {
   name       = "arc-runner-set"
   repository = "oci://ghcr.io/actions/actions-runner-controller-charts"
   chart      = "gha-runner-scale-set"
-  namespace  = kubernetes_namespace.arc_runners.metadata[0].name
+  namespace  = local.runner_namespace
   version    = "0.9.3"
 
   set {
@@ -79,24 +77,50 @@ resource "helm_release" "arc_runner_set" {
 
   set {
     name  = "controllerServiceAccount.name"
-    value = "arc-controller-gha-runner-scale-set-controller"
+    value = "arc-controller-gha-rs-controller"
   }
 
   set {
     name  = "controllerServiceAccount.namespace"
-    value = kubernetes_namespace.arc_systems.metadata[0].name
+    value = local.system_namespace
   }
 
   depends_on = [helm_release.arc_controller]
 }
 
-# ------------------------------------------------------------------------------
-# Runner Identity (ServiceAccount for Vault Auth)
-# ------------------------------------------------------------------------------
+# MARK: Service Account
 
 resource "kubernetes_service_account" "ci_runner" {
   metadata {
     name      = "howling-ci-runner"
-    namespace = kubernetes_namespace.arc_runners.metadata[0].name
+    namespace = local.runner_namespace
+  }
+}
+
+resource "kubernetes_role" "arc_secret_reader" {
+  metadata {
+    name      = "arc-secret-reader"
+    namespace = local.runner_namespace
+  }
+  rule {
+    api_groups = [""]
+    resources  = ["secrets"]
+    verbs      = ["get", "list", "watch"]
+  }
+}
+resource "kubernetes_role_binding" "arc_secret_reader_binding" {
+  metadata {
+    name      = "arc-secret-reader-binding"
+    namespace = local.runner_namespace
+  }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "Role"
+    name      = kubernetes_role.arc_secret_reader.metadata[0].name
+  }
+  subject {
+    kind      = "ServiceAccount"
+    name      = "arc-controller-gha-rs-controller"
+    namespace = local.system_namespace
   }
 }

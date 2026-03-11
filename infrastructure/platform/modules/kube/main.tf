@@ -4,6 +4,11 @@ resource "ovh_cloud_project_kube" "kube_cluster" {
   region             = var.region
   version            = var.kube_version
   private_network_id = var.private_network_id
+
+  private_network_configuration {
+    private_network_routing_as_default = true
+    default_vrack_gateway              = ""
+  }
 }
 
 resource "ovh_cloud_project_kube_nodepool" "kube_nodepool" {
