@@ -6,13 +6,16 @@ provider "ovh" {
 }
 
 provider "vault" {
-  address = "http://openbao.security.svc.cluster.local:8200"
+  address = var.vault_address
 
-  auth_login {
-    path = "auth/kubernetes/login"
-    parameters = {
-      role = "howling-ci-role"
-      jwt  = var.vault_jwt
+  dynamic "auth_login" {
+    for_each = var.vault_jwt != "" ? [1] : []
+    content {
+      path = "auth/kubernetes/login"
+      parameters = {
+        role = "howling-ci-role"
+        jwt  = var.vault_jwt
+      }
     }
   }
 }

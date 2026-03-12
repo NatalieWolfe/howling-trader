@@ -18,3 +18,13 @@ variable "github_repo_url" {
   type        = string
   description = "The URL of the GitHub repository to register the runner to"
 }
+
+variable "system_pool_name" {
+  type        = string
+  description = "The name of the system node pool"
+}
+
+variable "runner_pool_name" {
+  type        = string
+  description = "The name of the runner node pool"
+}

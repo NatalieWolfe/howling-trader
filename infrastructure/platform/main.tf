@@ -7,7 +7,8 @@ provider "ovh" {
 
 locals {
   clean_region     = replace(var.region, "-1", "")
-  kubeconfig_attrs = module.kube.kubeconfig_attributes[0]
+  system_pool_name = "howling-trader-cluster-nodepool"
+  runner_pool_name = "arc-runner-nodepool"
 }
 
 # MARK: Tofu State
@@ -56,15 +57,43 @@ module "network" {
 
 # MARK: Kubernetes
 
-module "kube" {
-  source     = "./modules/kube"
-  depends_on = [module.network]
-
-  ovh_project_id     = var.ovh_project_id
+resource "ovh_cloud_project_kube" "kube_cluster" {
+  service_name       = var.ovh_project_id
+  name               = "howling-trader-cluster"
   region             = var.region
+  version            = "1.34"
   private_network_id = module.network.openstack_network_id
-  nodes_subnet_id    = module.network.subnet_id
-  lb_subnet_id       = "" # module.network.lb_subnet_id
+
+  private_network_configuration {
+    private_network_routing_as_default = true
+    default_vrack_gateway              = ""
+  }
+
+  depends_on = [module.network]
+}
+
+resource "ovh_cloud_project_kube_nodepool" "system_pool" {
+  service_name  = var.ovh_project_id
+  kube_id       = ovh_cloud_project_kube.kube_cluster.id
+  name          = local.system_pool_name
+  flavor_name   = "b2-7"
+  desired_nodes = 2
+  max_nodes     = 3
+  min_nodes     = 2
+}
+
+resource "ovh_cloud_project_kube_nodepool" "runner_pool" {
+  service_name  = var.ovh_project_id
+  kube_id       = ovh_cloud_project_kube.kube_cluster.id
+  name          = local.runner_pool_name
+  flavor_name   = "b2-30"
+  desired_nodes = 0
+  max_nodes     = 3
+  min_nodes     = 0
+}
+
+locals {
+  kubeconfig_attrs = ovh_cloud_project_kube.kube_cluster.kubeconfig_attributes[0]
 }
 
 # Configure Kubernetes and Helm providers using the cluster outputs
@@ -85,13 +114,16 @@ provider "helm" {
 }
 
 provider "vault" {
-  address = "http://openbao.security.svc.cluster.local:8200"
+  address = var.vault_address
 
-  auth_login {
-    path = "auth/kubernetes/login"
-    parameters = {
-      role = "howling-ci-role"
-      jwt  = var.vault_jwt
+  dynamic "auth_login" {
+    for_each = var.vault_jwt != "" ? [1] : []
+    content {
+      path = "auth/kubernetes/login"
+      parameters = {
+        role = "howling-ci-role"
+        jwt  = var.vault_jwt
+      }
     }
   }
 }
@@ -105,6 +137,7 @@ module "security" {
   kube_host         = local.kubeconfig_attrs.host
   kube_ca_cert      = base64decode(local.kubeconfig_attrs.cluster_ca_certificate)
   runner_namespace  = module.runner.runner_namespace
+  pool_name         = local.system_pool_name
 
   providers = {
     helm  = helm
@@ -120,6 +153,8 @@ module "runner" {
   github_app_installation_id = var.github_app_installation_id
   github_app_private_key     = var.github_app_private_key
   github_repo_url            = var.github_repo_url
+  system_pool_name           = local.system_pool_name
+  runner_pool_name           = local.runner_pool_name
 
   providers = {
     kubernetes = kubernetes

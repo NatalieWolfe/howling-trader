@@ -17,3 +17,8 @@ variable "runner_namespace" {
   type        = string
   description = "Namespace where the runner is deployed"
 }
+
+variable "pool_name" {
+  type        = string
+  description = "The name of the node pool to deploy to"
+}
