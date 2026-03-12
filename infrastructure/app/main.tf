@@ -6,7 +6,15 @@ provider "ovh" {
 }
 
 provider "vault" {
-  address = "http://127.0.0.1:8200"
+  address = "http://openbao.security.svc.cluster.local:8200"
+
+  auth_login {
+    path = "auth/kubernetes/login"
+    parameters = {
+      role = "howling-ci-role"
+      jwt  = file("/var/run/secrets/kubernetes.io/serviceaccount/token")
+    }
+  }
 }
 
 data "terraform_remote_state" "platform" {
@@ -55,9 +63,7 @@ provider "helm" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# Registry Secret in OpenBao
-# ------------------------------------------------------------------------------
+# MARK: Registry credentials
 
 resource "vault_generic_secret" "registry" {
   path = "secret/howling/prod/registry"
@@ -71,9 +77,7 @@ data "vault_generic_secret" "certificates" {
   path = "secret/howling/prod/certificates"
 }
 
-# ------------------------------------------------------------------------------
-# Managed Database (Postgres)
-# ------------------------------------------------------------------------------
+# MARK: Database
 
 module "database" {
   source             = "./modules/database"
@@ -110,9 +114,7 @@ resource "vault_generic_secret" "database_admin" {
   })
 }
 
-# ------------------------------------------------------------------------------
-# OAuth Service Deployment
-# ------------------------------------------------------------------------------
+# MARK: OAuth
 
 module "oauth" {
   source                = "./modules/oauth"

@@ -85,7 +85,15 @@ provider "helm" {
 }
 
 provider "vault" {
-  address = "http://127.0.0.1:8200"
+  address = "http://openbao.security.svc.cluster.local:8200"
+
+  auth_login {
+    path = "auth/kubernetes/login"
+    parameters = {
+      role = "howling-ci-role"
+      jwt  = file("/var/run/secrets/kubernetes.io/serviceaccount/token")
+    }
+  }
 }
 
 # MARK: OpenBao
