@@ -33,16 +33,6 @@ variable "registry_name" {
   default = "howling-registry"
 }
 
-variable "registry_plan" {
-  type    = string
-  default = "SMALL"
-}
-
-variable "registry_user_email" {
-  type        = string
-  description = "The email address associated with the registry user"
-}
-
 variable "state_bucket_name" {
   type    = string
   default = "howling-trader-tofu-state"
@@ -52,4 +42,11 @@ variable "image_tag" {
   type        = string
   default     = "latest"
   description = "The tag for the container images"
+}
+
+variable "vault_jwt" {
+  type        = string
+  description = "The JWT token for Vault authentication"
+  sensitive   = true
+  default     = ""
 }

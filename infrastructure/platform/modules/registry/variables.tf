@@ -1,4 +1,4 @@
-variable "service_name" {
+variable "ovh_project_id" {
   type        = string
   description = "The Public Cloud Project ID"
 }
@@ -16,9 +16,4 @@ variable "registry_name" {
 variable "registry_plan" {
   type        = string
   description = "The plan name for the registry"
-}
-
-variable "registry_user_email" {
-  type        = string
-  description = "The email for the registry user"
 }

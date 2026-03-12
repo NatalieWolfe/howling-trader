@@ -45,8 +45,3 @@ variable "db_bootstrap_job_name" {
   type        = string
   description = "The name of the DB bootstrap job"
 }
-
-variable "letsencrypt_email" {
-  type        = string
-  description = "The email address for Let's Encrypt"
-}
