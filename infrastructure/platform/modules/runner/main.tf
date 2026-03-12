@@ -91,6 +91,11 @@ resource "helm_release" "arc_runner_set" {
   }
 
   set {
+    name  = "template.spec.containers[0].name"
+    value = "runner"
+  }
+
+  set {
     name  = "template.spec.containers[0].resources.requests.cpu"
     value = "7"
   }
