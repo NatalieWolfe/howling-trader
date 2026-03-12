@@ -12,7 +12,7 @@ provider "vault" {
     path = "auth/kubernetes/login"
     parameters = {
       role = "howling-ci-role"
-      jwt  = file("/var/run/secrets/kubernetes.io/serviceaccount/token")
+      jwt  = var.vault_jwt
     }
   }
 }

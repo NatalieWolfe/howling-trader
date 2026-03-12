@@ -71,3 +71,10 @@ variable "github_repo_url" {
   default     = "https://github.com/NatalieWolfe/howling-trader"
   description = "The URL of the GitHub repository to register the runner to"
 }
+
+variable "vault_jwt" {
+  type        = string
+  description = "The JWT token for Vault authentication"
+  sensitive   = true
+  default     = ""
+}

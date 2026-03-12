@@ -101,6 +101,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
+      - name: Get Vault JWT
+        run: echo "TF_VAR_vault_jwt=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" >> $GITHUB_ENV
       - name: OpenTofu Apply (Platform)
         env:
           TF_VAR_ovh_application_key: ${{ secrets.OVH_APPLICATION_KEY }}
@@ -127,6 +129,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
+      - name: Get Vault JWT
+        run: echo "TF_VAR_vault_jwt=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" >> $GITHUB_ENV
       - name: OpenTofu Apply (Application)
         env:
           TF_VAR_ovh_application_key: ${{ secrets.OVH_APPLICATION_KEY }}

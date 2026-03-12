@@ -43,3 +43,10 @@ variable "image_tag" {
   default     = "latest"
   description = "The tag for the container images"
 }
+
+variable "vault_jwt" {
+  type        = string
+  description = "The JWT token for Vault authentication"
+  sensitive   = true
+  default     = ""
+}
