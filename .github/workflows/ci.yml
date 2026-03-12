@@ -99,11 +99,13 @@ jobs:
         env:
           OVH_REGISTRY_URL: ${{ secrets.OVH_REGISTRY_URL }}
         run: |
+          # Strip 'https://' from the URL for the push tool
+          REGISTRY_HOST=$(echo ${OVH_REGISTRY_URL} | sed 's|^https://||')
           export CC=gcc-14
           export CXX=g++-14
-          bazel run --config=ci //services/oauth:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/howling-oauth --tag ${{ github.sha }}
-          bazel run --config=ci //howling_tools:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/howling-executor --tag ${{ github.sha }}
-          bazel run --config=ci //services/db:push -- --repository ${OVH_REGISTRY_URL}/howling-registry/schema-upgrade --tag ${{ github.sha }}
+          bazel run --config=ci //services/oauth:push -- --repository ${REGISTRY_HOST}/howling-registry/howling-oauth --tag ${{ github.sha }}
+          bazel run --config=ci //howling_tools:push -- --repository ${REGISTRY_HOST}/howling-registry/howling-executor --tag ${{ github.sha }}
+          bazel run --config=ci //services/db:push -- --repository ${REGISTRY_HOST}/howling-registry/schema-upgrade --tag ${{ github.sha }}
 
   infrastructure-platform-apply:
     needs: publish
@@ -124,6 +126,7 @@ jobs:
           TF_VAR_service_name: ${{ secrets.OVH_PROJECT_ID }}
           TF_VAR_registry_user_email: ${{ secrets.REGISTRY_USER_EMAIL }}
           TF_VAR_image_tag: ${{ github.sha }}
+          TF_VAR_vault_address: "http://openbao.security.svc.cluster.local:8200"
           AWS_ACCESS_KEY_ID: ${{ secrets.STATE_S3_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.STATE_S3_SECRET_KEY }}
           AWS_DEFAULT_REGION: us-east-va
@@ -152,6 +155,7 @@ jobs:
           TF_VAR_service_name: ${{ secrets.OVH_PROJECT_ID }}
           TF_VAR_registry_user_email: ${{ secrets.REGISTRY_USER_EMAIL }}
           TF_VAR_image_tag: ${{ github.sha }}
+          TF_VAR_vault_address: "http://openbao.security.svc.cluster.local:8200"
           AWS_ACCESS_KEY_ID: ${{ secrets.STATE_S3_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.STATE_S3_SECRET_KEY }}
           AWS_DEFAULT_REGION: us-east-va

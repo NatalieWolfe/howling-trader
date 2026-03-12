@@ -43,6 +43,11 @@ resource "helm_release" "arc_controller" {
   chart      = "gha-runner-scale-set-controller"
   namespace  = local.system_namespace
   version    = "0.9.3"
+
+  set {
+    name  = "nodeSelector.nodepool"
+    value = var.system_pool_name
+  }
 }
 
 # MARK: ARC Runner
@@ -83,6 +88,36 @@ resource "helm_release" "arc_runner_set" {
   set {
     name  = "controllerServiceAccount.namespace"
     value = local.system_namespace
+  }
+
+  set {
+    name  = "template.spec.containers[0].name"
+    value = "runner"
+  }
+
+  set {
+    name  = "template.spec.containers[0].resources.requests.cpu"
+    value = "7"
+  }
+
+  set {
+    name  = "template.spec.containers[0].resources.requests.memory"
+    value = "24Gi"
+  }
+
+  set {
+    name  = "template.spec.containers[0].resources.limits.cpu"
+    value = "7"
+  }
+
+  set {
+    name  = "template.spec.containers[0].resources.limits.memory"
+    value = "24Gi"
+  }
+
+  set {
+    name  = "template.spec.nodeSelector.nodepool"
+    value = var.runner_pool_name
   }
 
   depends_on = [helm_release.arc_controller]

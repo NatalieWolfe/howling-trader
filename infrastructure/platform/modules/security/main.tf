@@ -25,6 +25,11 @@ resource "helm_release" "openbao" {
     name  = "injector.enabled"
     value = "true"
   }
+
+  set {
+    name  = "server.nodeSelector.nodepool"
+    value = var.pool_name
+  }
 }
 
 # MARK: Ingress Controller
@@ -40,6 +45,11 @@ resource "helm_release" "ingress_nginx" {
     name  = "controller.service.externalTrafficPolicy"
     value = "Local"
   }
+
+  set {
+    name  = "controller.nodeSelector.nodepool"
+    value = var.pool_name
+  }
 }
 
 # MARK: Cert Manager
@@ -54,6 +64,11 @@ resource "helm_release" "cert_manager" {
   set {
     name  = "installCRDs"
     value = "true"
+  }
+
+  set {
+    name  = "nodeSelector.nodepool"
+    value = var.pool_name
   }
 }
 

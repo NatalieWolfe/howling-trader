@@ -50,3 +50,9 @@ variable "vault_jwt" {
   sensitive   = true
   default     = ""
 }
+
+variable "vault_address" {
+  type        = string
+  description = "The address of the OpenBao server"
+  default     = "http://openbao.security.svc.cluster.local:8200"
+}

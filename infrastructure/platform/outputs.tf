@@ -31,19 +31,20 @@ output "state_bucket_endpoint" {
 }
 
 output "kube_cluster_id" {
-  value       = module.kube.cluster_id
+  value       = ovh_cloud_project_kube.kube_cluster.id
   description = "The ID of the Managed Kubernetes cluster"
 }
 
 output "kubeconfig" {
-  value       = module.kube.kubeconfig
+  value       = ovh_cloud_project_kube.kube_cluster.kubeconfig
   sensitive   = true
   description = "The Kubeconfig for the cluster"
 }
 
 output "kubeconfig_attributes" {
-  value     = module.kube.kubeconfig_attributes
-  sensitive = true
+  value       = ovh_cloud_project_kube.kube_cluster.kubeconfig_attributes
+  sensitive   = true
+  description = "The Kubeconfig attributes for the cluster"
 }
 
 output "openstack_network_id" {
