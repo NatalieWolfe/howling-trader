@@ -27,9 +27,7 @@ resource "helm_release" "openbao" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# Ingress Controller (Nginx)
-# ------------------------------------------------------------------------------
+# MARK: Ingress Controller
 
 resource "helm_release" "ingress_nginx" {
   name             = "ingress-nginx"
@@ -44,9 +42,7 @@ resource "helm_release" "ingress_nginx" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# Cert-Manager
-# ------------------------------------------------------------------------------
+# MARK: Cert Manager
 
 resource "helm_release" "cert_manager" {
   name             = "cert-manager"
@@ -61,9 +57,7 @@ resource "helm_release" "cert_manager" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# Let's Encrypt ClusterIssuer (via Local Helm Chart)
-# ------------------------------------------------------------------------------
+# MARK: Lets Encrypt
 
 resource "helm_release" "letsencrypt_issuer" {
   name      = "letsencrypt-issuer"
@@ -76,4 +70,41 @@ resource "helm_release" "letsencrypt_issuer" {
   }
 
   depends_on = [helm_release.cert_manager]
+}
+
+# MARK: OpenBao
+
+resource "vault_auth_backend" "kubernetes" {
+  type = "kubernetes"
+  path = "kubernetes"
+
+  depends_on = [helm_release.openbao]
+}
+
+resource "vault_kubernetes_auth_backend_config" "config" {
+  backend            = vault_auth_backend.kubernetes.path
+  kubernetes_host    = var.kube_host
+  kubernetes_ca_cert = var.kube_ca_cert
+
+  depends_on = [vault_auth_backend.kubernetes]
+}
+
+resource "vault_policy" "ci_app" {
+  name   = "howling-ci-app"
+  policy = <<EOT
+path "secret/data/howling/prod/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+EOT
+}
+
+resource "vault_kubernetes_auth_backend_role" "ci_runner" {
+  backend                          = vault_auth_backend.kubernetes.path
+  role_name                        = "howling-ci-role"
+  bound_service_account_names      = ["howling-ci-runner"]
+  bound_service_account_namespaces = [var.runner_namespace]
+  token_policies                   = [vault_policy.ci_app.name]
+  token_ttl                        = 3600
+
+  depends_on = [vault_kubernetes_auth_backend_config.config]
 }

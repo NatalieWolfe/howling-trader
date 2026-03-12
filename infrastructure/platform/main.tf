@@ -84,15 +84,23 @@ provider "helm" {
   }
 }
 
+provider "vault" {
+  address = "http://127.0.0.1:8200"
+}
+
 # MARK: OpenBao
 
 module "security" {
   source = "./modules/security"
 
   letsencrypt_email = var.letsencrypt_email
+  kube_host         = local.kubeconfig_attrs.host
+  kube_ca_cert      = base64decode(local.kubeconfig_attrs.cluster_ca_certificate)
+  runner_namespace  = module.runner.runner_namespace
 
   providers = {
-    helm = helm
+    helm  = helm
+    vault = vault
   }
 }
 
