@@ -65,10 +65,21 @@ jobs:
   publish:
     needs: [format, test, infrastructure-check]
     if: github.ref == 'refs/heads/release'
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-set
     environment: Publish Environment
     steps:
       - uses: actions/checkout@v4
+      - name: Install Build Tools (gcc-14)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt-get update
+          sudo apt-get install -y gcc-14 g++-14
+      - name: Install Bazelisk
+        run: |
+          sudo wget -O /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64
+          sudo chmod +x /usr/local/bin/bazel
       - name: Mount Bazel Cache
         uses: actions/cache@v4
         with:
