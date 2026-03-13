@@ -91,7 +91,7 @@ resource "ovh_cloud_project_kube_nodepool" "system_pool" {
     }
     spec {
       unschedulable = false
-      taints         = []
+      taints        = []
     }
   }
 }
@@ -115,7 +115,7 @@ resource "ovh_cloud_project_kube_nodepool" "runner_pool" {
     }
     spec {
       unschedulable = false
-      taints         = []
+      taints        = []
     }
   }
 }
