@@ -73,23 +73,51 @@ resource "ovh_cloud_project_kube" "kube_cluster" {
 }
 
 resource "ovh_cloud_project_kube_nodepool" "system_pool" {
-  service_name  = var.ovh_project_id
-  kube_id       = ovh_cloud_project_kube.kube_cluster.id
-  name          = local.system_pool_name
-  flavor_name   = "b2-7"
-  desired_nodes = 2
-  max_nodes     = 3
-  min_nodes     = 2
+  service_name = var.ovh_project_id
+  kube_id      = ovh_cloud_project_kube.kube_cluster.id
+  name         = local.system_pool_name
+  flavor_name  = "b2-7"
+  max_nodes    = 5
+  min_nodes    = 3
+  autoscale    = true
+
+  template {
+    metadata {
+      labels = {
+        nodepool = local.system_pool_name
+      }
+      annotations = {}
+      finalizers  = []
+    }
+    spec {
+      unschedulable = false
+      taints         = []
+    }
+  }
 }
 
 resource "ovh_cloud_project_kube_nodepool" "runner_pool" {
-  service_name  = var.ovh_project_id
-  kube_id       = ovh_cloud_project_kube.kube_cluster.id
-  name          = local.runner_pool_name
-  flavor_name   = "b2-30"
-  desired_nodes = 0
-  max_nodes     = 3
-  min_nodes     = 0
+  service_name = var.ovh_project_id
+  kube_id      = ovh_cloud_project_kube.kube_cluster.id
+  name         = local.runner_pool_name
+  flavor_name  = "b2-30"
+  max_nodes    = 3
+  min_nodes    = 0
+  autoscale    = true
+
+  template {
+    metadata {
+      labels = {
+        nodepool = local.runner_pool_name
+      }
+      annotations = {}
+      finalizers  = []
+    }
+    spec {
+      unschedulable = false
+      taints         = []
+    }
+  }
 }
 
 locals {

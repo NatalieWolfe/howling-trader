@@ -59,66 +59,51 @@ resource "helm_release" "arc_runner_set" {
   namespace  = local.runner_namespace
   version    = "0.9.3"
 
-  set {
-    name  = "githubConfigUrl"
-    value = var.github_repo_url
-  }
-
-  # Reference the secret created above
-  set {
-    name  = "githubConfigSecret"
-    value = kubernetes_secret.github_app_creds.metadata[0].name
-  }
-
-  set {
-    name  = "minRunners"
-    value = "0"
-  }
-
-  set {
-    name  = "maxRunners"
-    value = "3"
-  }
-
-  set {
-    name  = "controllerServiceAccount.name"
-    value = "arc-controller-gha-rs-controller"
-  }
-
-  set {
-    name  = "controllerServiceAccount.namespace"
-    value = local.system_namespace
-  }
-
-  set {
-    name  = "template.spec.containers[0].name"
-    value = "runner"
-  }
-
-  set {
-    name  = "template.spec.containers[0].resources.requests.cpu"
-    value = "7"
-  }
-
-  set {
-    name  = "template.spec.containers[0].resources.requests.memory"
-    value = "24Gi"
-  }
-
-  set {
-    name  = "template.spec.containers[0].resources.limits.cpu"
-    value = "7"
-  }
-
-  set {
-    name  = "template.spec.containers[0].resources.limits.memory"
-    value = "24Gi"
-  }
-
-  set {
-    name  = "template.spec.nodeSelector.nodepool"
-    value = var.runner_pool_name
-  }
+  values = [
+    yamlencode({
+      githubConfigUrl    = var.github_repo_url
+      githubConfigSecret = kubernetes_secret.github_app_creds.metadata[0].name
+      maxRunners         = 3
+      minRunners         = 0
+      controllerServiceAccount = {
+        name      = "arc-controller-gha-rs-controller"
+        namespace = local.system_namespace
+      }
+      template = {
+        spec = {
+          containers = [{
+            name    = "runner"
+            image   = "ghcr.io/actions/actions-runner:latest"
+            command = ["/home/runner/run.sh"]
+            resources = {
+              requests = {
+                cpu    = "7"
+                memory = "24Gi"
+              }
+              limits = {
+                cpu    = "7"
+                memory = "24Gi"
+              }
+            }
+          }]
+          affinity = {
+            nodeAffinity = {
+              preferredDuringSchedulingIgnoredDuringExecution = [{
+                weight = 100
+                preference = {
+                  matchExpressions = [{
+                    key      = "nodepool"
+                    operator = "In"
+                    values   = [var.runner_pool_name]
+                  }]
+                }
+              }]
+            }
+          }
+        }
+      }
+    })
+  ]
 
   depends_on = [helm_release.arc_controller]
 }
