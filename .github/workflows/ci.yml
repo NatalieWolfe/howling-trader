@@ -72,7 +72,7 @@ jobs:
       - name: Prepare Environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget curl ca-certificates software-properties-common
+          sudo apt-get install -y wget curl ca-certificates software-properties-common nodejs
       - name: Install Build Tools (gcc-14)
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
@@ -114,6 +114,10 @@ jobs:
     environment: Publish Environment
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget curl ca-certificates software-properties-common nodejs
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
       - name: Get Vault JWT
@@ -143,6 +147,10 @@ jobs:
     environment: Publish Environment
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget curl ca-certificates software-properties-common nodejs
       - name: Setup OpenTofu
         uses: opentofu/setup-opentofu@v1
       - name: Get Vault JWT
