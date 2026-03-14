@@ -46,9 +46,9 @@ locals {
   kubeconfig_attrs = data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0]
 
   # Decoded Vault secrets
-  registry_creds       = jsondecode(vault_generic_secret.registry.data_json).data
-  database_creds       = jsondecode(vault_generic_secret.database.data_json).data
-  database_admin_creds = jsondecode(vault_generic_secret.database_admin.data_json).data
+  registry_creds       = vault_kv_secret_v2.registry.data
+  database_creds       = vault_kv_secret_v2.database.data
+  database_admin_creds = vault_kv_secret_v2.database_admin.data
 }
 
 # Configure Kubernetes and Helm providers using the cluster outputs from platform
@@ -70,13 +70,12 @@ provider "helm" {
 
 # MARK: Registry credentials
 
-resource "vault_generic_secret" "registry" {
-  path = "secret/data/howling/prod/registry"
+resource "vault_kv_secret_v2" "registry" {
+  mount = "secret"
+  name  = "howling/prod/registry"
   data_json = jsonencode({
-    data = {
-      username = local.platform_outputs.registry_user_login
-      password = local.platform_outputs.registry_user_password
-    }
+    username = local.platform_outputs.registry_user_login
+    password = local.platform_outputs.registry_user_password
   })
 }
 
@@ -101,23 +100,21 @@ module "database" {
   }
 }
 
-resource "vault_generic_secret" "database" {
-  path = "secret/data/howling/prod/database"
+resource "vault_kv_secret_v2" "database" {
+  mount = "secret"
+  name  = "howling/prod/database"
   data_json = jsonencode({
-    data = {
-      username = module.database.db_user
-      password = module.database.db_password
-    }
+    username = module.database.db_user
+    password = module.database.db_password
   })
 }
 
-resource "vault_generic_secret" "database_admin" {
-  path = "secret/data/howling/prod/database/admin"
+resource "vault_kv_secret_v2" "database_admin" {
+  mount = "secret"
+  name  = "howling/prod/database/admin"
   data_json = jsonencode({
-    data = {
-      username = module.database.db_admin_user
-      password = module.database.db_admin_password
-    }
+    username = module.database.db_admin_user
+    password = module.database.db_admin_password
   })
 }
 
