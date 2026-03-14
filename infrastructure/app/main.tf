@@ -76,10 +76,6 @@ resource "vault_generic_secret" "registry" {
   })
 }
 
-data "vault_generic_secret" "certificates" {
-  path = "secret/howling/prod/certificates"
-}
-
 # MARK: Database
 
 module "database" {
