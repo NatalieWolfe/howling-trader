@@ -40,39 +40,43 @@ data "terraform_remote_state" "platform" {
 }
 
 locals {
-  clean_region    = replace(var.region, "-1", "")
-  registry_server = split("/", data.terraform_remote_state.platform.outputs.registry_url)[2]
+  clean_region     = replace(var.region, "-1", "")
+  registry_server  = split("/", data.terraform_remote_state.platform.outputs.registry_url)[2]
+  platform_outputs = data.terraform_remote_state.platform.outputs
+  kubeconfig_attrs = data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0]
 
   # Decoded Vault secrets
-  registry_creds       = jsondecode(vault_generic_secret.registry.data_json)
-  database_creds       = jsondecode(vault_generic_secret.database.data_json)
-  database_admin_creds = jsondecode(vault_generic_secret.database_admin.data_json)
+  registry_creds       = jsondecode(vault_generic_secret.registry.data_json).data
+  database_creds       = jsondecode(vault_generic_secret.database.data_json).data
+  database_admin_creds = jsondecode(vault_generic_secret.database_admin.data_json).data
 }
 
 # Configure Kubernetes and Helm providers using the cluster outputs from platform
 provider "kubernetes" {
-  host                   = data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].host
-  client_certificate     = base64decode(data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].client_certificate)
-  client_key             = base64decode(data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].client_key)
-  cluster_ca_certificate = base64decode(data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].cluster_ca_certificate)
+  host                   = local.kubeconfig_attrs.host
+  client_certificate     = base64decode(local.kubeconfig_attrs.client_certificate)
+  client_key             = base64decode(local.kubeconfig_attrs.client_key)
+  cluster_ca_certificate = base64decode(local.kubeconfig_attrs.cluster_ca_certificate)
 }
 
 provider "helm" {
   kubernetes {
-    host                   = data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].host
-    client_certificate     = base64decode(data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].client_certificate)
-    client_key             = base64decode(data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].client_key)
-    cluster_ca_certificate = base64decode(data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].cluster_ca_certificate)
+    host                   = local.kubeconfig_attrs.host
+    client_certificate     = base64decode(local.kubeconfig_attrs.client_certificate)
+    client_key             = base64decode(local.kubeconfig_attrs.client_key)
+    cluster_ca_certificate = base64decode(local.kubeconfig_attrs.cluster_ca_certificate)
   }
 }
 
 # MARK: Registry credentials
 
 resource "vault_generic_secret" "registry" {
-  path = "secret/howling/prod/registry"
+  path = "secret/data/howling/prod/registry"
   data_json = jsonencode({
-    username = data.terraform_remote_state.platform.outputs.registry_user_login
-    password = data.terraform_remote_state.platform.outputs.registry_user_password
+    data = {
+      username = local.platform_outputs.registry_user_login
+      password = local.platform_outputs.registry_user_password
+    }
   })
 }
 
@@ -82,9 +86,9 @@ module "database" {
   source             = "./modules/database"
   service_name       = var.service_name
   region             = local.clean_region
-  network_id         = data.terraform_remote_state.platform.outputs.openstack_network_id
-  subnet_id          = data.terraform_remote_state.platform.outputs.subnet_id
-  authorized_subnets = [data.terraform_remote_state.platform.outputs.subnet_cidr]
+  network_id         = local.platform_outputs.openstack_network_id
+  subnet_id          = local.platform_outputs.subnet_id
+  authorized_subnets = [local.platform_outputs.subnet_cidr]
   registry_server    = local.registry_server
   registry_username  = local.registry_creds["username"]
   registry_password  = local.registry_creds["password"]
@@ -98,18 +102,22 @@ module "database" {
 }
 
 resource "vault_generic_secret" "database" {
-  path = "secret/howling/prod/database"
+  path = "secret/data/howling/prod/database"
   data_json = jsonencode({
-    username = module.database.db_user
-    password = module.database.db_password
+    data = {
+      username = module.database.db_user
+      password = module.database.db_password
+    }
   })
 }
 
 resource "vault_generic_secret" "database_admin" {
-  path = "secret/howling/prod/database/admin"
+  path = "secret/data/howling/prod/database/admin"
   data_json = jsonencode({
-    username = module.database.db_admin_user
-    password = module.database.db_admin_password
+    data = {
+      username = module.database.db_admin_user
+      password = module.database.db_admin_password
+    }
   })
 }
 
