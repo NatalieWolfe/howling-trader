@@ -127,8 +127,11 @@ jobs:
           TF_VAR_ovh_application_key: ${{ secrets.OVH_APPLICATION_KEY }}
           TF_VAR_ovh_application_secret: ${{ secrets.OVH_APPLICATION_SECRET }}
           TF_VAR_ovh_consumer_key: ${{ secrets.OVH_CONSUMER_KEY }}
-          TF_VAR_service_name: ${{ secrets.OVH_PROJECT_ID }}
-          TF_VAR_registry_user_email: ${{ secrets.REGISTRY_USER_EMAIL }}
+          TF_VAR_ovh_project_id: ${{ secrets.OVH_PROJECT_ID }}
+          TF_VAR_letsencrypt_email: ${{ secrets.TLS_CERTIFICATE_EMAIL }}
+          TF_VAR_github_app_id: ${{ secrets.GH_APP_ID }}
+          TF_VAR_github_app_installation_id: ${{ secrets.GH_APP_INSTALLATION_ID }}
+          TF_VAR_github_app_private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           TF_VAR_image_tag: ${{ github.sha }}
           TF_VAR_vault_address: "http://openbao.security.svc.cluster.local:8200"
           AWS_ACCESS_KEY_ID: ${{ secrets.STATE_S3_ACCESS_KEY }}
@@ -137,8 +140,8 @@ jobs:
           AWS_REGION: us-east-va
         run: |
           cd infrastructure/platform
-          tofu init
-          tofu apply -auto-approve
+          tofu init -input=false
+          tofu apply -auto-approve -input=false
 
   infrastructure-app-apply:
     needs: infrastructure-platform-apply
@@ -161,7 +164,6 @@ jobs:
           TF_VAR_ovh_application_secret: ${{ secrets.OVH_APPLICATION_SECRET }}
           TF_VAR_ovh_consumer_key: ${{ secrets.OVH_CONSUMER_KEY }}
           TF_VAR_service_name: ${{ secrets.OVH_PROJECT_ID }}
-          TF_VAR_registry_user_email: ${{ secrets.REGISTRY_USER_EMAIL }}
           TF_VAR_image_tag: ${{ github.sha }}
           TF_VAR_vault_address: "http://openbao.security.svc.cluster.local:8200"
           AWS_ACCESS_KEY_ID: ${{ secrets.STATE_S3_ACCESS_KEY }}
@@ -170,8 +172,8 @@ jobs:
           AWS_REGION: us-east-va
         run: |
           cd infrastructure/app
-          tofu init
-          tofu apply -auto-approve
+          tofu init -input=false
+          tofu apply -auto-approve -input=false
       - name: Show Infrastructure Outputs
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.STATE_S3_ACCESS_KEY }}
