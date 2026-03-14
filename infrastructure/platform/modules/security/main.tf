@@ -89,6 +89,15 @@ resource "helm_release" "letsencrypt_issuer" {
 
 # MARK: OpenBao
 
+resource "vault_mount" "secret" {
+  path        = "secret"
+  type        = "kv"
+  options     = { version = "2" }
+  description = "KV Version 2 secrets engine for application data"
+
+  depends_on = [helm_release.openbao]
+}
+
 resource "vault_auth_backend" "kubernetes" {
   type = "kubernetes"
   path = "kubernetes"
@@ -117,12 +126,20 @@ path "auth/token/create" {
   capabilities = ["update"]
 }
 
-# 3. Discover and Manage Auth Methods
+# 3. Discover and Manage Auth Methods and Mounts
 path "sys/auth" {
   capabilities = ["read", "list"]
 }
 
 path "sys/auth/kubernetes" {
+  capabilities = ["create", "read", "update", "delete", "sudo"]
+}
+
+path "sys/mounts" {
+  capabilities = ["read", "list"]
+}
+
+path "sys/mounts/secret" {
   capabilities = ["create", "read", "update", "delete", "sudo"]
 }
 
