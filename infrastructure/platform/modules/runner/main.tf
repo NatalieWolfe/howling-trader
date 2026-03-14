@@ -71,6 +71,7 @@ resource "helm_release" "arc_runner_set" {
       }
       template = {
         spec = {
+          serviceAccountName = "howling-ci-runner"
           containers = [{
             name    = "runner"
             image   = "ghcr.io/actions/actions-runner:latest"
