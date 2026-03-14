@@ -107,8 +107,45 @@ resource "vault_kubernetes_auth_backend_config" "config" {
 resource "vault_policy" "ci_app" {
   name   = "howling-ci-app"
   policy = <<EOT
+# 1. Application Secret Management
 path "secret/data/howling/prod/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+# 2. Session Management (Ephemeral tokens for Tofu)
+path "auth/token/create" {
+  capabilities = ["update"]
+}
+
+# 3. Discover and Manage Auth Methods
+path "sys/auth" {
+  capabilities = ["read", "list"]
+}
+
+path "sys/auth/kubernetes" {
+  capabilities = ["create", "read", "update", "delete", "sudo"]
+}
+
+# 4. Configure Kubernetes Backend
+path "auth/kubernetes/config" {
+  capabilities = ["create", "read", "update", "delete"]
+}
+
+path "auth/kubernetes/role" {
+  capabilities = ["list"]
+}
+
+path "auth/kubernetes/role/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+# 5. Manage Policies (Self-Management)
+path "sys/policies/acl" {
+  capabilities = ["list"]
+}
+
+path "sys/policies/acl/howling-ci-app" {
+  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 }
 EOT
 }
