@@ -3,6 +3,11 @@ variable "service_name" {
   description = "The Public Cloud Project ID"
 }
 
+variable "namespace" {
+  type        = string
+  description = "The namespace to deploy Kubernetes resources into"
+}
+
 variable "region" {
   type        = string
   description = "The region for the database"

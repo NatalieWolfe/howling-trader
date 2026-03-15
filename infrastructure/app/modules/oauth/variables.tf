@@ -4,6 +4,11 @@ variable "domain_name" {
   description = "The domain name for the OAuth service"
 }
 
+variable "namespace" {
+  type        = string
+  description = "The namespace to deploy Kubernetes resources into"
+}
+
 variable "image_repository" {
   type        = string
   description = "The repository URL for the OAuth service image"
