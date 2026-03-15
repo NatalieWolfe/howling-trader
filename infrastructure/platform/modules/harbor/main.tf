@@ -28,6 +28,8 @@ resource "harbor_registry" "ghcr" {
   provider_name = "docker-registry"
   name          = "ghcr"
   endpoint_url  = "https://ghcr.io"
+  access_id     = var.github_username
+  access_secret = var.ghcr_readonly_token
 }
 
 resource "harbor_replication" "pull_openbao_agent" {

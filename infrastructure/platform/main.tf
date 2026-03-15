@@ -39,8 +39,10 @@ provider "harbor" {
 
 # Create a Harbor project named after the registry
 module "harbor" {
-  source        = "./modules/harbor"
-  registry_name = var.registry_name
+  source              = "./modules/harbor"
+  registry_name       = var.registry_name
+  github_username     = var.github_username
+  ghcr_readonly_token = var.ghcr_readonly_token
 
   providers = {
     harbor = harbor
