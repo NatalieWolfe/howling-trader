@@ -44,7 +44,6 @@ locals {
   registry_server  = replace(data.terraform_remote_state.platform.outputs.registry_url, "https://", "")
   platform_outputs = data.terraform_remote_state.platform.outputs
   kubeconfig_attrs = data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0]
-  namespace        = kubernetes_namespace.howling_app.metadata[0].name
 
   # Local mirror for the OpenBao Agent (Harbor preserves source namespace)
   openbao_agent_image = "${local.registry_server}/${var.registry_name}/openbao/openbao:latest"
@@ -79,6 +78,12 @@ resource "kubernetes_namespace" "howling_app" {
   }
 }
 
+resource "kubernetes_namespace" "howling_admin" {
+  metadata {
+    name = "howling-admin"
+  }
+}
+
 # MARK: Registry credentials
 
 resource "vault_kv_secret_v2" "registry" {
@@ -94,7 +99,7 @@ resource "vault_kv_secret_v2" "registry" {
 
 module "database" {
   source              = "./modules/database"
-  namespace           = local.namespace
+  namespace           = kubernetes_namespace.howling_admin.metadata[0].name
   service_name        = var.service_name
   region              = local.clean_region
   network_id          = local.platform_outputs.openstack_network_id
@@ -135,7 +140,7 @@ resource "vault_kv_secret_v2" "database_admin" {
 
 module "oauth" {
   source                = "./modules/oauth"
-  namespace             = local.namespace
+  namespace             = kubernetes_namespace.howling_app.metadata[0].name
   registry_server       = local.registry_server
   registry_username     = local.platform_outputs.registry_user_login
   registry_password     = local.platform_outputs.registry_user_password
