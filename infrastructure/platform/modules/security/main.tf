@@ -186,8 +186,8 @@ EOT
 resource "vault_kubernetes_auth_backend_role" "ci_runner" {
   backend                          = vault_auth_backend.kubernetes.path
   role_name                        = "howling-ci-role"
-  bound_service_account_names      = ["howling-ci-runner"]
-  bound_service_account_namespaces = [var.runner_namespace]
+  bound_service_account_names      = ["*"]
+  bound_service_account_namespaces = [var.runner_namespace, "howling-admin"]
   token_policies                   = [vault_policy.ci_app.name]
   token_ttl                        = 3600
 
