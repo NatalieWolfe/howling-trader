@@ -41,7 +41,7 @@ resource "harbor_replication" "pull_openbao_agent" {
   dest_namespace = harbor_project.main_project.name
 
   filters {
-    name = "openbao/openbao-agent"
+    name = "openbao/openbao"
   }
 
   filters {
