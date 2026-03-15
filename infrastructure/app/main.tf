@@ -40,11 +40,14 @@ data "terraform_remote_state" "platform" {
 }
 
 locals {
-  namespace        = kubernetes_namespace.howling_app.metadata[0].name
   clean_region     = replace(var.region, "-1", "")
-  registry_server  = split("/", data.terraform_remote_state.platform.outputs.registry_url)[2]
+  registry_server  = replace(data.terraform_remote_state.platform.outputs.registry_url, "https://", "")
   platform_outputs = data.terraform_remote_state.platform.outputs
   kubeconfig_attrs = data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0]
+  namespace        = kubernetes_namespace.howling_app.metadata[0].name
+
+  # Local mirror for the OpenBao Agent (Harbor preserves source namespace)
+  openbao_agent_image = "${local.registry_server}/${var.registry_name}/openbao/openbao-agent:latest"
 
   # Decoded Vault secrets
   database_creds       = vault_kv_secret_v2.database.data
@@ -90,18 +93,19 @@ resource "vault_kv_secret_v2" "registry" {
 # MARK: Database
 
 module "database" {
-  source             = "./modules/database"
-  namespace          = local.namespace
-  service_name       = var.service_name
-  region             = local.clean_region
-  network_id         = local.platform_outputs.openstack_network_id
-  subnet_id          = local.platform_outputs.subnet_id
-  authorized_subnets = [local.platform_outputs.subnet_cidr]
-  registry_server    = local.registry_server
-  registry_username  = local.platform_outputs.registry_user_login
-  registry_password  = local.platform_outputs.registry_user_password
-  image_repository   = "${local.registry_server}/${var.registry_name}/schema-upgrade"
-  image_tag          = var.image_tag
+  source              = "./modules/database"
+  namespace           = local.namespace
+  service_name        = var.service_name
+  region              = local.clean_region
+  network_id          = local.platform_outputs.openstack_network_id
+  subnet_id           = local.platform_outputs.subnet_id
+  authorized_subnets  = [local.platform_outputs.subnet_cidr]
+  registry_server     = local.registry_server
+  registry_username   = local.platform_outputs.registry_user_login
+  registry_password   = local.platform_outputs.registry_user_password
+  image_repository    = "${local.registry_server}/${var.registry_name}/schema-upgrade"
+  image_tag           = var.image_tag
+  openbao_agent_image = local.openbao_agent_image
 
   providers = {
     kubernetes = kubernetes
@@ -140,6 +144,7 @@ module "oauth" {
   db_host               = module.database.db_host
   db_port               = module.database.db_port
   db_bootstrap_job_name = module.database.db_bootstrap_job_name
+  openbao_agent_image   = local.openbao_agent_image
 
   providers = {
     kubernetes = kubernetes

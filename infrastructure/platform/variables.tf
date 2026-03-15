@@ -72,6 +72,18 @@ variable "github_repo_url" {
   description = "The URL of the GitHub repository to register the runner to"
 }
 
+variable "github_username" {
+  type        = string
+  default     = "NatalieWolfe"
+  description = "The GitHub username for registry authentication"
+}
+
+variable "ghcr_readonly_token" {
+  type        = string
+  sensitive   = true
+  description = "The GitHub PAT for registry authentication"
+}
+
 variable "vault_jwt" {
   type        = string
   description = "The JWT token for Vault authentication"

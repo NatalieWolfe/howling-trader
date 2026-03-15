@@ -76,7 +76,7 @@ resource "kubernetes_job" "db_bootstrap" {
           "vault.hashicorp.com/role"               = "howling-ci-role"
           "vault.hashicorp.com/agent-proxy-enable" = "true"
           "vault.hashicorp.com/agent-init-first"   = "true"
-          "vault.hashicorp.com/agent-image"        = "ghcr.io/openbao/openbao-agent:latest"
+          "vault.hashicorp.com/agent-image"        = var.openbao_agent_image
         }
       }
       spec {
