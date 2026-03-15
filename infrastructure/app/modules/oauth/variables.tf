@@ -50,3 +50,8 @@ variable "db_bootstrap_job_name" {
   type        = string
   description = "The name of the DB bootstrap job"
 }
+
+variable "openbao_agent_image" {
+  type        = string
+  description = "The image to use for the OpenBao agent sidecar"
+}

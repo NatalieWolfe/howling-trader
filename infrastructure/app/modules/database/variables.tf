@@ -85,3 +85,8 @@ variable "image_tag" {
   default     = "latest"
   description = "The tag for the schema upgrade image"
 }
+
+variable "openbao_agent_image" {
+  type        = string
+  description = "The image to use for the OpenBao agent sidecar"
+}
