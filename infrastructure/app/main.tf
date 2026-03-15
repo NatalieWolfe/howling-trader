@@ -46,7 +46,6 @@ locals {
   kubeconfig_attrs = data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0]
 
   # Decoded Vault secrets
-  registry_creds       = vault_kv_secret_v2.registry.data
   database_creds       = vault_kv_secret_v2.database.data
   database_admin_creds = vault_kv_secret_v2.database_admin.data
 }
@@ -89,8 +88,8 @@ module "database" {
   subnet_id          = local.platform_outputs.subnet_id
   authorized_subnets = [local.platform_outputs.subnet_cidr]
   registry_server    = local.registry_server
-  registry_username  = local.registry_creds["username"]
-  registry_password  = local.registry_creds["password"]
+  registry_username  = local.platform_outputs.registry_user_login
+  registry_password  = local.platform_outputs.registry_user_password
   image_repository   = "${local.registry_server}/${var.registry_name}/schema-upgrade"
   image_tag          = var.image_tag
 
@@ -123,8 +122,8 @@ resource "vault_kv_secret_v2" "database_admin" {
 module "oauth" {
   source                = "./modules/oauth"
   registry_server       = local.registry_server
-  registry_username     = local.registry_creds["username"]
-  registry_password     = local.registry_creds["password"]
+  registry_username     = local.platform_outputs.registry_user_login
+  registry_password     = local.platform_outputs.registry_user_password
   image_repository      = "${local.registry_server}/${var.registry_name}/howling-oauth"
   image_tag             = var.image_tag
   db_host               = module.database.db_host
