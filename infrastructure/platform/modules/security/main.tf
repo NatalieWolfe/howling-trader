@@ -116,9 +116,25 @@ resource "vault_kubernetes_auth_backend_config" "config" {
 resource "vault_policy" "ci_app" {
   name   = "howling-ci-app"
   policy = <<EOT
-# 1. Application Secret Management
+# 1. Application Secret Management (KV v2)
 path "secret/data/howling/prod/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+path "secret/metadata/howling/prod/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+path "secret/delete/howling/prod/*" {
+  capabilities = ["update"]
+}
+
+path "secret/undelete/howling/prod/*" {
+  capabilities = ["update"]
+}
+
+path "secret/destroy/howling/prod/*" {
+  capabilities = ["update"]
 }
 
 # 2. Session Management (Ephemeral tokens for Tofu)
