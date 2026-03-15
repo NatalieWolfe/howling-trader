@@ -172,12 +172,12 @@ path "auth/kubernetes/role/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
 
-# 5. Manage Policies (Self-Management)
+# 5. Manage Policies (Self-Management and App Policies)
 path "sys/policies/acl" {
   capabilities = ["list"]
 }
 
-path "sys/policies/acl/howling-ci-app" {
+path "sys/policies/acl/howling-*" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 }
 EOT
