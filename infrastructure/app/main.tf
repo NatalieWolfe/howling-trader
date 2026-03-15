@@ -40,6 +40,7 @@ data "terraform_remote_state" "platform" {
 }
 
 locals {
+  namespace        = kubernetes_namespace.howling_app.metadata[0].name
   clean_region     = replace(var.region, "-1", "")
   registry_server  = split("/", data.terraform_remote_state.platform.outputs.registry_url)[2]
   platform_outputs = data.terraform_remote_state.platform.outputs
@@ -49,6 +50,8 @@ locals {
   database_creds       = vault_kv_secret_v2.database.data
   database_admin_creds = vault_kv_secret_v2.database_admin.data
 }
+
+# MARK: Kubernetes
 
 # Configure Kubernetes and Helm providers using the cluster outputs from platform
 provider "kubernetes" {
@@ -67,6 +70,12 @@ provider "helm" {
   }
 }
 
+resource "kubernetes_namespace" "howling_app" {
+  metadata {
+    name = "howling-app"
+  }
+}
+
 # MARK: Registry credentials
 
 resource "vault_kv_secret_v2" "registry" {
@@ -82,6 +91,7 @@ resource "vault_kv_secret_v2" "registry" {
 
 module "database" {
   source             = "./modules/database"
+  namespace          = local.namespace
   service_name       = var.service_name
   region             = local.clean_region
   network_id         = local.platform_outputs.openstack_network_id
@@ -110,7 +120,7 @@ resource "vault_kv_secret_v2" "database" {
 
 resource "vault_kv_secret_v2" "database_admin" {
   mount = "secret"
-  name  = "howling/prod/database/admin"
+  name  = "howling/admin/database"
   data_json = jsonencode({
     username = module.database.db_admin_user
     password = module.database.db_admin_password
@@ -121,6 +131,7 @@ resource "vault_kv_secret_v2" "database_admin" {
 
 module "oauth" {
   source                = "./modules/oauth"
+  namespace             = local.namespace
   registry_server       = local.registry_server
   registry_username     = local.platform_outputs.registry_user_login
   registry_password     = local.platform_outputs.registry_user_password

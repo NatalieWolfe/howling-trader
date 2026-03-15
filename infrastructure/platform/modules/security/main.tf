@@ -116,24 +116,24 @@ resource "vault_kubernetes_auth_backend_config" "config" {
 resource "vault_policy" "ci_app" {
   name   = "howling-ci-app"
   policy = <<EOT
-# 1. Application Secret Management (KV v2)
-path "secret/data/howling/prod/*" {
+# 1. Application Secret Management
+path "secret/data/howling/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
 
-path "secret/metadata/howling/prod/*" {
+path "secret/metadata/howling/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
 
-path "secret/delete/howling/prod/*" {
+path "secret/delete/howling/*" {
   capabilities = ["update"]
 }
 
-path "secret/undelete/howling/prod/*" {
+path "secret/undelete/howling/*" {
   capabilities = ["update"]
 }
 
-path "secret/destroy/howling/prod/*" {
+path "secret/destroy/howling/*" {
   capabilities = ["update"]
 }
 
@@ -189,6 +189,27 @@ resource "vault_kubernetes_auth_backend_role" "ci_runner" {
   bound_service_account_names      = ["howling-ci-runner"]
   bound_service_account_namespaces = [var.runner_namespace]
   token_policies                   = [vault_policy.ci_app.name]
+  token_ttl                        = 3600
+
+  depends_on = [vault_kubernetes_auth_backend_config.config]
+}
+
+resource "vault_policy" "app" {
+  name   = "howling-app"
+  policy = <<EOT
+# Read-only access to application secrets (Runtime only)
+path "secret/data/howling/prod/*" {
+  capabilities = ["read"]
+}
+EOT
+}
+
+resource "vault_kubernetes_auth_backend_role" "app" {
+  backend                          = vault_auth_backend.kubernetes.path
+  role_name                        = "howling-app-role"
+  bound_service_account_names      = ["*"]
+  bound_service_account_namespaces = ["howling-app"]
+  token_policies                   = [vault_policy.app.name]
   token_ttl                        = 3600
 
   depends_on = [vault_kubernetes_auth_backend_config.config]

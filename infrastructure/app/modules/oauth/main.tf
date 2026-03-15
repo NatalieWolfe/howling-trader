@@ -1,10 +1,22 @@
 # ------------------------------------------------------------------------------
+# Service Account
+# ------------------------------------------------------------------------------
+
+resource "kubernetes_service_account" "oauth" {
+  metadata {
+    name      = "howling-oauth"
+    namespace = var.namespace
+  }
+}
+
+# ------------------------------------------------------------------------------
 # Image Pull Secret
 # ------------------------------------------------------------------------------
 
 resource "kubernetes_secret" "registry_creds" {
   metadata {
-    name = "harbor-registry-creds"
+    name      = "harbor-registry-creds"
+    namespace = var.namespace
   }
 
   type = "kubernetes.io/dockerconfigjson"
@@ -26,7 +38,8 @@ resource "kubernetes_secret" "registry_creds" {
 
 resource "kubernetes_deployment" "oauth" {
   metadata {
-    name = "howling-oauth"
+    name      = "howling-oauth"
+    namespace = var.namespace
     labels = {
       app            = "howling-oauth"
       "db-bootstrap" = var.db_bootstrap_job_name
@@ -48,7 +61,7 @@ resource "kubernetes_deployment" "oauth" {
         }
         annotations = {
           "vault.hashicorp.com/agent-inject"       = "true"
-          "vault.hashicorp.com/role"               = "howling-role"
+          "vault.hashicorp.com/role"               = "howling-app-role"
           "vault.hashicorp.com/agent-proxy-enable" = "true"
           "vault.hashicorp.com/agent-init-first"   = "true"
           "vault.hashicorp.com/agent-image"        = "openbao/openbao-agent:latest"
@@ -56,6 +69,7 @@ resource "kubernetes_deployment" "oauth" {
       }
 
       spec {
+        service_account_name = kubernetes_service_account.oauth.metadata[0].name
         image_pull_secrets {
           name = kubernetes_secret.registry_creds.metadata[0].name
         }
@@ -108,7 +122,8 @@ resource "kubernetes_deployment" "oauth" {
 
 resource "kubernetes_service" "oauth" {
   metadata {
-    name = "howling-oauth"
+    name      = "howling-oauth"
+    namespace = var.namespace
   }
 
   spec {
@@ -138,7 +153,8 @@ resource "kubernetes_service" "oauth" {
 
 resource "kubernetes_ingress_v1" "oauth" {
   metadata {
-    name = "howling-oauth"
+    name      = "howling-oauth"
+    namespace = var.namespace
     annotations = {
       "kubernetes.io/ingress.class"              = "nginx"
       "cert-manager.io/cluster-issuer"           = "letsencrypt-prod"

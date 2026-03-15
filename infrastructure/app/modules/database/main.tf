@@ -40,13 +40,12 @@ resource "ovh_cloud_project_database_postgresql_user" "admin" {
   name         = "avnadmin"
 }
 
-# ------------------------------------------------------------------------------
-# Image Pull Secret
-# ------------------------------------------------------------------------------
+# MARK: DB Bootstrap
 
 resource "kubernetes_secret" "registry_creds" {
   metadata {
-    name = "harbor-registry-creds-db"
+    name      = "harbor-registry-creds-db"
+    namespace = var.namespace
   }
 
   type = "kubernetes.io/dockerconfigjson"
@@ -62,13 +61,10 @@ resource "kubernetes_secret" "registry_creds" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# DB Bootstrap Job (Grant Ownership and Upgrade Schema)
-# ------------------------------------------------------------------------------
-
 resource "kubernetes_job" "db_bootstrap" {
   metadata {
-    name = "howling-db-bootstrap"
+    name      = "howling-db-bootstrap"
+    namespace = var.namespace
   }
 
   spec {
@@ -77,7 +73,7 @@ resource "kubernetes_job" "db_bootstrap" {
         name = "howling-db-bootstrap"
         annotations = {
           "vault.hashicorp.com/agent-inject"       = "true"
-          "vault.hashicorp.com/role"               = "howling-role"
+          "vault.hashicorp.com/role"               = "howling-ci-role"
           "vault.hashicorp.com/agent-proxy-enable" = "true"
           "vault.hashicorp.com/agent-init-first"   = "true"
           "vault.hashicorp.com/agent-image"        = "openbao/openbao-agent:latest"
