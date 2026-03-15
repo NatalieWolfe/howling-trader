@@ -30,21 +30,19 @@ resource "harbor_registry" "ghcr" {
   endpoint_url  = "https://ghcr.io"
 }
 
-resource "harbor_replication_policy" "pull_openbao_agent" {
+resource "harbor_replication" "pull_openbao_agent" {
   name        = "pull-openbao-agent"
   action      = "pull"
   description = "Mirror OpenBao Agent sidecar image from GHCR"
 
-  src_registry_id = harbor_registry.ghcr.registry_id
-  dest_namespace  = harbor_project.main_project.name
+  registry_id    = harbor_registry.ghcr.registry_id
+  dest_namespace = harbor_project.main_project.name
 
   filters {
     name = "openbao/openbao-agent"
     tag  = "latest"
   }
 
-  trigger {
-    type  = "scheduled"
-    value = "0 0 0 * * 6" # Weekly on Saturday at midnight
-  }
+  schedule           = "0 0 0 * * 6" # Weekly on Saturday at midnight
+  execute_on_changed = true
 }
