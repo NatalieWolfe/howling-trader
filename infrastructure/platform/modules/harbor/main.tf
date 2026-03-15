@@ -42,7 +42,10 @@ resource "harbor_replication" "pull_openbao_agent" {
 
   filters {
     name = "openbao/openbao-agent"
-    tag  = "latest"
+  }
+
+  filters {
+    tag = "latest"
   }
 
   schedule           = "0 0 0 * * 6" # Weekly on Saturday at midnight
