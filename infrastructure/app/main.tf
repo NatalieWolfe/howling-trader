@@ -47,7 +47,7 @@ locals {
   namespace        = kubernetes_namespace.howling_app.metadata[0].name
 
   # Local mirror for the OpenBao Agent (Harbor preserves source namespace)
-  openbao_agent_image = "${local.registry_server}/${var.registry_name}/openbao/openbao-agent:latest"
+  openbao_agent_image = "${local.registry_server}/${var.registry_name}/openbao/openbao:latest"
 
   # Decoded Vault secrets
   database_creds       = vault_kv_secret_v2.database.data
