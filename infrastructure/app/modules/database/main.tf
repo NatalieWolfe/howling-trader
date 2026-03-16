@@ -75,8 +75,8 @@ resource "kubernetes_job" "db_bootstrap" {
           "vault.hashicorp.com/agent-inject"       = "true"
           "vault.hashicorp.com/role"               = "howling-ci-role"
           "vault.hashicorp.com/agent-proxy-enable" = "true"
-          "vault.hashicorp.com/agent-init-first"   = "true"
           "vault.hashicorp.com/agent-image"        = var.openbao_agent_image
+          "vault.hashicorp.com/agent-json-patch"   = "[{\"op\": \"add\", \"path\": \"/restartPolicy\", \"value\": \"Always\"}]"
         }
       }
       spec {
