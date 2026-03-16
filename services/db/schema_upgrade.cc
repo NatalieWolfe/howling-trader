@@ -15,7 +15,11 @@ void run() {
 
   LOG(INFO) << "Waiting for security client to be ready...";
   auto security = std::make_unique<security::bao_client>();
-  security->wait_for_ready(30s);
+  try {
+    security->wait_for_ready(10s);
+  } catch (const std::exception& e) {
+    LOG(WARNING) << "OpenBao client not ready, continuing anyway: " << e.what();
+  }
   LOG(INFO) << "Starting schema upgrade...";
   auto db = make_database(use_admin_database_account, std::move(security));
   LOG(INFO) << "Schema upgrade completed successfully.";
