@@ -76,6 +76,7 @@ resource "kubernetes_job" "db_bootstrap" {
           "vault.hashicorp.com/agent-pre-populate-only"       = "true"
           "vault.hashicorp.com/role"                          = "howling-ci-role"
           "vault.hashicorp.com/agent-image"                   = var.openbao_agent_image
+          "vault.hashicorp.com/agent-inject-perms-dbadmin"    = "0644"
           "vault.hashicorp.com/agent-inject-secret-dbadmin"   = "secret/data/howling/admin/database"
           "vault.hashicorp.com/agent-inject-template-dbadmin" = <<EOT
             {{- with secret "secret/data/howling/admin/database" -}}
