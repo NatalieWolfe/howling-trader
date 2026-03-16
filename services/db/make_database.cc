@@ -42,6 +42,13 @@ namespace {
 
 void fetch_db_secrets_internal(
     security_client& security, std::string_view path) {
+  if (absl::GetFlag(FLAGS_pg_user) != "postgres" ||
+      absl::GetFlag(FLAGS_pg_password) != "password") {
+    LOG(INFO) << "Database secrets already provided via flags, skipping "
+                 "OpenBao fetch.";
+    return;
+  }
+
   LOG(INFO) << "Fetching database secrets from OpenBao path: " << path;
   Json::Value secret = security.get_secret(path);
   if (secret.isMember("username") && secret["username"].isString()) {

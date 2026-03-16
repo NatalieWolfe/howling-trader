@@ -75,12 +75,18 @@ provider "helm" {
 resource "kubernetes_namespace" "howling_app" {
   metadata {
     name = "howling-app"
+    labels = {
+      vault-injection = "enabled"
+    }
   }
 }
 
 resource "kubernetes_namespace" "howling_admin" {
   metadata {
     name = "howling-admin"
+    labels = {
+      vault-injection = "enabled"
+    }
   }
 }
 
