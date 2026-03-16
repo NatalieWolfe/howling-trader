@@ -79,11 +79,11 @@ resource "kubernetes_job" "db_bootstrap" {
           "vault.hashicorp.com/agent-inject-perms-dbadmin"    = "0644"
           "vault.hashicorp.com/agent-inject-secret-dbadmin"   = "secret/data/howling/admin/database"
           "vault.hashicorp.com/agent-inject-template-dbadmin" = <<EOT
-            {{- with secret "secret/data/howling/admin/database" -}}
-            pg_user={{ .Data.data.username }}
-            pg_password={{ .Data.data.password }}
-            {{- end -}}
-          EOT
+{{- with secret "secret/data/howling/admin/database" -}}
+--pg_user={{ .Data.data.username }}
+--pg_password={{ .Data.data.password }}
+{{- end -}}
+EOT
         }
       }
       spec {
