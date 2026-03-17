@@ -197,9 +197,18 @@ resource "vault_kubernetes_auth_backend_role" "ci_runner" {
 resource "vault_policy" "app" {
   name   = "howling-app"
   policy = <<EOT
-# Read-only access to application secrets (Runtime only)
+# 1. Read-only access to application secrets (Runtime only)
 path "secret/data/howling/prod/*" {
-  capabilities = ["read"]
+  capabilities = ["read", "list"]
+}
+
+# 2. Access to Transit engine for database encryption/decryption
+path "transit/encrypt/howling-db-key" {
+  capabilities = ["update"]
+}
+
+path "transit/decrypt/howling-db-key" {
+  capabilities = ["update"]
 }
 EOT
 }
