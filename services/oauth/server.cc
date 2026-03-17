@@ -33,7 +33,7 @@ void run_server() {
 
   LOG(INFO) << "Waiting for security client to be ready...";
   auto security = std::make_unique<security::bao_client>();
-  security->wait_for_ready(30s);
+  security->wait_for_ready(5min);
   schwab::fetch_schwab_secrets(*security);
   Json::Value telegram_secret = security->get_secret("howling/prod/telegram");
   absl::SetFlag(&FLAGS_telegram_bot_token, telegram_secret["token"].asString());
