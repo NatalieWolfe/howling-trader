@@ -10,6 +10,7 @@
 #include <thread>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
 #include "boost/beast/http.hpp"
@@ -83,7 +84,9 @@ void bao_client::wait_for_ready(milliseconds timeout) {
 
   while (true) {
     try {
-      if (get_bao("/v1/sys/health").result() == http::status::ok) return;
+      auto res = get_bao("/v1/sys/health");
+      if (res.result() == http::status::ok) return;
+      LOG(INFO) << "Failed to get bao status: " << res.result_int();
     } catch (...) {
       // Ignore connection errors and retry.
     }
