@@ -72,18 +72,11 @@ resource "kubernetes_job" "db_bootstrap" {
       metadata {
         name = "howling-db-bootstrap"
         annotations = {
-          "vault.hashicorp.com/agent-inject"                  = "true"
-          "vault.hashicorp.com/agent-pre-populate-only"       = "true"
-          "vault.hashicorp.com/role"                          = "howling-ci-role"
-          "vault.hashicorp.com/agent-image"                   = var.openbao_agent_image
-          "vault.hashicorp.com/agent-inject-perms-dbadmin"    = "0644"
-          "vault.hashicorp.com/agent-inject-secret-dbadmin"   = "secret/data/howling/admin/database"
-          "vault.hashicorp.com/agent-inject-template-dbadmin" = <<EOT
-{{- with secret "secret/data/howling/admin/database" -}}
---pg_user={{ .Data.data.username }}
---pg_password={{ .Data.data.password }}
-{{- end -}}
-EOT
+          "vault.hashicorp.com/agent-inject"                    = "true"
+          "vault.hashicorp.com/role"                            = "howling-ci-role"
+          "vault.hashicorp.com/agent-cache-enable"              = "true"
+          "vault.hashicorp.com/agent-cache-use-auto-auth-token" = "force"
+          "vault.hashicorp.com/agent-image"                     = var.openbao_agent_image
         }
       }
       spec {
@@ -95,7 +88,6 @@ EOT
           name  = "bootstrap"
           image = "${var.image_repository}:${var.image_tag}"
           args = [
-            "--flagfile=/vault/secrets/dbadmin",
             "--database=postgres",
             "--pg_host=${ovh_cloud_project_database.postgres.endpoints[0].domain}",
             "--pg_port=${ovh_cloud_project_database.postgres.endpoints[0].port}",

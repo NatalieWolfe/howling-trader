@@ -16,7 +16,7 @@ void run() {
   LOG(INFO) << "Waiting for security client to be ready...";
   auto security = std::make_unique<security::bao_client>();
   try {
-    security->wait_for_ready(10s);
+    security->wait_for_ready(5min);
   } catch (const std::exception& e) {
     LOG(WARNING) << "OpenBao client not ready, continuing anyway: " << e.what();
   }
