@@ -87,8 +87,11 @@ void bao_client::wait_for_ready(milliseconds timeout) {
       auto res = get_bao("/v1/sys/health");
       if (res.result() == http::status::ok) return;
       LOG(INFO) << "Failed to get bao status: " << res.result_int();
-    } catch (...) {
+    } catch (const std::exception& e) {
+      LOG(INFO) << "Connection error waiting for bao to start: " << e.what();
       // Ignore connection errors and retry.
+    } catch (...) {
+      LOG(INFO) << "Unknown connection error waiting for bao to start.";
     }
 
     if (steady_clock::now() - start_time >= timeout) {
