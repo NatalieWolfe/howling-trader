@@ -64,7 +64,7 @@ void fetch_database_secrets(security_client& security) {
 }
 
 void fetch_admin_database_secrets(security_client& security) {
-  fetch_db_secrets_internal(security, "howling/prod/database/admin");
+  fetch_db_secrets_internal(security, "howling/admin/database");
 }
 
 std::unique_ptr<database>

@@ -66,7 +66,6 @@ resource "kubernetes_deployment" "oauth" {
           "vault.hashicorp.com/agent-cache-use-auto-auth-token" = "force"
           "vault.hashicorp.com/agent-image"                     = var.openbao_agent_image
         }
-
       }
 
       spec {
