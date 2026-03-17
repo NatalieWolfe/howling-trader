@@ -77,6 +77,7 @@ resource "kubernetes_job" "db_bootstrap" {
           "vault.hashicorp.com/agent-cache-enable"              = "true"
           "vault.hashicorp.com/agent-cache-use-auto-auth-token" = "force"
           "vault.hashicorp.com/agent-image"                     = var.openbao_agent_image
+          "vault.hashicorp.com/agent-enable-quit"               = "true"
         }
       }
       spec {
@@ -88,6 +89,7 @@ resource "kubernetes_job" "db_bootstrap" {
           name  = "bootstrap"
           image = "${var.image_repository}:${var.image_tag}"
           args = [
+            "--bao_shutdown_on_destroy",
             "--database=postgres",
             "--pg_host=${ovh_cloud_project_database.postgres.endpoints[0].domain}",
             "--pg_port=${ovh_cloud_project_database.postgres.endpoints[0].port}",
@@ -105,7 +107,7 @@ resource "kubernetes_job" "db_bootstrap" {
   wait_for_completion = true
 
   timeouts {
-    create = "2m"
-    update = "2m"
+    create = "10m"
+    update = "10m"
   }
 }
