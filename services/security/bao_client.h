@@ -19,6 +19,7 @@ namespace howling::security {
 class bao_client : public howling::security_client {
 public:
   bao_client();
+  ~bao_client();
 
   /**
    * @brief Blocks until the OpenBao proxy is ready to handle requests.

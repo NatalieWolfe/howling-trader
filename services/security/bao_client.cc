@@ -28,16 +28,24 @@ ABSL_FLAG(
     "http://127.0.0.1:8200",
     "OpenBao server address.");
 
+ABSL_FLAG(
+    bool,
+    bao_shutdown_on_destroy,
+    false,
+    "Instruct the Bao API proxy to shutdown when the client is destroyed.");
+
 namespace howling::security {
 namespace {
 
 namespace http = ::boost::beast::http;
 namespace urls = ::boost::urls;
 
+using ::std::chrono::duration_cast;
 using ::std::chrono::milliseconds;
 using ::std::chrono::steady_clock;
 
-constexpr milliseconds MAX_DELAY{2000};
+constexpr double BACKOFF_EXP = 1.2;
+constexpr steady_clock::duration MAX_DELAY = milliseconds{2000};
 
 net::url make_bao_url() {
   urls::url url = urls::parse_uri(absl::GetFlag(FLAGS_bao_address)).value();
@@ -78,9 +86,21 @@ void check_response(
 
 bao_client::bao_client() {}
 
+bao_client::~bao_client() {
+  if (absl::GetFlag(FLAGS_bao_shutdown_on_destroy)) {
+    try {
+      post_bao("/agent/v1/quit", Json::objectValue);
+    } catch (const std::exception& e) {
+      LOG(WARNING) << "Error shutting down Bao sidecar: " << e.what();
+    } catch (...) {
+      LOG(WARNING) << "Unknown error shutting down Bao sidecar.";
+    }
+  }
+}
+
 void bao_client::wait_for_ready(milliseconds timeout) {
   const steady_clock::time_point start_time = steady_clock::now();
-  milliseconds delay{1};
+  steady_clock::duration delay = milliseconds{1};
 
   while (true) {
     try {
@@ -100,7 +120,8 @@ void bao_client::wait_for_ready(milliseconds timeout) {
     }
 
     std::this_thread::sleep_for(delay);
-    delay = std::min(delay * 2, MAX_DELAY);
+    delay = std::min(
+        duration_cast<steady_clock::duration>(delay * BACKOFF_EXP), MAX_DELAY);
   }
 }
 
