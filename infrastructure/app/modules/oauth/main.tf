@@ -60,11 +60,11 @@ resource "kubernetes_deployment" "oauth" {
           app = "howling-oauth"
         }
         annotations = {
-          "vault.hashicorp.com/agent-inject"                    = "true"
-          "vault.hashicorp.com/role"                            = "howling-app-role"
-          "vault.hashicorp.com/agent-cache-enable"              = "true"
-          "vault.hashicorp.com/agent-cache-use-auto-auth-token" = "force"
-          "vault.hashicorp.com/agent-image"                     = var.openbao_agent_image
+          "openbao.org/agent-inject"                    = "true"
+          "openbao.org/role"                            = "howling-app-role"
+          "openbao.org/agent-proxy-enable"              = "true"
+          "openbao.org/agent-proxy-use-auto-auth-token" = "true"
+          "openbao.org/agent-image"                     = var.openbao_agent_image
         }
       }
 
