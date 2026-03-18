@@ -28,6 +28,9 @@ public:
       postgres_options options, std::unique_ptr<security_client> security);
   ~postgres_database();
 
+  std::future<void> upgrade_schema() override;
+  std::future<void> check_schema_version() override;
+
   std::future<void> save(stock::Symbol symbol, const Candle& candle) override;
   std::future<void> save(const Market& market) override;
   std::future<void> save_trade(const trading::TradeRecord& trade) override;
@@ -50,6 +53,8 @@ public:
 private:
   struct implementation;
   std::unique_ptr<implementation> _implementation;
+
+  std::future<void> _prepare_queries();
 };
 
 } // namespace howling

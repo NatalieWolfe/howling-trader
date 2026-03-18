@@ -43,6 +43,7 @@ void run_server() {
   // connections are still valid before passing them to callers. The connection
   // should auto-release back to the pool upon destruction.
   std::unique_ptr<database> db = make_database(std::move(security));
+  db->check_schema_version().get();
   LOG(INFO) << "Database connection established.";
 
   boost::asio::io_context ioc{/*concurrency_hint=*/1};

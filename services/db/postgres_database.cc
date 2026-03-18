@@ -107,6 +107,8 @@ unsigned int pg_type_id<system_clock::time_point>() {
   return 1114;
 }
 
+// MARK: Query Class
+
 class query {
 private:
   struct already_prepared_t {};
@@ -138,12 +140,12 @@ public:
       : _conn{conn}, _name{_to_prepared_name(query_str)} {
     inline_check_command_result(
         PQprepare(
-            _conn,
+            conn,
             _name.c_str(),
             query_str.c_str(),
             /*nParams=*/0,
             /*paramTypes=*/nullptr),
-        *_conn);
+        *conn);
   }
 
   ~query() {
@@ -353,7 +355,7 @@ void full_schema_install(PGconn& conn) {
   }
 }
 
-void upgrade(PGconn& conn) {
+int get_schema_version(PGconn& conn) {
   LOG(INFO) << "Checking for howling_version table existence.";
   bool has_version_table = false;
   execute_read(
@@ -365,10 +367,7 @@ void upgrade(PGconn& conn) {
         )
       )sql",
       has_version_table);
-  if (!has_version_table) {
-    full_schema_install(conn);
-    return;
-  }
+  if (!has_version_table) return -1;
 
   LOG(INFO) << "Checking schema version.";
   int version;
@@ -381,14 +380,7 @@ void upgrade(PGconn& conn) {
       updater_id,
       update_started_at);
   LOG(INFO) << "Found schema version " << version;
-
-  if (version != db_internal::get_schema_version()) {
-    LOG(INFO) << "Upgrading schema from version " << version << " to "
-              << db_internal::get_schema_version();
-    for (std::string_view statement : db_internal::get_schema_update(version)) {
-      execute(conn, std::string{statement});
-    }
-  }
+  return version;
 }
 
 } // namespace
@@ -396,15 +388,15 @@ void upgrade(PGconn& conn) {
 // MARK: Postgres Database
 
 struct postgres_database::implementation {
-  PGconn* _conn;
-  std::unique_ptr<security_client> _security;
-  std::map<std::string, std::unique_ptr<query>> _prepared_queries;
+  PGconn* conn;
+  std::unique_ptr<security_client> security;
+  std::map<std::string, std::unique_ptr<query>> prepared_queries;
 };
 
 postgres_database::postgres_database(
     postgres_options options, std::unique_ptr<security_client> security)
     : _implementation{std::make_unique<implementation>()} {
-  _implementation->_security = std::move(security);
+  _implementation->security = std::move(security);
   std::string connection_parameters = std::format(
       "host={} port={} dbname={} user={} password={} sslmode={}",
       options.host,
@@ -413,16 +405,72 @@ postgres_database::postgres_database(
       options.user,
       options.password,
       options.sslmode);
-  _implementation->_conn = PQconnectdb(connection_parameters.c_str());
+  _implementation->conn = PQconnectdb(connection_parameters.c_str());
 
   try {
-    check_pgconn_err(*_implementation->_conn);
+    check_pgconn_err(*_implementation->conn);
     LOG(INFO) << "Postgres connection established. SSL in use: "
-              << (PQsslInUse(_implementation->_conn) ? "yes" : "no");
-    upgrade(*_implementation->_conn);
+              << (PQsslInUse(_implementation->conn) ? "yes" : "no");
+  } catch (...) {
+    if (_implementation->conn) {
+      PQfinish(_implementation->conn);
+      _implementation->conn = nullptr;
+    }
+    std::rethrow_exception(std::current_exception());
+  }
+}
 
-    // Prepare Candle INSERT query
-    _implementation->_prepared_queries.emplace(
+postgres_database::~postgres_database() {
+  if (_implementation && _implementation->conn) {
+    PQfinish(_implementation->conn);
+  }
+}
+
+std::future<void> postgres_database::upgrade_schema() {
+  std::promise<void> p;
+  try {
+    int version = get_schema_version(*_implementation->conn);
+    int expected_version = db_internal::get_schema_version();
+    if (version <= 0) {
+      full_schema_install(*_implementation->conn);
+    } else if (version != expected_version) {
+      LOG(INFO) << "Upgrading schema from version " << version << " to "
+                << expected_version;
+      for (std::string_view statement :
+           db_internal::get_schema_update(version)) {
+        execute(*_implementation->conn, std::string{statement});
+      }
+    }
+
+    _prepare_queries().get();
+    p.set_value();
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
+}
+
+std::future<void> postgres_database::check_schema_version() {
+  std::promise<void> p;
+  try {
+    int db_version = get_schema_version(*_implementation->conn);
+    int expected_version = db_internal::get_schema_version();
+    if (db_version != expected_version) {
+      throw std::runtime_error(
+          std::format(
+              "Expected schema version {}, found {}",
+              db_version,
+              expected_version));
+    }
+
+    _prepare_queries().get();
+    p.set_value();
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
+}
+
+std::future<void> postgres_database::_prepare_queries() {
+  std::promise<void> p;
+  try {
+    _implementation->prepared_queries.emplace(
         "candle_insert",
         query::prepare<
             int,
@@ -433,7 +481,7 @@ postgres_database::postgres_database(
             int64_t,
             system_clock::time_point,
             int64_t>(
-            *_implementation->_conn,
+            *_implementation->conn,
             R"sql(
               INSERT INTO candles (
                 symbol, open, close, high, low, volume, opened_at, duration_us
@@ -446,8 +494,7 @@ postgres_database::postgres_database(
                 volume = EXCLUDED.volume,
                 duration_us = EXCLUDED.duration_us)sql"));
 
-    // Prepare Market INSERT query
-    _implementation->_prepared_queries.emplace(
+    _implementation->prepared_queries.emplace(
         "market_insert",
         query::prepare<
             int,
@@ -458,7 +505,7 @@ postgres_database::postgres_database(
             double,
             int64_t,
             system_clock::time_point>(
-            *_implementation->_conn,
+            *_implementation->conn,
             R"sql(
               INSERT INTO market (
                 symbol, bid, bid_lots, ask, ask_lots, last, last_lots, emitted_at
@@ -471,32 +518,28 @@ postgres_database::postgres_database(
                 last = EXCLUDED.last,
                 last_lots = EXCLUDED.last_lots)sql"));
 
-    // Prepare Candle SELECT query
-    _implementation->_prepared_queries.emplace(
-        "candle_select", query::prepare<int>(*_implementation->_conn, R"sql(
+    _implementation->prepared_queries.emplace(
+        "candle_select", query::prepare<int>(*_implementation->conn, R"sql(
           SELECT open, close, high, low, volume, opened_at, duration_us
           FROM candles
           WHERE symbol = $1
           ORDER BY opened_at ASC)sql"));
 
-    // Prepare Market SELECT query
-    _implementation->_prepared_queries.emplace(
-        "market_select", query::prepare<int>(*_implementation->_conn, R"sql(
+    _implementation->prepared_queries.emplace(
+        "market_select", query::prepare<int>(*_implementation->conn, R"sql(
           SELECT bid, bid_lots, ask, ask_lots, last, last_lots, emitted_at
           FROM market
           WHERE symbol = $1
           ORDER BY emitted_at ASC)sql"));
 
-    // Prepare Trade SELECT query
-    _implementation->_prepared_queries.emplace(
-        "trade_select", query::prepare<int>(*_implementation->_conn, R"sql(
+    _implementation->prepared_queries.emplace(
+        "trade_select", query::prepare<int>(*_implementation->conn, R"sql(
           SELECT executed_at, action, price, quantity, confidence, dry_run
           FROM trades
           WHERE symbol = $1
           ORDER BY executed_at DESC)sql"));
 
-    // Prepare Trade INSERT query
-    _implementation->_prepared_queries.emplace(
+    _implementation->prepared_queries.emplace(
         "trade_insert",
         query::prepare<
             int,
@@ -506,50 +549,45 @@ postgres_database::postgres_database(
             int64_t,
             double,
             bool>(
-            *_implementation->_conn,
+            *_implementation->conn,
             R"sql(
               INSERT INTO trades (
                 symbol, executed_at, action, price, quantity, confidence, dry_run
               ) VALUES ($1, $2, $3, $4, $5, $6, $7))sql"));
 
-    // Prepare Refresh Token INSERT query
-    _implementation->_prepared_queries.emplace(
+    _implementation->prepared_queries.emplace(
         "refresh_token_insert",
         query::prepare<std::string_view, bytes>(
-            *_implementation->_conn,
+            *_implementation->conn,
             R"sql(
-              INSERT INTO auth_tokens (
-                service_name, refresh_token, updated_at
-              ) VALUES ($1, $2, CURRENT_TIMESTAMP)
+              INSERT INTO auth_tokens (service_name, refresh_token, updated_at)
+              VALUES ($1, $2, CURRENT_TIMESTAMP)
               ON CONFLICT (service_name) DO UPDATE SET
                 refresh_token = EXCLUDED.refresh_token,
                 updated_at = CURRENT_TIMESTAMP)sql"));
 
-    // Prepare Refresh Token SELECT query
-    _implementation->_prepared_queries.emplace(
+    _implementation->prepared_queries.emplace(
         "refresh_token_select",
         query::prepare<std::string_view>(
-            *_implementation->_conn,
+            *_implementation->conn,
             R"sql(
               SELECT refresh_token
               FROM auth_tokens
               WHERE service_name = $1)sql"));
 
-    // Prepare Last Notification Time SELECT query
-    _implementation->_prepared_queries.emplace(
+    _implementation->prepared_queries.emplace(
         "get_last_notified_at",
         query::prepare<std::string_view>(
-            *_implementation->_conn,
+            *_implementation->conn,
             R"sql(
               SELECT last_notified_at
               FROM auth_tokens
               WHERE service_name = $1)sql"));
 
-    // Prepare Notification Sent UPDATE query
-    _implementation->_prepared_queries.emplace(
+    _implementation->prepared_queries.emplace(
         "update_last_notified_at",
         query::prepare<std::string_view>(
-            *_implementation->_conn,
+            *_implementation->conn,
             R"sql(
               INSERT INTO auth_tokens (
                 service_name, refresh_token, last_notified_at, updated_at
@@ -557,26 +595,16 @@ postgres_database::postgres_database(
               ON CONFLICT (service_name) DO UPDATE SET
                 last_notified_at = CURRENT_TIMESTAMP,
                 updated_at = CURRENT_TIMESTAMP)sql"));
-  } catch (...) {
-    if (_implementation->_conn) {
-      PQfinish(_implementation->_conn);
-      _implementation->_conn = nullptr;
-    }
-    std::rethrow_exception(std::current_exception());
-  }
-}
-
-postgres_database::~postgres_database() {
-  if (_implementation && _implementation->_conn) {
-    PQfinish(_implementation->_conn);
-  }
+    p.set_value();
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
 }
 
 std::future<void>
 postgres_database::save(stock::Symbol symbol, const Candle& candle) {
   std::promise<void> p;
   try {
-    query& q = *_implementation->_prepared_queries.at("candle_insert");
+    query& q = *_implementation->prepared_queries.at("candle_insert");
     q.bind_all(
         static_cast<int>(symbol),
         candle.open(),
@@ -595,7 +623,7 @@ postgres_database::save(stock::Symbol symbol, const Candle& candle) {
 std::future<void> postgres_database::save(const Market& market) {
   std::promise<void> p;
   try {
-    query& q = *_implementation->_prepared_queries.at("market_insert");
+    query& q = *_implementation->prepared_queries.at("market_insert");
     q.bind_all(
         static_cast<int>(market.symbol()),
         market.bid(),
@@ -617,7 +645,7 @@ postgres_database::save_trade(const trading::TradeRecord& trade) {
   std::promise<void> p;
 
   try {
-    query& q = *_implementation->_prepared_queries.at("trade_insert");
+    query& q = *_implementation->prepared_queries.at("trade_insert");
     q.bind_all(
         static_cast<int>(trade.symbol()),
         to_std_chrono(trade.executed_at()),
@@ -637,10 +665,10 @@ std::future<void> postgres_database::save_refresh_token(
     std::string_view service_name, std::string_view token) {
   std::promise<void> p;
   try {
-    query& q = *_implementation->_prepared_queries.at("refresh_token_insert");
+    query& q = *_implementation->prepared_queries.at("refresh_token_insert");
     q.bind_all(
         service_name,
-        bytes{_implementation->_security->encrypt(HOWLING_DB_KEY, token)});
+        bytes{_implementation->security->encrypt(HOWLING_DB_KEY, token)});
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
@@ -648,7 +676,7 @@ std::future<void> postgres_database::save_refresh_token(
 }
 
 std::generator<Candle> postgres_database::read_candles(stock::Symbol symbol) {
-  query& q = *_implementation->_prepared_queries.at("candle_select");
+  query& q = *_implementation->prepared_queries.at("candle_select");
   q.bind_all(symbol);
   while (q.step()) {
     double open, close, high, low;
@@ -668,7 +696,7 @@ std::generator<Candle> postgres_database::read_candles(stock::Symbol symbol) {
 }
 
 std::generator<Market> postgres_database::read_market(stock::Symbol symbol) {
-  query& q = *_implementation->_prepared_queries.at("market_select");
+  query& q = *_implementation->prepared_queries.at("market_select");
   q.bind_all(symbol);
   while (q.step()) {
     double bid, ask, last;
@@ -690,7 +718,7 @@ std::generator<Market> postgres_database::read_market(stock::Symbol symbol) {
 
 std::generator<trading::TradeRecord>
 postgres_database::read_trades(stock::Symbol symbol) {
-  query& q = *_implementation->_prepared_queries.at("trade_select");
+  query& q = *_implementation->prepared_queries.at("trade_select");
   q.bind_all(symbol);
   while (q.step()) {
     system_clock::time_point executed_at;
@@ -715,7 +743,7 @@ std::future<std::string>
 postgres_database::read_refresh_token(std::string_view service_name) {
   std::promise<std::string> p;
   try {
-    query& q = *_implementation->_prepared_queries.at("refresh_token_select");
+    query& q = *_implementation->prepared_queries.at("refresh_token_select");
     q.bind_all(service_name);
     if (!q.step()) {
       p.set_value("");
@@ -723,7 +751,7 @@ postgres_database::read_refresh_token(std::string_view service_name) {
       std::string encrypted_token;
       q.read_all(encrypted_token);
       p.set_value(
-          _implementation->_security->decrypt(HOWLING_DB_KEY, encrypted_token));
+          _implementation->security->decrypt(HOWLING_DB_KEY, encrypted_token));
     }
   } catch (...) { p.set_exception(std::current_exception()); }
   return p.get_future();
@@ -733,7 +761,7 @@ std::future<std::optional<system_clock::time_point>>
 postgres_database::get_last_notified_at(std::string_view service_name) {
   std::promise<std::optional<system_clock::time_point>> p;
   try {
-    query& q = *_implementation->_prepared_queries.at("get_last_notified_at");
+    query& q = *_implementation->prepared_queries.at("get_last_notified_at");
     q.bind_all(service_name);
     if (!q.step()) {
       p.set_value(std::nullopt);
@@ -750,8 +778,7 @@ std::future<void>
 postgres_database::update_last_notified_at(std::string_view service_name) {
   std::promise<void> p;
   try {
-    query& q =
-        *_implementation->_prepared_queries.at("update_last_notified_at");
+    query& q = *_implementation->prepared_queries.at("update_last_notified_at");
     q.bind_all(service_name);
     while (q.step());
     p.set_value();

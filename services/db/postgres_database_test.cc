@@ -72,6 +72,7 @@ protected:
 };
 
 TEST_F(PostgresDatabaseTest, InitializesEmptyDatabase) {
+  db().upgrade_schema();
   std::string conninfo = std::format(
       "host={} port={} dbname={} user={} password={} sslmode=disable",
       absl::GetFlag(FLAGS_pg_host),
@@ -101,6 +102,7 @@ TEST_F(PostgresDatabaseTest, InitializesEmptyDatabase) {
 }
 
 TEST_F(PostgresDatabaseTest, SavedRefreshTokenIsEncryptedAtRest) {
+  db().upgrade_schema();
   std::string secret_token = "my_very_secret_refresh_token";
   std::string encrypted_token = "vault:v1:encrypted_token";
 

@@ -15,14 +15,27 @@ void run() {
 
   LOG(INFO) << "Waiting for security client to be ready...";
   auto security = std::make_unique<security::bao_client>();
-  try {
-    security->wait_for_ready(5min);
-  } catch (const std::exception& e) {
-    LOG(WARNING) << "OpenBao client not ready, continuing anyway: " << e.what();
-  }
-  LOG(INFO) << "Starting schema upgrade...";
+  security->wait_for_ready(5min);
+
   auto db = make_database(use_admin_database_account, std::move(security));
-  LOG(INFO) << "Schema upgrade completed successfully.";
+  LOG(INFO) << "Starting schema upgrade...";
+  std::future<void> upgrade_state = db->upgrade_schema();
+  if (upgrade_state.wait_for(10min) == std::future_status::ready) {
+    try {
+      upgrade_state.get();
+      LOG(INFO) << "Schema upgrade completed successfully.";
+    } catch (const std::exception& e) {
+      LOG(ERROR) << "Failed to upgrade schema: " << e.what();
+      LOG(ERROR) << "Sleeping to enable retain logs for viewing.";
+      std::this_thread::sleep_for(10min);
+      throw;
+    } catch (...) {
+      LOG(ERROR) << "Unknown failure while upgrading schema!";
+      LOG(ERROR) << "Sleeping to enable retain logs for viewing.";
+      std::this_thread::sleep_for(10min);
+      throw;
+    }
+  }
 }
 
 } // namespace

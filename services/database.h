@@ -19,6 +19,21 @@ class database {
 public:
   virtual ~database() = default;
 
+  /**
+   * @brief Upgrades the database schema to the most recent version.
+   *
+   * If the schema is already up to date, this is a no-op.
+   */
+  virtual std::future<void> upgrade_schema() = 0;
+
+  /**
+   * @brief Asserts that the schema of the database matches what is expected by
+   * this connection.
+   *
+   * @throws A runtime error if the schema version is the expected version.
+   */
+  virtual std::future<void> check_schema_version() = 0;
+
   virtual std::future<void>
   save(stock::Symbol symbol, const Candle& candle) = 0;
   virtual std::future<void> save(const Market& market) = 0;

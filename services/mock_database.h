@@ -12,6 +12,9 @@ namespace howling {
 
 class mock_database : public database {
 public:
+  MOCK_METHOD(std::future<void>, upgrade_schema, (), (override));
+  MOCK_METHOD(std::future<void>, check_schema_version, (), (override));
+
   MOCK_METHOD(
       std::future<void>,
       save,

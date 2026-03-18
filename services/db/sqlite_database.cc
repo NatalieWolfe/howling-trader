@@ -284,22 +284,18 @@ void full_schema_install(sqlite3& db) {
   }
 }
 
-void upgrade(sqlite3& db) {
+int get_schema_version(sqlite3& db) {
   LOG(INFO) << "Checking for howling_version table existence.";
   int has_version_table = 0;
   execute_read(
       db,
       R"sql(
         SELECT (
-          SELECT 1
-          FROM sqlite_schema WHERE name = 'howling_version'
+          SELECT 1 FROM sqlite_schema WHERE name = 'howling_version'
         ) IS NOT NULL
       )sql",
       has_version_table);
-  if (!has_version_table) {
-    full_schema_install(db);
-    return;
-  }
+  if (!has_version_table) return -1;
 
   LOG(INFO) << "Checking schema version.";
   int version;
@@ -311,14 +307,7 @@ void upgrade(sqlite3& db) {
       version,
       updater_id,
       update_started_at);
-
-  if (version != db_internal::get_schema_version()) {
-    LOG(INFO) << "Upgrading schema from version " << version << " to "
-              << db_internal::get_schema_version();
-    for (std::string_view statement : db_internal::get_schema_update(version)) {
-      execute(db, statement);
-    }
-  }
+  return version;
 }
 
 } // namespace
@@ -329,7 +318,6 @@ sqlite_database::sqlite_database(std::unique_ptr<security_client> security)
     : _security(std::move(security)) {
   try {
     _check(sqlite3_open(absl::GetFlag(FLAGS_sqlite_db_path).c_str(), &_db));
-    upgrade(*_db);
   } catch (...) {
     if (_db) {
       sqlite3_close_v2(_db);
@@ -341,6 +329,43 @@ sqlite_database::sqlite_database(std::unique_ptr<security_client> security)
 
 sqlite_database::~sqlite_database() {
   if (_db) sqlite3_close_v2(_db);
+}
+
+std::future<void> sqlite_database::upgrade_schema() {
+  std::promise<void> p;
+  try {
+    int version = get_schema_version(*_db);
+    int expected_version = db_internal::get_schema_version();
+    if (version <= 0) {
+      full_schema_install(*_db);
+    } else if (version != expected_version) {
+      LOG(INFO) << "Upgrading schema from version " << version << " to "
+                << expected_version;
+      for (std::string_view statement :
+           db_internal::get_schema_update(version)) {
+        execute(*_db, statement);
+      }
+    }
+    p.set_value();
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
+}
+
+std::future<void> sqlite_database::check_schema_version() {
+  std::promise<void> p;
+  try {
+    int db_version = get_schema_version(*_db);
+    int expected_version = db_internal::get_schema_version();
+    if (db_version != expected_version) {
+      throw std::runtime_error(
+          std::format(
+              "Expected schema version {}, found {}",
+              db_version,
+              expected_version));
+    }
+    p.set_value();
+  } catch (...) { p.set_exception(std::current_exception()); }
+  return p.get_future();
 }
 
 std::future<void>

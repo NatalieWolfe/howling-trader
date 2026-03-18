@@ -24,6 +24,8 @@ protected:
   virtual database& db() = 0;
   virtual void clear_database() = 0;
 
+  void upgrade_schema() { db().upgrade_schema().get(); }
+
   void save_candle(stock::Symbol symbol, const Candle& candle) {
     db().save(symbol, candle).get();
   }
@@ -59,11 +61,15 @@ protected:
   mock_security_client* _mock_security = nullptr;
 };
 
+// TODO: Add `check_schema_version` tests.
+
 #define DATABASE_TEST(FIXTURE_CLASS)                                           \
   TEST_F(FIXTURE_CLASS, CanSaveCandles) {                                      \
+    upgrade_schema();                                                          \
     EXPECT_NO_THROW(save_candle(stock::NVDA, Candle::default_instance()));     \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, SavedCandlesAreReadable) {                             \
+    upgrade_schema();                                                          \
     Candle candle;                                                             \
     candle.set_open(1.0);                                                      \
     candle.set_close(2.0);                                                     \
@@ -102,9 +108,11 @@ protected:
     EXPECT_EQ(count, 1);                                                       \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, CanSaveMarket) {                                       \
+    upgrade_schema();                                                          \
     EXPECT_NO_THROW(save_market(Market::default_instance()));                  \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, SavedMarketHistoryIsReadable) {                        \
+    upgrade_schema();                                                          \
     Market market;                                                             \
     market.set_symbol(stock::NVDA);                                            \
     market.set_bid(1.0);                                                       \
@@ -141,6 +149,7 @@ protected:
     EXPECT_EQ(count, 1);                                                       \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, CanSaveTrade) {                                        \
+    upgrade_schema();                                                          \
     trading::TradeRecord trade;                                                \
     trade.set_symbol(stock::NVDA);                                             \
     trade.set_action(trading::BUY);                                            \
@@ -151,6 +160,7 @@ protected:
     EXPECT_NO_THROW(save_trade(trade));                                        \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, SavedTradesAreReadable) {                              \
+    upgrade_schema();                                                          \
     trading::TradeRecord trade;                                                \
     trade.set_symbol(stock::NVDA);                                             \
     trade.set_action(trading::SELL);                                           \
@@ -172,9 +182,11 @@ protected:
     EXPECT_EQ(count, 1);                                                       \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, CanSaveRefreshToken) {                                 \
+    upgrade_schema();                                                          \
     EXPECT_NO_THROW(save_refresh_token("schwab", "token"));                    \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, SavedRefreshTokenIsReadable) {                         \
+    upgrade_schema();                                                          \
     std::string service = "schwab";                                            \
     std::string token = "my_secret_token";                                     \
     std::string encrypted = "vault:v1:encrypted";                              \
@@ -186,9 +198,11 @@ protected:
     EXPECT_EQ(read_refresh_token(service), token);                             \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, ReadingMissingRefreshTokenReturnsEmpty) {              \
+    upgrade_schema();                                                          \
     EXPECT_EQ(read_refresh_token("missing_service"), "");                      \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, CanRecordAndReadNotificationTime) {                    \
+    upgrade_schema();                                                          \
     std::string service = "schwab";                                            \
     EXPECT_CALL(*_mock_security, encrypt(HOWLING_DB_KEY, "token"))             \
         .WillOnce(testing::Return("encrypted"));                               \
