@@ -28,7 +28,7 @@ public:
       postgres_options options, std::unique_ptr<security_client> security);
   ~postgres_database();
 
-  std::future<void> upgrade_schema() override;
+  std::future<void> upgrade_schema(std::string_view app_db_user) override;
   std::future<void> check_schema_version() override;
 
   std::future<void> save(stock::Symbol symbol, const Candle& candle) override;

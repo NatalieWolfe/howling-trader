@@ -383,6 +383,17 @@ int get_schema_version(PGconn& conn) {
   return version;
 }
 
+std::string escape_identifier(PGconn& conn, std::string_view identifier) {
+  char* escaped =
+      PQescapeIdentifier(&conn, identifier.data(), identifier.length());
+  if (escaped == nullptr) {
+    throw std::runtime_error("Failed to escape identifier.");
+  }
+  std::string result{escaped};
+  PQfreemem(escaped);
+  return result;
+}
+
 } // namespace
 
 // MARK: Postgres Database
@@ -391,6 +402,7 @@ struct postgres_database::implementation {
   PGconn* conn;
   std::unique_ptr<security_client> security;
   std::map<std::string, std::unique_ptr<query>> prepared_queries;
+  std::string dbname;
 };
 
 postgres_database::postgres_database(
@@ -406,6 +418,7 @@ postgres_database::postgres_database(
       options.password,
       options.sslmode);
   _implementation->conn = PQconnectdb(connection_parameters.c_str());
+  _implementation->dbname = options.dbname;
 
   try {
     check_pgconn_err(*_implementation->conn);
@@ -426,7 +439,8 @@ postgres_database::~postgres_database() {
   }
 }
 
-std::future<void> postgres_database::upgrade_schema() {
+std::future<void>
+postgres_database::upgrade_schema(std::string_view app_db_user) {
   std::promise<void> p;
   try {
     int version = get_schema_version(*_implementation->conn);
@@ -440,6 +454,40 @@ std::future<void> postgres_database::upgrade_schema() {
            db_internal::get_schema_update(version)) {
         execute(*_implementation->conn, std::string{statement});
       }
+    }
+
+    if (!app_db_user.empty()) {
+      std::string escaped_user =
+          escape_identifier(*_implementation->conn, app_db_user);
+      execute(
+          *_implementation->conn,
+          std::format(
+              R"sql(GRANT CONNECT ON DATABASE {} TO {})sql",
+              escape_identifier(
+                  *_implementation->conn, _implementation->dbname),
+              escaped_user));
+      execute(
+          *_implementation->conn,
+          std::format(
+              R"sql(GRANT USAGE ON SCHEMA public TO {})sql", escaped_user));
+      execute(
+          *_implementation->conn,
+          std::format(
+              R"sql(
+                GRANT SELECT, INSERT, UPDATE, DELETE
+                ON ALL TABLES
+                IN SCHEMA public
+                TO {})sql",
+              escaped_user));
+      execute(
+          *_implementation->conn,
+          std::format(
+              R"sql(
+                GRANT USAGE, SELECT
+                ON ALL SEQUENCES
+                IN SCHEMA public
+                TO {})sql",
+              escaped_user));
     }
 
     _prepare_queries().get();
@@ -457,8 +505,8 @@ std::future<void> postgres_database::check_schema_version() {
       throw std::runtime_error(
           std::format(
               "Expected schema version {}, found {}",
-              db_version,
-              expected_version));
+              expected_version,
+              db_version));
     }
 
     _prepare_queries().get();

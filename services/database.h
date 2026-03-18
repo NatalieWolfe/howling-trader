@@ -23,8 +23,10 @@ public:
    * @brief Upgrades the database schema to the most recent version.
    *
    * If the schema is already up to date, this is a no-op.
+   *
+   * @param app_db_user The username of the non-admin database user.
    */
-  virtual std::future<void> upgrade_schema() = 0;
+  virtual std::future<void> upgrade_schema(std::string_view app_db_user) = 0;
 
   /**
    * @brief Asserts that the schema of the database matches what is expected by

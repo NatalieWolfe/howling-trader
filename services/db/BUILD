@@ -100,6 +100,7 @@ cc_binary(
         ":make_database",
         "//environment:init",
         "//services/security:bao_client",
+        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
     ],
 )
