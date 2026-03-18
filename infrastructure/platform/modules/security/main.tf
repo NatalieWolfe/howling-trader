@@ -177,7 +177,11 @@ path "sys/policies/acl" {
   capabilities = ["list"]
 }
 
-path "sys/policies/acl/howling-*" {
+path "sys/policies/acl/howling-ci-app" {
+  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
+
+path "sys/policies/acl/howling-app" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 }
 EOT

@@ -143,7 +143,6 @@ jobs:
           TF_VAR_github_username: ${{ github.actor }}
           TF_VAR_ghcr_readonly_token: ${{ secrets.GHCR_READ_PERSONAL_ACCESS_TOKEN }}
           TF_VAR_image_tag: ${{ github.sha }}
-          TF_VAR_vault_address: "http://openbao.security.svc.cluster.local:8200"
           AWS_ACCESS_KEY_ID: ${{ secrets.STATE_S3_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.STATE_S3_SECRET_KEY }}
           AWS_DEFAULT_REGION: us-east-va
@@ -175,7 +174,6 @@ jobs:
           TF_VAR_ovh_consumer_key: ${{ secrets.OVH_CONSUMER_KEY }}
           TF_VAR_service_name: ${{ secrets.OVH_PROJECT_ID }}
           TF_VAR_image_tag: ${{ github.sha }}
-          TF_VAR_vault_address: "http://openbao.security.svc.cluster.local:8200"
           AWS_ACCESS_KEY_ID: ${{ secrets.STATE_S3_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.STATE_S3_SECRET_KEY }}
           AWS_DEFAULT_REGION: us-east-va
