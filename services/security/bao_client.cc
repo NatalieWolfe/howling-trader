@@ -45,7 +45,7 @@ using ::std::chrono::milliseconds;
 using ::std::chrono::steady_clock;
 
 constexpr double BACKOFF_EXP = 1.2;
-constexpr steady_clock::duration MAX_DELAY = milliseconds{2000};
+constexpr steady_clock::duration MAX_DELAY = milliseconds{10000};
 
 net::url make_bao_url() {
   urls::url url = urls::parse_uri(absl::GetFlag(FLAGS_bao_address)).value();
@@ -102,19 +102,45 @@ void bao_client::wait_for_ready(milliseconds timeout) {
   const steady_clock::time_point start_time = steady_clock::now();
   steady_clock::duration delay = milliseconds{1};
 
+  int connection_failure_count = 0;
+  int status_failure_count = 0;
+  steady_clock::time_point start = steady_clock::now();
   while (true) {
     try {
       auto res = get_bao("/v1/sys/health");
-      if (res.result() == http::status::ok) return;
+      if (status_failure_count == 0) {
+        LOG(INFO)
+            << "Established connection in "
+            << duration_cast<milliseconds>(steady_clock::now() - start).count()
+            << " milliseconds after " << connection_failure_count
+            << " connection failures.";
+      }
+      if (res.result() == http::status::ok) {
+        LOG(INFO)
+            << "Successful Bao health check in "
+            << duration_cast<milliseconds>(steady_clock::now() - start).count()
+            << " milliseconds after " << connection_failure_count
+            << " connection failures and " << status_failure_count
+            << " status check failures.";
+        return;
+      }
+      ++status_failure_count;
       LOG(INFO) << "Failed to get bao status: " << res.result_int();
     } catch (const std::exception& e) {
-      LOG(INFO) << "Connection error waiting for bao to start: " << e.what();
       // Ignore connection errors and retry.
+      ++connection_failure_count;
     } catch (...) {
       LOG(INFO) << "Unknown connection error waiting for bao to start.";
+      ++connection_failure_count;
     }
 
     if (steady_clock::now() - start_time >= timeout) {
+      LOG(ERROR)
+          << "Failed to connect to Bao after "
+          << duration_cast<milliseconds>(steady_clock::now() - start).count()
+          << " milliseconds with " << connection_failure_count
+          << " connection failures and " << status_failure_count
+          << " status check failures.";
       throw std::runtime_error(
           "Timed out waiting for OpenBao proxy to be ready.");
     }
