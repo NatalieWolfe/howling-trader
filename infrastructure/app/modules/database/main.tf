@@ -95,6 +95,7 @@ resource "kubernetes_job" "db_bootstrap" {
             "--pg_port=${ovh_cloud_project_database.postgres.endpoints[0].port}",
             "--pg_database=howling",
             "--pg_enable_encryption=true",
+            "--app_db_user=${ovh_cloud_project_database_postgresql_user.app_user.name}",
             "--logging_mode=json",
           ]
         }

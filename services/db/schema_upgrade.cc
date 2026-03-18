@@ -2,10 +2,18 @@
 #include <iostream>
 #include <memory>
 
+#include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "environment/init.h"
 #include "services/db/make_database.h"
 #include "services/security/bao_client.h"
+
+ABSL_FLAG(
+    std::string,
+    app_db_user,
+    "",
+    "Username which non-admin applications will use to connect to the "
+    "database.");
 
 namespace howling {
 namespace {
@@ -19,7 +27,8 @@ void run() {
 
   auto db = make_database(use_admin_database_account, std::move(security));
   LOG(INFO) << "Starting schema upgrade...";
-  std::future<void> upgrade_state = db->upgrade_schema();
+  std::future<void> upgrade_state =
+      db->upgrade_schema(absl::GetFlag(FLAGS_app_db_user));
   if (upgrade_state.wait_for(10min) == std::future_status::ready) {
     try {
       upgrade_state.get();

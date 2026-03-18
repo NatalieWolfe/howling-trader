@@ -24,7 +24,8 @@ protected:
   virtual database& db() = 0;
   virtual void clear_database() = 0;
 
-  void upgrade_schema() { db().upgrade_schema().get(); }
+  void upgrade_schema() { db().upgrade_schema("").get(); }
+  void check_schema_version() { db().check_schema_version().get(); }
 
   void save_candle(stock::Symbol symbol, const Candle& candle) {
     db().save(symbol, candle).get();
@@ -61,7 +62,8 @@ protected:
   mock_security_client* _mock_security = nullptr;
 };
 
-// TODO: Add `check_schema_version` tests.
+// TODO: Add `check_schema_version` tests. Requires having a database reset
+// command because PG maintains state between tests.
 
 #define DATABASE_TEST(FIXTURE_CLASS)                                           \
   TEST_F(FIXTURE_CLASS, CanSaveCandles) {                                      \

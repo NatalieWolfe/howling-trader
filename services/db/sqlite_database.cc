@@ -331,7 +331,7 @@ sqlite_database::~sqlite_database() {
   if (_db) sqlite3_close_v2(_db);
 }
 
-std::future<void> sqlite_database::upgrade_schema() {
+std::future<void> sqlite_database::upgrade_schema(std::string_view) {
   std::promise<void> p;
   try {
     int version = get_schema_version(*_db);

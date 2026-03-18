@@ -65,7 +65,7 @@ TEST_F(SqliteDatabaseTest, InitializesEmptyDatabase) {
   EXPECT_NO_THROW(
       db = std::make_unique<sqlite_database>(
           std::make_unique<mock_security_client>()));
-  EXPECT_NO_THROW(db->upgrade_schema().get());
+  EXPECT_NO_THROW(db->upgrade_schema("").get());
 
   sqlite3* raw_db;
   ASSERT_EQ(sqlite3_open(SHARED_MEMORY_DB_PATH.data(), &raw_db), SQLITE_OK);
@@ -98,7 +98,7 @@ TEST_F(SqliteDatabaseTest, SavedRefreshTokenIsEncryptedAtRest) {
   auto security = std::make_unique<mock_security_client>();
   mock_security_client* security_client = security.get();
   _db = std::make_unique<sqlite_database>(std::move(security));
-  _db->upgrade_schema().get();
+  _db->upgrade_schema("").get();
 
   std::string secret_token = "my_very_secret_refresh_token";
   std::string encrypted_token = "vault:v1:encrypted_token";
