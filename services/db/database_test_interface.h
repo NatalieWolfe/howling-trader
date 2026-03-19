@@ -4,13 +4,14 @@
 #include <memory>
 #include <string>
 
+#include "absl/flags/flag.h"
 #include "data/candle.pb.h"
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "google/protobuf/duration.pb.h"
 #include "google/protobuf/timestamp.pb.h"
 #include "services/database.h"
-#include "services/db/constants.h"
+#include "services/db/environment.h"
 #include "services/mock_security.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -19,7 +20,10 @@ namespace howling {
 
 class DatabaseTest : public testing::Test {
 protected:
-  void SetUp() override { clear_database(); }
+  void SetUp() override {
+    absl::SetFlag(&FLAGS_db_encryption_key_name, "test_key_name");
+    clear_database();
+  }
 
   virtual database& db() = 0;
   virtual void clear_database() = 0;
@@ -192,9 +196,9 @@ protected:
     std::string service = "schwab";                                            \
     std::string token = "my_secret_token";                                     \
     std::string encrypted = "vault:v1:encrypted";                              \
-    EXPECT_CALL(*_mock_security, encrypt(HOWLING_DB_KEY, token))               \
+    EXPECT_CALL(*_mock_security, encrypt("test_key_name", token))              \
         .WillOnce(testing::Return(encrypted));                                 \
-    EXPECT_CALL(*_mock_security, decrypt(HOWLING_DB_KEY, encrypted))           \
+    EXPECT_CALL(*_mock_security, decrypt("test_key_name", encrypted))          \
         .WillOnce(testing::Return(token));                                     \
     save_refresh_token(service, token);                                        \
     EXPECT_EQ(read_refresh_token(service), token);                             \
@@ -206,7 +210,7 @@ protected:
   TEST_F(FIXTURE_CLASS, CanRecordAndReadNotificationTime) {                    \
     upgrade_schema();                                                          \
     std::string service = "schwab";                                            \
-    EXPECT_CALL(*_mock_security, encrypt(HOWLING_DB_KEY, "token"))             \
+    EXPECT_CALL(*_mock_security, encrypt("test_key_name", "token"))            \
         .WillOnce(testing::Return("encrypted"));                               \
     save_refresh_token(service, "token");                                      \
     EXPECT_FALSE(get_last_notified_at(service).has_value());                   \

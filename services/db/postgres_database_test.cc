@@ -14,7 +14,6 @@
 #include "data/trade.pb.h"
 #include "google/protobuf/util/time_util.h"
 #include "libpq/libpq-fe.h"
-#include "services/db/constants.h"
 #include "services/db/database_test_interface.h"
 #include "services/mock_security.h"
 #include "time/conversion.h"
@@ -30,6 +29,7 @@ ABSL_FLAG(std::string, pg_database, "howling", "Database for Postgres.");
 namespace howling {
 namespace {
 
+using ::testing::_;
 using ::testing::IsSupersetOf;
 using ::testing::Return;
 
@@ -106,7 +106,7 @@ TEST_F(PostgresDatabaseTest, SavedRefreshTokenIsEncryptedAtRest) {
   std::string secret_token = "my_very_secret_refresh_token";
   std::string encrypted_token = "vault:v1:encrypted_token";
 
-  EXPECT_CALL(*_mock_security, encrypt(HOWLING_DB_KEY, secret_token))
+  EXPECT_CALL(*_mock_security, encrypt(_, secret_token))
       .WillOnce(Return(encrypted_token));
 
   _db->save_refresh_token("schwab", secret_token).get();
