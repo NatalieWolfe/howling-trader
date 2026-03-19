@@ -64,21 +64,34 @@ struct token_manager::implementation {
         refresher(std::move(refresher)) {}
 
   std::string check_cache(bool clear_cache);
+  std::string get_refresh_token();
 
   std::unique_ptr<AuthService::StubInterface> stub;
   std::unique_ptr<database> db;
   std::unique_ptr<token_refresher> refresher;
   std::mutex mutex;
   std::string cached_token;
+  std::string cached_refresh_token;
   system_clock::time_point cache_expiration;
 };
 
 std::string token_manager::implementation::check_cache(bool clear_cache) {
   std::lock_guard<std::mutex> lock(mutex);
-  if (clear_cache || system_clock::now() > cache_expiration) {
+  if (clear_cache) {
+    cached_token.clear();
+    cached_refresh_token.clear();
+  } else if (system_clock::now() > cache_expiration) {
     cached_token.clear();
   }
   return cached_token;
+}
+
+std::string token_manager::implementation::get_refresh_token() {
+  std::lock_guard<std::mutex> lock(mutex);
+  if (cached_refresh_token.empty()) {
+    cached_refresh_token = db->read_refresh_token(SERVICE_NAME).get();
+  }
+  return cached_refresh_token;
 }
 
 token_manager& token_manager::get_instance() {
@@ -101,12 +114,14 @@ token_manager::~token_manager() = default;
 
 std::string token_manager::get_bearer_token(
     bool clear_cache, std::chrono::milliseconds timeout) {
-  std::string refresh_token = _implementation->check_cache(clear_cache);
-  if (!refresh_token.empty()) return refresh_token;
+  {
+    std::string cache_token = _implementation->check_cache(clear_cache);
+    if (!cache_token.empty()) return cache_token;
+  }
 
   system_clock::time_point deadline = system_clock::now() + timeout;
   while (system_clock::now() < deadline) {
-    refresh_token = _implementation->db->read_refresh_token(SERVICE_NAME).get();
+    std::string refresh_token = _implementation->get_refresh_token();
 
     if (!refresh_token.empty()) {
       try {
