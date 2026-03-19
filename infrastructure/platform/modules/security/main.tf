@@ -98,6 +98,23 @@ resource "vault_mount" "secret" {
   depends_on = [helm_release.openbao]
 }
 
+resource "vault_mount" "transit" {
+  path        = "transit"
+  type        = "transit"
+  description = "Transit engine for DB fields"
+
+  depends_on = [helm_release.openbao]
+}
+
+resource "vault_transit_secret_backend_key" "howling_db_key" {
+  backend               = vault_mount.transit.path
+  name                  = "howling-db-key"
+  type                  = "aes256-gcm96"
+  deletion_allowed      = true
+  convergent_encryption = false
+  auto_rotate_period    = 3600 * 24 * 365 # 1 year in seconds.
+}
+
 resource "vault_auth_backend" "kubernetes" {
   type = "kubernetes"
   path = "kubernetes"
@@ -116,7 +133,7 @@ resource "vault_kubernetes_auth_backend_config" "config" {
 resource "vault_policy" "ci_app" {
   name   = "howling-ci-app"
   policy = <<EOT
-# 1. Application Secret Management
+# Application Secret Management
 path "secret/data/howling/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
@@ -137,12 +154,17 @@ path "secret/destroy/howling/*" {
   capabilities = ["update"]
 }
 
-# 2. Session Management (Ephemeral tokens for Tofu)
+# Transit Management
+path "transit/keys/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+# Session Management (Ephemeral tokens for Tofu)
 path "auth/token/create" {
   capabilities = ["update"]
 }
 
-# 3. Discover and Manage Auth Methods and Mounts
+# Discover and Manage Auth Methods and Mounts
 path "sys/auth" {
   capabilities = ["read", "list"]
 }
@@ -159,7 +181,11 @@ path "sys/mounts/secret" {
   capabilities = ["create", "read", "update", "delete", "sudo"]
 }
 
-# 4. Configure Kubernetes Backend
+path "sys/mounts/transit" {
+  capabilities = ["create", "read", "update", "delete", "sudo"]
+}
+
+# Configure Kubernetes Backend
 path "auth/kubernetes/config" {
   capabilities = ["create", "read", "update", "delete"]
 }
@@ -172,7 +198,7 @@ path "auth/kubernetes/role/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
 
-# 5. Manage Policies (Self-Management and App Policies)
+# Manage Policies (Self-Management and App Policies)
 path "sys/policies/acl" {
   capabilities = ["list"]
 }

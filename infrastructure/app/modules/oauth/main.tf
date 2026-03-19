@@ -78,6 +78,7 @@ resource "kubernetes_deployment" "oauth" {
           name  = "oauth-service"
           image = "${var.image_repository}:${var.image_tag}"
 
+          # TODO: #42 - Add `--db_encryption_key_name` flag.
           args = [
             "--database=postgres",
             "--pg_host=${var.db_host}",

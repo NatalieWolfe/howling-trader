@@ -58,3 +58,8 @@ output "subnet_id" {
 output "subnet_cidr" {
   value = module.network.subnet_cidr
 }
+
+output "db_encryption_key_name" {
+  value       = module.security.db_encryption_key_name
+  description = "Name of the encryption key used by the database."
+}
