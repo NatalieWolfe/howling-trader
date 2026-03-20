@@ -1,6 +1,7 @@
 #include "services/authenticate.h"
 
 #include <chrono>
+#include <cmath>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -44,6 +45,7 @@ using ::std::chrono::system_clock;
 
 // Schwab tokens usually last 30 minutes. Cache for 25 to be safe.
 constexpr std::string_view SERVICE_NAME = "schwab";
+constexpr double BACKOFF_RATE = 1.1;
 
 static token_manager* alternate_singleton = nullptr;
 
@@ -121,6 +123,7 @@ private:
   void _pump();
   void _request_login_notification();
 
+  int _pump_failure_count = 0;
   std::unique_ptr<AuthService::StubInterface> _auth_stub;
   std::unique_ptr<database> _db;
   std::unique_ptr<token_refresher> _refresher;
@@ -148,7 +151,9 @@ void token_manager::implementation::_start_pump() {
   _pump_thread = std::jthread{[this]() {
     while (_continue_pumping) {
       if (system_clock::now() > _cache_expiration) _pump();
-      std::this_thread::sleep_for(auth_token_pump_period());
+      std::this_thread::sleep_for(
+          auth_token_pump_period() *
+          std::pow(BACKOFF_RATE, _pump_failure_count));
     }
   }};
 }
@@ -177,9 +182,11 @@ void token_manager::implementation::_pump() {
         _cached_token = tokens.access_token;
         _cache_expiration = system_clock::now() + auth_token_cache_ttl();
         _token_refreshed.notify_all();
+        _pump_failure_count = 0;
         return;
       }
     } catch (const std::exception& e) {
+      ++_pump_failure_count;
       LOG(WARNING) << "Failed to refresh token: " << e.what();
     }
   }
