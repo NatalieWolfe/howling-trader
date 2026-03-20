@@ -13,7 +13,10 @@ cc_library(
         "//services/db:make_database",
         "//services/oauth/proto:auth_service_cc_grpc",
         "//services/security:bao_client",
+        "//time:conversion",
+        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/time",
         "@grpc//:grpc++",
     ],
 )
@@ -25,9 +28,32 @@ cc_test(
         ":authenticate",
         ":mock_database",
         ":mock_security",
+        ":mock_token_refresher",
         "//services/oauth:mock_auth_service",
         "//services/oauth/proto:auth_service_cc_grpc",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/time",
         "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "authenticate_test_utils",
+    testonly = True,
+    hdrs = ["authenticate_test_utils.h"],
+    visibility = ["//visibility:public"],
+    deps = [":authenticate"],
+)
+
+cc_library(
+    name = "mock_token_refresher",
+    testonly = True,
+    hdrs = ["mock_token_refresher.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":authenticate",
+        "//api/schwab:oauth",
+        "@googletest//:gtest",
     ],
 )
 

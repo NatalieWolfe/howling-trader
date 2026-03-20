@@ -8,7 +8,7 @@
 
 namespace howling {
 
-class MockAuthServiceStub : public AuthService::StubInterface {
+class mock_auth_service_stub : public AuthService::StubInterface {
 public:
   MOCK_METHOD(
       grpc::Status,

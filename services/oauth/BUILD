@@ -151,10 +151,14 @@ cc_test(
     name = "oauth_http_service_test",
     srcs = ["oauth_http_service_test.cc"],
     deps = [
+        ":mock_auth_service",
         ":mock_oauth_exchanger",
         ":oauth_http_service",
+        "//services:authenticate",
+        "//services:authenticate_test_utils",
         "//services:mock_database",
         "//services:mock_security",
+        "//services:mock_token_refresher",
         "@googletest//:gtest_main",
     ],
 )

@@ -11,6 +11,9 @@ namespace howling {
 
 class database;
 
+struct defer_pump_start_t {};
+static constexpr defer_pump_start_t defer_pump_start{};
+
 class token_refresher {
 public:
   virtual ~token_refresher() = default;
@@ -27,12 +30,20 @@ public:
       std::unique_ptr<database> db,
       std::unique_ptr<token_refresher> refresher);
 
+  token_manager(
+      defer_pump_start_t,
+      std::unique_ptr<AuthService::StubInterface> stub,
+      std::unique_ptr<database> db,
+      std::unique_ptr<token_refresher> refresher);
+
   ~token_manager();
 
   // Blocks until a valid token is available or a timeout occurs.
   std::string get_bearer_token(
       bool clear_cache = false,
       std::chrono::milliseconds timeout = std::chrono::minutes(5));
+
+  void start_pump();
 
 private:
   token_manager();

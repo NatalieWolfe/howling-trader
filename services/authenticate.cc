@@ -1,13 +1,17 @@
 #include "services/authenticate.h"
 
 #include <chrono>
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 #include <thread>
 
+#include "absl/flags/flag.h"
 #include "absl/log/log.h"
+#include "absl/time/time.h"
 #include "api/schwab/connect.h"
 #include "api/schwab/oauth.h"
 #include "google/protobuf/empty.pb.h"
@@ -20,17 +24,36 @@
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 #include "services/oauth/proto/auth_service.pb.h"
 #include "services/security/bao_client.h"
+#include "time/conversion.h"
+
+ABSL_FLAG(
+    absl::Duration,
+    auth_token_cache_ttl,
+    absl::Minutes(20),
+    "Lifetime for cached auth tokens before they are refreshed.");
+ABSL_FLAG(
+    absl::Duration,
+    auth_token_pump_period,
+    absl::Seconds(20),
+    "Waiting period between iterations of the token refresh pump.");
 
 namespace howling {
 namespace {
-
-using namespace ::std::chrono_literals;
 
 using ::std::chrono::system_clock;
 
 // Schwab tokens usually last 30 minutes. Cache for 25 to be safe.
 constexpr std::string_view SERVICE_NAME = "schwab";
-constexpr auto CACHE_DURATION = 25min;
+
+static token_manager* alternate_singleton = nullptr;
+
+auto auth_token_cache_ttl() {
+  return to_std_chrono(absl::GetFlag(FLAGS_auth_token_cache_ttl));
+}
+
+auto auth_token_pump_period() {
+  return to_std_chrono(absl::GetFlag(FLAGS_auth_token_pump_period));
+}
 
 class real_token_refresher : public token_refresher {
 public:
@@ -43,7 +66,10 @@ public:
 
 } // namespace
 
-struct token_manager::implementation {
+// MARK: Token Manager Implementation
+
+class token_manager::implementation {
+public:
   implementation() {
     // TODO: Take in the auth service hostname/ip and port on the command line.
     // TODO: Use secure channel credentials for communication. Use the
@@ -51,50 +77,139 @@ struct token_manager::implementation {
     // sourced from OpenBao.
     std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(
         "localhost:50051", grpc::InsecureChannelCredentials());
-    stub = AuthService::NewStub(channel);
-    db = make_database(std::make_unique<security::bao_client>());
-    refresher = std::make_unique<real_token_refresher>();
+    _auth_stub = AuthService::NewStub(channel);
+    _db = make_database(std::make_unique<security::bao_client>());
+    _refresher = std::make_unique<real_token_refresher>();
+    _start_pump();
   }
 
   implementation(
-      std::unique_ptr<AuthService::StubInterface> stub,
+      std::unique_ptr<AuthService::StubInterface> auth_stub,
       std::unique_ptr<database> db,
       std::unique_ptr<token_refresher> refresher)
-      : stub(std::move(stub)), db(std::move(db)),
-        refresher(std::move(refresher)) {}
+      : _auth_stub{std::move(auth_stub)}, _db{std::move(db)},
+        _refresher{std::move(refresher)} {
+    _start_pump();
+  }
+
+  implementation(
+      defer_pump_start_t,
+      std::unique_ptr<AuthService::StubInterface> auth_stub,
+      std::unique_ptr<database> db,
+      std::unique_ptr<token_refresher> refresher)
+      : _auth_stub{std::move(auth_stub)}, _db{std::move(db)},
+        _refresher{std::move(refresher)} {}
+
+  ~implementation() { _continue_pumping = false; }
 
   std::string check_cache(bool clear_cache);
-  std::string get_refresh_token();
 
-  std::unique_ptr<AuthService::StubInterface> stub;
-  std::unique_ptr<database> db;
-  std::unique_ptr<token_refresher> refresher;
-  std::mutex mutex;
-  std::string cached_token;
-  std::string cached_refresh_token;
-  system_clock::time_point cache_expiration;
+  template <typename Rep, typename Period>
+  std::string wait_for(std::chrono::duration<Rep, Period> deadline) {
+    std::unique_lock lock{_mutex};
+    _token_refreshed.wait_for(
+        lock, deadline, [&]() { return !_cached_token.empty(); });
+    return _cached_token;
+  }
+
+  void maybe_start_pump() {
+    if (!_pump_thread.joinable()) _start_pump();
+  }
+
+private:
+  void _start_pump();
+  void _pump();
+  void _request_login_notification();
+
+  std::unique_ptr<AuthService::StubInterface> _auth_stub;
+  std::unique_ptr<database> _db;
+  std::unique_ptr<token_refresher> _refresher;
+  std::atomic_bool _continue_pumping = true;
+  std::jthread _pump_thread;
+  std::mutex _mutex;
+  std::string _cached_token;
+  std::string _cached_refresh_token;
+  system_clock::time_point _cache_expiration;
+  std::condition_variable _token_refreshed;
 };
 
 std::string token_manager::implementation::check_cache(bool clear_cache) {
-  std::lock_guard<std::mutex> lock(mutex);
+  std::lock_guard<std::mutex> lock(_mutex);
   if (clear_cache) {
-    cached_token.clear();
-    cached_refresh_token.clear();
-  } else if (system_clock::now() > cache_expiration) {
-    cached_token.clear();
+    _cached_token.clear();
+    _cached_refresh_token.clear();
+  } else if (system_clock::now() > _cache_expiration) {
+    _cached_token.clear();
   }
-  return cached_token;
+  return _cached_token;
 }
 
-std::string token_manager::implementation::get_refresh_token() {
-  std::lock_guard<std::mutex> lock(mutex);
-  if (cached_refresh_token.empty()) {
-    cached_refresh_token = db->read_refresh_token(SERVICE_NAME).get();
+void token_manager::implementation::_start_pump() {
+  _pump_thread = std::jthread{[this]() {
+    while (_continue_pumping) {
+      if (system_clock::now() > _cache_expiration) _pump();
+      std::this_thread::sleep_for(auth_token_pump_period());
+    }
+  }};
+}
+
+void token_manager::implementation::_pump() {
+  std::string refresh_token;
+  {
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_cached_refresh_token.empty()) {
+      _cached_refresh_token = _db->read_refresh_token(SERVICE_NAME).get();
+    }
+    refresh_token = _cached_refresh_token;
   }
-  return cached_refresh_token;
+
+  if (refresh_token.empty()) {
+    _request_login_notification();
+  } else {
+    try {
+      schwab::oauth_tokens tokens = _refresher->refresh_tokens(refresh_token);
+      if (tokens.refresh_token != refresh_token) {
+        _db->save_refresh_token(SERVICE_NAME, tokens.refresh_token).get();
+      }
+
+      {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _cached_token = tokens.access_token;
+        _cache_expiration = system_clock::now() + auth_token_cache_ttl();
+        _token_refreshed.notify_all();
+        return;
+      }
+    } catch (const std::exception& e) {
+      LOG(WARNING) << "Failed to refresh token: " << e.what();
+    }
+  }
+}
+
+void token_manager::implementation::_request_login_notification() {
+  LoginRequest request;
+  request.set_service_name(SERVICE_NAME);
+  google::protobuf::Empty response;
+  grpc::ClientContext context;
+  context.set_deadline(system_clock::now() + std::chrono::seconds(10));
+  grpc::Status status = _auth_stub->RequestLogin(&context, request, &response);
+
+  if (!status.ok()) {
+    LOG(ERROR) << "gRPC RequestLogin failed: " << status.error_message();
+  }
+}
+
+// MARK: Token Manager
+
+void set_test_token_manager(token_manager& tm) {
+  alternate_singleton = &tm;
+}
+
+void clear_test_token_manager() {
+  alternate_singleton = nullptr;
 }
 
 token_manager& token_manager::get_instance() {
+  if (alternate_singleton) return *alternate_singleton;
   static token_manager instance;
   return instance;
 }
@@ -110,59 +225,35 @@ token_manager::token_manager(
           std::make_unique<implementation>(
               std::move(stub), std::move(db), std::move(refresher))) {}
 
+token_manager::token_manager(
+    defer_pump_start_t,
+    std::unique_ptr<AuthService::StubInterface> stub,
+    std::unique_ptr<database> db,
+    std::unique_ptr<token_refresher> refresher)
+    : _implementation(
+          std::make_unique<implementation>(
+              defer_pump_start,
+              std::move(stub),
+              std::move(db),
+              std::move(refresher))) {}
+
 token_manager::~token_manager() = default;
 
 std::string token_manager::get_bearer_token(
     bool clear_cache, std::chrono::milliseconds timeout) {
-  {
-    std::string cache_token = _implementation->check_cache(clear_cache);
-    if (!cache_token.empty()) return cache_token;
-  }
+  std::string cache_token = _implementation->check_cache(clear_cache);
+  if (!cache_token.empty()) return cache_token;
 
-  system_clock::time_point deadline = system_clock::now() + timeout;
-  while (system_clock::now() < deadline) {
-    std::string refresh_token = _implementation->get_refresh_token();
-
-    if (!refresh_token.empty()) {
-      try {
-        schwab::oauth_tokens tokens =
-            _implementation->refresher->refresh_tokens(refresh_token);
-
-        if (tokens.refresh_token != refresh_token) {
-          _implementation->db
-              ->save_refresh_token(SERVICE_NAME, tokens.refresh_token)
-              .get();
-        }
-
-        {
-          std::lock_guard<std::mutex> lock(_implementation->mutex);
-          _implementation->cached_token = tokens.access_token;
-          _implementation->cache_expiration =
-              system_clock::now() + CACHE_DURATION;
-          return _implementation->cached_token;
-        }
-      } catch (const std::exception& e) {
-        LOG(WARNING) << "Failed to refresh token: " << e.what();
-      }
-    }
-
-    // If missing/invalid, request manual auth via gRPC.
-    LoginRequest request;
-    request.set_service_name(SERVICE_NAME);
-    google::protobuf::Empty response;
-    grpc::ClientContext context;
-    context.set_deadline(system_clock::now() + 5s);
-    grpc::Status status =
-        _implementation->stub->RequestLogin(&context, request, &response);
-
-    if (!status.ok()) {
-      LOG(ERROR) << "gRPC RequestLogin failed: " << status.error_message();
-    }
-
-    std::this_thread::sleep_for(1s);
-  }
+  cache_token = _implementation->wait_for(timeout);
+  if (!cache_token.empty()) return cache_token;
 
   throw std::runtime_error("Timed out waiting for bearer token.");
+}
+
+void token_manager::start_pump() {
+  // TODO: #111 - Create a way to prime the auth token at startup to ensure
+  // the service fails-fast when something isn't right.
+  _implementation->maybe_start_pump();
 }
 
 } // namespace howling
