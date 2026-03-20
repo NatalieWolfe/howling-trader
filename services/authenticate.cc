@@ -168,10 +168,13 @@ void token_manager::implementation::_pump() {
     refresh_token = _cached_refresh_token;
   }
 
-  if (refresh_token.empty()) {
+  if (refresh_token.empty() || _pump_failure_count > 10) {
+    _pump_failure_count = 0;
+    check_cache(/*clear_cache=*/true);
     _request_login_notification();
   } else {
     try {
+      // TODO: #113 - Handle auth rejection (400/401) from schwab here.
       schwab::oauth_tokens tokens = _refresher->refresh_tokens(refresh_token);
       if (tokens.refresh_token != refresh_token) {
         _db->save_refresh_token(SERVICE_NAME, tokens.refresh_token).get();
