@@ -1,6 +1,27 @@
-# ------------------------------------------------------------------------------
-# Service Account
-# ------------------------------------------------------------------------------
+locals {
+  registry             = "${var.registry_server}/${var.registry_name}"
+  registry_credentials = kubernetes_secret.registry_creds.metadata[0].name
+  auth_service_address = "${kubernetes_service.oauth.metadata[0].name}:50051"
+  service_account_name = kubernetes_service_account.oauth.metadata[0].name
+  bao_sidecar_annotations = {
+    "vault.hashicorp.com/agent-inject"                    = "true"
+    "vault.hashicorp.com/role"                            = "howling-app-role"
+    "vault.hashicorp.com/agent-cache-enable"              = "true"
+    "vault.hashicorp.com/agent-cache-use-auto-auth-token" = "force"
+    "vault.hashicorp.com/agent-image"                     = var.openbao_agent_image
+  }
+  common_flags = [
+    "--db_encryption_key_name=${var.db_encryption_key_name}",
+    "--database=postgres",
+    "--pg_host=${var.db_host}",
+    "--pg_port=${var.db_port}",
+    "--pg_database=howling",
+    "--pg_enable_encryption",
+    "--logging_mode=json",
+  ]
+}
+
+# MARK: Service Account
 
 resource "kubernetes_service_account" "oauth" {
   metadata {
@@ -9,9 +30,7 @@ resource "kubernetes_service_account" "oauth" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# Image Pull Secret
-# ------------------------------------------------------------------------------
+# MARK: Registry Image
 
 resource "kubernetes_secret" "registry_creds" {
   metadata {
@@ -32,9 +51,7 @@ resource "kubernetes_secret" "registry_creds" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# OAuth Service Deployment
-# ------------------------------------------------------------------------------
+# MARK: OAuth Service
 
 resource "kubernetes_deployment" "oauth" {
   metadata {
@@ -59,34 +76,20 @@ resource "kubernetes_deployment" "oauth" {
         labels = {
           app = "howling-oauth"
         }
-        annotations = {
-          "vault.hashicorp.com/agent-inject"                    = "true"
-          "vault.hashicorp.com/role"                            = "howling-app-role"
-          "vault.hashicorp.com/agent-cache-enable"              = "true"
-          "vault.hashicorp.com/agent-cache-use-auto-auth-token" = "force"
-          "vault.hashicorp.com/agent-image"                     = var.openbao_agent_image
-        }
+        annotations = local.bao_sidecar_annotations
       }
 
       spec {
-        service_account_name = kubernetes_service_account.oauth.metadata[0].name
+        service_account_name = local.service_account_name
         image_pull_secrets {
-          name = kubernetes_secret.registry_creds.metadata[0].name
+          name = local.registry_credentials
         }
 
         container {
           name  = "oauth-service"
-          image = "${var.image_repository}:${var.image_tag}"
+          image = "${local.registry}/${var.oauth_service_repository}:${var.image_tag}"
 
-          args = [
-            "--db_encryption_key_name=${var.db_encryption_key_name}",
-            "--database=postgres",
-            "--pg_host=${var.db_host}",
-            "--pg_port=${var.db_port}",
-            "--pg_database=howling",
-            "--pg_enable_encryption",
-            "--logging_mode=json",
-          ]
+          args = local.common_flags
 
           port {
             container_port = 8080 # HTTP
@@ -148,9 +151,7 @@ resource "kubernetes_service" "oauth" {
   }
 }
 
-# ------------------------------------------------------------------------------
-# Ingress with HTTPS
-# ------------------------------------------------------------------------------
+# MARK: HTTPS Ingress
 
 resource "kubernetes_ingress_v1" "oauth" {
   metadata {
@@ -182,6 +183,65 @@ resource "kubernetes_ingress_v1" "oauth" {
                 number = 80
               }
             }
+          }
+        }
+      }
+    }
+  }
+}
+
+# MARK: Auth Refresh Job
+
+resource "kubernetes_cron_job_v1" "auth_refresh" {
+  metadata {
+    name      = "auth-refresh"
+    namespace = var.namespace
+    labels = {
+      app = "auth-refresh"
+    }
+  }
+  spec {
+    schedule                  = "0 17 * * 0-4" # Sunday - Thursday at 5pm Pacific.
+    timezone                  = "America/Los_Angeles"
+    concurrency_policy        = "Forbid"
+    failed_jobs_history_limit = 5
+
+    job_template {
+      metadata {}
+      spec {
+        backoff_limit              = 10
+        ttl_seconds_after_finished = 3600 * 12 # 12 hours in seconds
+
+        template {
+          metadata {
+            labels = {
+              app = "auth-refresh"
+            }
+            annotations = local.bao_sidecar_annotations
+          }
+          spec {
+            service_account_name = local.service_account_name
+            image_pull_secrets {
+              name = local.registry_credentials
+            }
+
+            container {
+              name  = "auth-refresh"
+              image = "${local.registry}/${var.auth_refresh_repository}:${var.image_tag}"
+
+              args = concat(local.common_flags, [
+                "--auth_service_address=${local.auth_service_address}",
+              ])
+
+              resources {
+                # TODO: Add monitoring on resource usages for all services and
+                # adjust resource limits/requests accordingly.
+                limits   = { cpu = "250m", memory = "256Mi" }
+                requests = { cpu = "100m", memory = "128Mi" }
+              }
+            }
+
+            restart_policy = "OnFailure"
           }
         }
       }

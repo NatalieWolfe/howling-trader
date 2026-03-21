@@ -25,6 +25,35 @@ cc_binary(
     ],
 )
 
+pkg_tar(
+    name = "auth_refresh_package",
+    srcs = [":auth_refresh"],
+    include_runfiles = True,
+    package_dir = "/services/oauth",
+)
+
+oci_image(
+    name = "auth_refresh_image",
+    base = "@ubuntu_noble",
+    entrypoint = ["/services/oauth/auth_refresh"],
+    env = {
+        "RUNFILES_DIR": "/services/oauth/auth_refresh.runfiles",
+    },
+    tars = [":auth_refresh_package"],
+)
+
+oci_load(
+    name = "auth_refresh_load",
+    image = ":auth_refresh_image",
+    repo_tags = ["auth-refresh:latest"],
+)
+
+oci_push(
+    name = "auth_refresh_push",
+    image = ":auth_refresh_image",
+    remote_tags = ["latest"],
+)
+
 cc_library(
     name = "auth_service",
     srcs = ["auth_service.cc"],

@@ -9,15 +9,19 @@ variable "namespace" {
   description = "The namespace to deploy Kubernetes resources into"
 }
 
-variable "image_repository" {
-  type        = string
-  description = "The repository URL for the OAuth service image"
-}
-
 variable "image_tag" {
   type        = string
-  default     = "latest"
-  description = "The tag for the OAuth service image"
+  description = "The tag for the latest images."
+}
+
+variable "oauth_service_repository" {
+  type    = string
+  default = "howling-oauth"
+}
+
+variable "auth_refresh_repository" {
+  type    = string
+  default = "auth-refresh"
 }
 
 variable "registry_server" {
@@ -34,6 +38,11 @@ variable "registry_password" {
   type        = string
   sensitive   = true
   description = "The registry password"
+}
+
+variable "registry_name" {
+  type        = string
+  description = "The container image registry."
 }
 
 variable "db_host" {

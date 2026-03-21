@@ -108,12 +108,17 @@ jobs:
           OVH_REGISTRY_URL: ${{ secrets.OVH_REGISTRY_URL }}
         run: |
           # Strip 'https://' from the URL for the push tool
-          REGISTRY_HOST=$(echo ${OVH_REGISTRY_URL} | sed 's|^https://||')
+          REGISTRY="$(echo ${OVH_REGISTRY_URL} | sed 's|^https://||')/howling-registry"
           export CC=gcc-14
           export CXX=g++-14
-          bazel run --config=ci //services/oauth:push -- --repository ${REGISTRY_HOST}/howling-registry/howling-oauth --tag ${{ github.sha }}
-          bazel run --config=ci //howling_tools:push -- --repository ${REGISTRY_HOST}/howling-registry/howling-executor --tag ${{ github.sha }}
-          bazel run --config=ci //services/db:push -- --repository ${REGISTRY_HOST}/howling-registry/schema-upgrade --tag ${{ github.sha }}
+          bazel run --config=ci //howling_tools:push -- \
+            --repository ${REGISTRY}/howling-executor --tag ${{ github.sha }}
+          bazel run --config=ci //services/db:push -- \
+            --repository ${REGISTRY}/schema-upgrade --tag ${{ github.sha }}
+          bazel run --config=ci //services/oauth:push -- \
+            --repository ${REGISTRY}/howling-oauth --tag ${{ github.sha }}
+          bazel run --config=ci //services/oauth:auth_refresh_push -- \
+            --repository ${REGISTRY}/auth-refresh --tag ${{ github.sha }}
 
   infrastructure-platform-apply:
     needs: publish
