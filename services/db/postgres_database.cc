@@ -18,12 +18,13 @@
 #include <utility>
 #include <vector>
 
+#include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "data/candle.pb.h"
 #include "data/stock.pb.h"
 #include "google/protobuf/util/time_util.h"
 #include "libpq/libpq-fe.h"
-#include "services/db/constants.h"
+#include "services/db/environment.h"
 #include "services/db/schema/schema.h"
 #include "time/conversion.h"
 
@@ -716,7 +717,8 @@ std::future<void> postgres_database::save_refresh_token(
     query& q = *_implementation->prepared_queries.at("refresh_token_insert");
     q.bind_all(
         service_name,
-        bytes{_implementation->security->encrypt(HOWLING_DB_KEY, token)});
+        bytes{_implementation->security->encrypt(
+            absl::GetFlag(FLAGS_db_encryption_key_name), token)});
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
@@ -798,8 +800,8 @@ postgres_database::read_refresh_token(std::string_view service_name) {
     } else {
       std::string encrypted_token;
       q.read_all(encrypted_token);
-      p.set_value(
-          _implementation->security->decrypt(HOWLING_DB_KEY, encrypted_token));
+      p.set_value(_implementation->security->decrypt(
+          absl::GetFlag(FLAGS_db_encryption_key_name), encrypted_token));
     }
   } catch (...) { p.set_exception(std::current_exception()); }
   return p.get_future();

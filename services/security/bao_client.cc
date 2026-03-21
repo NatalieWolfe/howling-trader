@@ -58,7 +58,8 @@ net::url make_bao_url() {
 
 http::response<http::string_body> get_bao(std::string_view target) {
   net::url bao_url = make_bao_url();
-  // TODO: Check the url scheme and use a secure connection if it is https.
+  // TODO: #106 - Check the url scheme and use a secure connection if it is
+  // https.
   auto conn = net::make_insecure_connection(bao_url);
   return net::get(*conn, bao_url.host, target);
 }

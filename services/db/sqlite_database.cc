@@ -20,7 +20,7 @@
 #include "data/candle.pb.h"
 #include "data/stock.pb.h"
 #include "google/protobuf/util/time_util.h"
-#include "services/db/constants.h"
+#include "services/db/environment.h"
 #include "services/db/schema/schema.h"
 #include "sqlite3.h"
 #include "strings/format.h"
@@ -453,7 +453,9 @@ std::future<void> sqlite_database::save_refresh_token(
       ON CONFLICT (service_name) DO UPDATE SET
         refresh_token = excluded.refresh_token,
         updated_at = CURRENT_TIMESTAMP)sql"};
-    q.bind_all(service_name, _security->encrypt(HOWLING_DB_KEY, token));
+    q.bind_all(
+        service_name,
+        _security->encrypt(absl::GetFlag(FLAGS_db_encryption_key_name), token));
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
@@ -551,7 +553,8 @@ sqlite_database::read_refresh_token(std::string_view service_name) {
     if (!q.step()) {
       p.set_value("");
     } else {
-      p.set_value(_security->decrypt(HOWLING_DB_KEY, q.read<std::string>(0)));
+      p.set_value(_security->decrypt(
+          absl::GetFlag(FLAGS_db_encryption_key_name), q.read<std::string>(0)));
     }
   } catch (...) { p.set_exception(std::current_exception()); }
   return p.get_future();

@@ -4,8 +4,10 @@ load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 cc_library(
-    name = "constants",
-    hdrs = ["constants.h"],
+    name = "environment",
+    srcs = ["environment.cc"],
+    hdrs = ["environment.h"],
+    deps = ["@abseil-cpp//absl/flags:flag"],
 )
 
 cc_library(
@@ -28,7 +30,7 @@ cc_library(
     srcs = ["postgres_database.cc"],
     hdrs = ["postgres_database.h"],
     deps = [
-        ":constants",
+        ":environment",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
@@ -46,7 +48,7 @@ cc_library(
     testonly = True,
     hdrs = ["database_test_interface.h"],
     deps = [
-        ":constants",
+        ":environment",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
@@ -65,6 +67,7 @@ cc_binary(
     srcs = ["postgres_database_test.cc"],
     deps = [
         ":database_test_interface",
+        ":environment",
         ":postgres_database",
         "//data:candle_cc_proto",
         "//data:stock_cc_proto",
@@ -110,7 +113,7 @@ cc_library(
     srcs = ["sqlite_database.cc"],
     hdrs = ["sqlite_database.h"],
     deps = [
-        ":constants",
+        ":environment",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
@@ -132,6 +135,7 @@ cc_test(
     srcs = ["sqlite_database_test.cc"],
     deps = [
         ":database_test_interface",
+        ":environment",
         ":sqlite_database",
         "//data:candle_cc_proto",
         "//data:stock_cc_proto",

@@ -9,16 +9,22 @@
 
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "absl/time/time.h"
 #include "api/schwab/oauth.h"
 #include "boost/asio.hpp"
 #include "boost/beast.hpp"
 #include "net/connect.h"
+#include "services/authenticate.h"
+#include "services/authenticate_test_utils.h"
 #include "services/database.h"
 #include "services/mock_database.h"
+#include "services/mock_token_refresher.h"
+#include "services/oauth/mock_auth_service.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 ABSL_DECLARE_FLAG(absl::Duration, schwab_auth_timeout);
+ABSL_DECLARE_FLAG(absl::Duration, auth_token_pump_period);
 
 namespace howling {
 namespace {
@@ -43,9 +49,22 @@ unsigned short get_port() {
 struct test_server {
   test_server() : port{get_port()}, service{} {
     auto oauth_exchanger = std::make_unique<mock_oauth_exchanger>();
+
+    auto stub = std::make_unique<mock_auth_service_stub>();
+    auto refresher = std::make_unique<mock_token_refresher>();
+    auto mock_db = std::make_unique<mock_database>();
+    db = mock_db.get();
+
+    token_man = std::make_unique<token_manager>(
+        defer_pump_start,
+        std::move(stub),
+        std::move(mock_db),
+        std::move(refresher));
+    set_test_token_manager(*token_man);
+
     exchanger = oauth_exchanger.get();
     service = std::make_unique<oauth_http_service>(
-        ioc, port, db, std::move(oauth_exchanger));
+        ioc, port, *db, std::move(oauth_exchanger));
     service->start();
     server_thread = std::jthread([this]() { ioc.run(); });
     // Give the server a moment to start and enter the accept loop.
@@ -53,14 +72,16 @@ struct test_server {
   }
 
   ~test_server() {
+    clear_test_token_manager();
     ioc.stop();
     if (server_thread.joinable()) server_thread.join();
   }
 
   asio::io_context ioc;
   unsigned short port;
-  mock_database db;
+  mock_database* db;
   mock_oauth_exchanger* exchanger;
+  std::unique_ptr<token_manager> token_man;
   std::unique_ptr<oauth_http_service> service;
   std::jthread server_thread;
 };
@@ -81,9 +102,20 @@ struct test_client {
   beast::tcp_stream stream;
 };
 
+class OauthHttpServiceTest : public testing::Test {
+protected:
+  void SetUp() {
+    absl::SetFlag(&FLAGS_auth_token_pump_period, absl::Seconds(1));
+  }
+};
+
+using SchwabOauthCallbackTest = OauthHttpServiceTest;
+using StatusTest = OauthHttpServiceTest;
+using SchwabStatusTest = OauthHttpServiceTest;
+
 // MARK: GET /schwab/oauth-callback
 
-TEST(SchwabOauthCallback, ReturnsOkAndStoresToken) {
+TEST_F(SchwabOauthCallbackTest, ReturnsOkAndStoresToken) {
   test_server server;
   test_client client{server.port};
 
@@ -96,7 +128,7 @@ TEST(SchwabOauthCallback, ReturnsOkAndStoresToken) {
 
   std::promise<void> save_promise;
   std::future<void> save_future = save_promise.get_future();
-  EXPECT_CALL(server.db, save_refresh_token("schwab", "refresh"))
+  EXPECT_CALL(*server.db, save_refresh_token("schwab", "refresh"))
       .WillOnce([&](std::string_view, std::string_view) {
         save_promise.set_value();
         std::promise<void> p;
@@ -124,7 +156,7 @@ TEST(SchwabOauthCallback, ReturnsOkAndStoresToken) {
       save_future.wait_for(std::chrono::seconds(1)), std::future_status::ready);
 }
 
-TEST(SchwabOauthCallback, MissingCodeReturnsBadRequest) {
+TEST_F(SchwabOauthCallbackTest, MissingCodeReturnsBadRequest) {
   test_server server;
   test_client client{server.port};
 
@@ -143,7 +175,7 @@ TEST(SchwabOauthCallback, MissingCodeReturnsBadRequest) {
 
 // MARK: GET /status
 
-TEST(Status, ReturnsOk) {
+TEST_F(StatusTest, ReturnsOk) {
   test_server server;
   test_client client{server.port};
 
@@ -162,7 +194,7 @@ TEST(Status, ReturnsOk) {
 
 // MARK: GET /schwab/status
 
-TEST(SchwabStatus, ReturnsAuthenticationRequiredWhenNoToken) {
+TEST_F(SchwabStatusTest, ReturnsAuthenticationRequiredWhenNoToken) {
   test_server server;
   test_client client{server.port};
 

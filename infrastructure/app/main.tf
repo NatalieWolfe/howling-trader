@@ -145,17 +145,18 @@ resource "vault_kv_secret_v2" "database_admin" {
 # MARK: OAuth
 
 module "oauth" {
-  source                = "./modules/oauth"
-  namespace             = kubernetes_namespace.howling_app.metadata[0].name
-  registry_server       = local.registry_server
-  registry_username     = local.platform_outputs.registry_user_login
-  registry_password     = local.platform_outputs.registry_user_password
-  image_repository      = "${local.registry_server}/${var.registry_name}/howling-oauth"
-  image_tag             = var.image_tag
-  db_host               = module.database.db_host
-  db_port               = module.database.db_port
-  db_bootstrap_job_name = module.database.db_bootstrap_job_name
-  openbao_agent_image   = local.openbao_agent_image
+  source                 = "./modules/oauth"
+  namespace              = kubernetes_namespace.howling_app.metadata[0].name
+  registry_server        = local.registry_server
+  registry_username      = local.platform_outputs.registry_user_login
+  registry_password      = local.platform_outputs.registry_user_password
+  registry_name          = var.registry_name
+  image_tag              = var.image_tag
+  db_host                = module.database.db_host
+  db_port                = module.database.db_port
+  db_bootstrap_job_name  = module.database.db_bootstrap_job_name
+  db_encryption_key_name = local.platform_outputs.db_encryption_key_name
+  openbao_agent_image    = local.openbao_agent_image
 
   providers = {
     kubernetes = kubernetes

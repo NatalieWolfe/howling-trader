@@ -9,15 +9,19 @@ variable "namespace" {
   description = "The namespace to deploy Kubernetes resources into"
 }
 
-variable "image_repository" {
-  type        = string
-  description = "The repository URL for the OAuth service image"
-}
-
 variable "image_tag" {
   type        = string
-  default     = "latest"
-  description = "The tag for the OAuth service image"
+  description = "The tag for the latest images."
+}
+
+variable "oauth_service_repository" {
+  type    = string
+  default = "howling-oauth"
+}
+
+variable "auth_refresh_repository" {
+  type    = string
+  default = "auth-refresh"
 }
 
 variable "registry_server" {
@@ -36,6 +40,11 @@ variable "registry_password" {
   description = "The registry password"
 }
 
+variable "registry_name" {
+  type        = string
+  description = "The container image registry."
+}
+
 variable "db_host" {
   type        = string
   description = "The database hostname"
@@ -49,6 +58,11 @@ variable "db_port" {
 variable "db_bootstrap_job_name" {
   type        = string
   description = "The name of the DB bootstrap job"
+}
+
+variable "db_encryption_key_name" {
+  type        = string
+  description = "Name of the encryption key used by the database."
 }
 
 variable "openbao_agent_image" {

@@ -13,7 +13,6 @@
 #include "data/stock.pb.h"
 #include "data/trade.pb.h"
 #include "google/protobuf/util/time_util.h"
-#include "services/db/constants.h"
 #include "services/db/database_test_interface.h"
 #include "services/mock_security.h"
 #include "sqlite3.h"
@@ -26,6 +25,7 @@ ABSL_DECLARE_FLAG(std::string, sqlite_db_path);
 namespace howling {
 namespace {
 
+using ::testing::_;
 using ::testing::IsSupersetOf;
 using ::testing::Return;
 
@@ -103,7 +103,7 @@ TEST_F(SqliteDatabaseTest, SavedRefreshTokenIsEncryptedAtRest) {
   std::string secret_token = "my_very_secret_refresh_token";
   std::string encrypted_token = "vault:v1:encrypted_token";
 
-  EXPECT_CALL(*security_client, encrypt(HOWLING_DB_KEY, secret_token))
+  EXPECT_CALL(*security_client, encrypt(_, secret_token))
       .WillOnce(Return(encrypted_token));
 
   _db->save_refresh_token("schwab", secret_token).get();
