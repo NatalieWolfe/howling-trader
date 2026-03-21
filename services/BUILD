@@ -12,7 +12,6 @@ cc_library(
         "//services:database",
         "//services/db:make_database",
         "//services/oauth/proto:auth_service_cc_grpc",
-        "//services/security:bao_client",
         "//time:conversion",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
@@ -100,7 +99,10 @@ cc_library(
     name = "security",
     hdrs = ["security.h"],
     visibility = ["//visibility:public"],
-    deps = ["@jsoncpp"],
+    deps = [
+        ":service_base",
+        "@jsoncpp",
+    ],
 )
 
 cc_library(
@@ -112,4 +114,10 @@ cc_library(
         ":security",
         "@googletest//:gtest",
     ],
+)
+
+cc_library(
+    name = "service_base",
+    hdrs = ["service_base.h"],
+    visibility = ["//services:__subpackages__"],
 )

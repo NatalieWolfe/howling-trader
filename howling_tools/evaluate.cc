@@ -21,7 +21,7 @@
 #include "environment/runfiles.h"
 #include "services/database.h"
 #include "services/db/make_database.h"
-#include "services/security/bao_client.h"
+#include "services/security/register.h"
 #include "time/conversion.h"
 #include "trading/metrics.h"
 #include "trading/trading_state.h"
@@ -71,7 +71,8 @@ struct day_data {
 
 std::generator<day_data> get_days(stock::Symbol symbol) {
   if (absl::GetFlag(FLAGS_use_database)) {
-    auto db = make_database(std::make_unique<security::bao_client>());
+    security::register_security_client();
+    auto db = make_database();
     vector<Candle> day_candles;
     std::string day_name;
     for (const Candle& candle : db->read_candles(symbol)) {

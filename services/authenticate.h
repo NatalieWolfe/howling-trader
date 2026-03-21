@@ -11,8 +11,10 @@ namespace howling {
 
 class database;
 
-struct defer_pump_start_t {};
-static constexpr defer_pump_start_t defer_pump_start{};
+struct defer_pump_start_t {
+  explicit defer_pump_start_t() = default;
+};
+inline constexpr defer_pump_start_t defer_pump_start{};
 
 class token_refresher {
 public:

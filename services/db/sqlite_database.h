@@ -17,7 +17,7 @@ namespace howling {
 
 class sqlite_database : public database {
 public:
-  sqlite_database(std::unique_ptr<security_client> security);
+  sqlite_database(security_client& security);
   ~sqlite_database();
 
   std::future<void> upgrade_schema(std::string_view /*app_db_user*/) override;
@@ -45,7 +45,7 @@ private:
   void _check(int code, std::source_location loc = {});
 
   sqlite3* _db = nullptr;
-  std::unique_ptr<security_client> _security;
+  security_client& _security;
 };
 
 } // namespace howling

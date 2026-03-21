@@ -63,7 +63,7 @@ protected:
     db().update_last_notified_at(service_name).get();
   }
 
-  mock_security_client* _mock_security = nullptr;
+  mock_security_client _mock_security;
 };
 
 // TODO: Add `check_schema_version` tests. Requires having a database reset
@@ -196,9 +196,9 @@ protected:
     std::string service = "schwab";                                            \
     std::string token = "my_secret_token";                                     \
     std::string encrypted = "vault:v1:encrypted";                              \
-    EXPECT_CALL(*_mock_security, encrypt("test_key_name", token))              \
+    EXPECT_CALL(_mock_security, encrypt("test_key_name", token))              \
         .WillOnce(testing::Return(encrypted));                                 \
-    EXPECT_CALL(*_mock_security, decrypt("test_key_name", encrypted))          \
+    EXPECT_CALL(_mock_security, decrypt("test_key_name", encrypted))          \
         .WillOnce(testing::Return(token));                                     \
     save_refresh_token(service, token);                                        \
     EXPECT_EQ(read_refresh_token(service), token);                             \
@@ -210,7 +210,7 @@ protected:
   TEST_F(FIXTURE_CLASS, CanRecordAndReadNotificationTime) {                    \
     upgrade_schema();                                                          \
     std::string service = "schwab";                                            \
-    EXPECT_CALL(*_mock_security, encrypt("test_key_name", "token"))            \
+    EXPECT_CALL(_mock_security, encrypt("test_key_name", "token"))            \
         .WillOnce(testing::Return("encrypted"));                               \
     save_refresh_token(service, "token");                                      \
     EXPECT_FALSE(get_last_notified_at(service).has_value());                   \

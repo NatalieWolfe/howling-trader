@@ -24,8 +24,7 @@ struct postgres_options {
 
 class postgres_database : public database {
 public:
-  postgres_database(
-      postgres_options options, std::unique_ptr<security_client> security);
+  postgres_database(security_client& security, postgres_options options);
   ~postgres_database();
 
   std::future<void> upgrade_schema(std::string_view app_db_user) override;

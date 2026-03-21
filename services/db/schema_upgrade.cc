@@ -1,3 +1,4 @@
+#include <chrono>
 #include <exception>
 #include <iostream>
 #include <memory>
@@ -6,7 +7,7 @@
 #include "absl/log/log.h"
 #include "environment/init.h"
 #include "services/db/make_database.h"
-#include "services/security/bao_client.h"
+#include "services/security/register.h"
 
 ABSL_FLAG(
     std::string,
@@ -20,12 +21,9 @@ namespace {
 
 void run() {
   using namespace std::chrono_literals;
+  security::register_security_client();
 
-  LOG(INFO) << "Waiting for security client to be ready...";
-  auto security = std::make_unique<security::bao_client>();
-  security->wait_for_ready(5min);
-
-  auto db = make_database(use_admin_database_account, std::move(security));
+  auto db = make_database(use_admin_database_account);
   LOG(INFO) << "Starting schema upgrade...";
   std::future<void> upgrade_state =
       db->upgrade_schema(absl::GetFlag(FLAGS_app_db_user));

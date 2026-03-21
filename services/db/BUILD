@@ -20,6 +20,7 @@ cc_library(
         ":sqlite_database",
         "//services:database",
         "//services:security",
+        "//services/registry",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
     ],
@@ -102,7 +103,7 @@ cc_binary(
     deps = [
         ":make_database",
         "//environment:init",
-        "//services/security:bao_client",
+        "//services/security:register",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
     ],

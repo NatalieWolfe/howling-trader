@@ -10,19 +10,17 @@
 #include "services/database.h"
 #include "services/db/make_database.h"
 #include "services/oauth/auth_client.h"
-#include "services/security/bao_client.h"
+#include "services/security/register.h"
 
 namespace howling {
 namespace {
 
 void run() {
-  LOG(INFO) << "Initializing security service.";
-  auto security = std::make_unique<security::bao_client>();
-  security->wait_for_ready(std::chrono::minutes(10));
-  schwab::fetch_schwab_secrets(*security);
+  security::register_security_client();
+  schwab::fetch_schwab_secrets();
 
   LOG(INFO) << "Initializing database connection.";
-  std::unique_ptr<database> db = make_database(std::move(security));
+  std::unique_ptr<database> db = make_database();
   db->check_schema_version().get();
 
   LOG(INFO) << "Refreshing token.";

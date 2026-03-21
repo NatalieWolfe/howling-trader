@@ -24,7 +24,6 @@
 #include "services/db/make_database.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 #include "services/oauth/proto/auth_service.pb.h"
-#include "services/security/bao_client.h"
 #include "time/conversion.h"
 
 ABSL_FLAG(
@@ -80,7 +79,7 @@ public:
     std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(
         "localhost:50051", grpc::InsecureChannelCredentials());
     _auth_stub = AuthService::NewStub(channel);
-    _db = make_database(std::make_unique<security::bao_client>());
+    _db = make_database();
     _refresher = std::make_unique<real_token_refresher>();
     _start_pump();
   }

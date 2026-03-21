@@ -32,10 +32,8 @@ using ::testing::Return;
 class SqliteDatabaseTest : public DatabaseTest {
 protected:
   void SetUp() override {
-    auto security = std::make_unique<mock_security_client>();
-    _mock_security = security.get();
     absl::SetFlag(&FLAGS_sqlite_db_path, ":memory:");
-    _db = std::make_unique<sqlite_database>(std::move(security));
+    _db = std::make_unique<sqlite_database>(_mock_security);
     DatabaseTest::SetUp();
   }
 
@@ -62,9 +60,7 @@ TEST_F(SqliteDatabaseTest, InitializesEmptyDatabase) {
   absl::SetFlag(&FLAGS_sqlite_db_path, std::string{SHARED_MEMORY_DB_PATH});
 
   std::unique_ptr<sqlite_database> db;
-  EXPECT_NO_THROW(
-      db = std::make_unique<sqlite_database>(
-          std::make_unique<mock_security_client>()));
+  EXPECT_NO_THROW(db = std::make_unique<sqlite_database>(_mock_security));
   EXPECT_NO_THROW(db->upgrade_schema("").get());
 
   sqlite3* raw_db;
@@ -95,15 +91,13 @@ TEST_F(SqliteDatabaseTest, SavedRefreshTokenIsEncryptedAtRest) {
       "file:encrypted_at_rest?mode=memory&cache=shared";
   absl::SetFlag(&FLAGS_sqlite_db_path, std::string{SHARED_MEMORY_DB_PATH});
 
-  auto security = std::make_unique<mock_security_client>();
-  mock_security_client* security_client = security.get();
-  _db = std::make_unique<sqlite_database>(std::move(security));
+  _db = std::make_unique<sqlite_database>(_mock_security);
   _db->upgrade_schema("").get();
 
   std::string secret_token = "my_very_secret_refresh_token";
   std::string encrypted_token = "vault:v1:encrypted_token";
 
-  EXPECT_CALL(*security_client, encrypt(_, secret_token))
+  EXPECT_CALL(_mock_security, encrypt(_, secret_token))
       .WillOnce(Return(encrypted_token));
 
   _db->save_refresh_token("schwab", secret_token).get();

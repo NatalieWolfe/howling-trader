@@ -43,9 +43,7 @@ protected:
         .password = absl::GetFlag(FLAGS_pg_password),
         .dbname = absl::GetFlag(FLAGS_pg_database),
         .sslmode = "disable"};
-    auto security = std::make_unique<mock_security_client>();
-    _mock_security = security.get();
-    _db = std::make_unique<postgres_database>(options, std::move(security));
+    _db = std::make_unique<postgres_database>(_mock_security, options);
     DatabaseTest::SetUp();
   }
 
@@ -106,7 +104,7 @@ TEST_F(PostgresDatabaseTest, SavedRefreshTokenIsEncryptedAtRest) {
   std::string secret_token = "my_very_secret_refresh_token";
   std::string encrypted_token = "vault:v1:encrypted_token";
 
-  EXPECT_CALL(*_mock_security, encrypt(_, secret_token))
+  EXPECT_CALL(_mock_security, encrypt(_, secret_token))
       .WillOnce(Return(encrypted_token));
 
   _db->save_refresh_token("schwab", secret_token).get();

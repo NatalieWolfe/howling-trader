@@ -24,6 +24,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//services:security",
+        "//services/registry",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
         "@jsoncpp",

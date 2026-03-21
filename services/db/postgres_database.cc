@@ -401,15 +401,15 @@ std::string escape_identifier(PGconn& conn, std::string_view identifier) {
 
 struct postgres_database::implementation {
   PGconn* conn;
-  std::unique_ptr<security_client> security;
+  security_client* security;
   std::map<std::string, std::unique_ptr<query>> prepared_queries;
   std::string dbname;
 };
 
 postgres_database::postgres_database(
-    postgres_options options, std::unique_ptr<security_client> security)
+    security_client& security, postgres_options options)
     : _implementation{std::make_unique<implementation>()} {
-  _implementation->security = std::move(security);
+  _implementation->security = &security;
   std::string connection_parameters = std::format(
       "host={} port={} dbname={} user={} password={} sslmode={}",
       options.host,

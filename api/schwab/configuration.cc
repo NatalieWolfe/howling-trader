@@ -6,6 +6,7 @@
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "services/security.h"
+#include "services/registry/registry.h"
 #include "json/value.h"
 
 ABSL_FLAG(std::string, schwab_api_key_id, "", "API key ID for Schwab.");
@@ -18,8 +19,9 @@ ABSL_FLAG(
 
 namespace howling::schwab {
 
-void fetch_schwab_secrets(security_client& security) {
-  LOG(INFO) << "Fetching secrets from OpenBao...";
+void fetch_schwab_secrets() {
+  LOG(INFO) << "Fetching Schwab secrets...";
+  auto& security = registry::get_service<security_client>();
   Json::Value schwab_secret = security.get_secret("howling/prod/schwab");
   absl::SetFlag(&FLAGS_schwab_api_key_id, schwab_secret["api_key"].asString());
   absl::SetFlag(

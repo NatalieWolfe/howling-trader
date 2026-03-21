@@ -8,6 +8,7 @@
 #include "services/database.h"
 #include "services/db/postgres_database.h"
 #include "services/db/sqlite_database.h"
+#include "services/registry/registry.h"
 #include "services/security.h"
 
 ABSL_FLAG(
@@ -40,8 +41,8 @@ ABSL_FLAG(
 namespace howling {
 namespace {
 
-void fetch_db_secrets_internal(
-    security_client& security, std::string_view path) {
+void fetch_db_secrets_internal(std::string_view path) {
+  auto& security = registry::get_service<security_client>();
   if (absl::GetFlag(FLAGS_pg_user) != "postgres" ||
       absl::GetFlag(FLAGS_pg_password) != "password") {
     LOG(INFO) << "Database secrets already provided via flags, skipping "
@@ -59,16 +60,16 @@ void fetch_db_secrets_internal(
   }
 }
 
-void fetch_database_secrets(security_client& security) {
-  fetch_db_secrets_internal(security, "howling/prod/database");
+void fetch_database_secrets() {
+  fetch_db_secrets_internal("howling/prod/database");
 }
 
-void fetch_admin_database_secrets(security_client& security) {
-  fetch_db_secrets_internal(security, "howling/admin/database");
+void fetch_admin_database_secrets() {
+  fetch_db_secrets_internal("howling/admin/database");
 }
 
-std::unique_ptr<database>
-make_database_internal(std::unique_ptr<security_client> security) {
+std::unique_ptr<database> make_database_internal() {
+  auto& security = registry::get_service<security_client>();
   if (absl::GetFlag(FLAGS_database) == "postgres") {
     bool encrypt = absl::GetFlag(FLAGS_pg_enable_encryption);
     LOG(INFO) << "Connecting to postgres database \""
@@ -77,34 +78,30 @@ make_database_internal(std::unique_ptr<security_client> security) {
               << absl::GetFlag(FLAGS_pg_port)
               << (encrypt ? " (encrypted)" : " (unencrypted)");
     return std::make_unique<postgres_database>(
+        security,
         postgres_options{
             .host = absl::GetFlag(FLAGS_pg_host),
             .port = std::to_string(absl::GetFlag(FLAGS_pg_port)),
             .user = absl::GetFlag(FLAGS_pg_user),
             .password = absl::GetFlag(FLAGS_pg_password),
             .dbname = absl::GetFlag(FLAGS_pg_database),
-            .sslmode = encrypt ? "require" : "disable"},
-        std::move(security));
+            .sslmode = encrypt ? "require" : "disable"});
   }
-  return std::make_unique<sqlite_database>(std::move(security));
+  return std::make_unique<sqlite_database>(security);
 }
 
 } // namespace
 
-std::unique_ptr<database>
-make_database(std::unique_ptr<security_client> security) {
-  if (security && absl::GetFlag(FLAGS_database) == "postgres") {
-    fetch_database_secrets(*security);
-  }
-  return make_database_internal(std::move(security));
+std::unique_ptr<database> make_database() {
+  if (absl::GetFlag(FLAGS_database) == "postgres") fetch_database_secrets();
+  return make_database_internal();
 }
 
-std::unique_ptr<database> make_database(
-    use_admin_database_account_t, std::unique_ptr<security_client> security) {
-  if (security && absl::GetFlag(FLAGS_database) == "postgres") {
-    fetch_admin_database_secrets(*security);
+std::unique_ptr<database> make_database(use_admin_database_account_t) {
+  if (absl::GetFlag(FLAGS_database) == "postgres") {
+    fetch_admin_database_secrets();
   }
-  return make_database_internal(std::move(security));
+  return make_database_internal();
 }
 
 } // namespace howling

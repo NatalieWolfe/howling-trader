@@ -26,7 +26,7 @@
 #include "services/database.h"
 #include "services/db/make_database.h"
 #include "services/market_watch.h"
-#include "services/security/bao_client.h"
+#include "services/security/register.h"
 #include "time/conversion.h"
 #include "trading/executor.h"
 #include "trading/trading_state.h"
@@ -176,10 +176,8 @@ void run() {
       symbols.begin(), symbols.end()};
   stock::Symbol followed_stock = symbols.front();
 
-  LOG(INFO) << "Waiting for security client to be ready...";
-  auto security = std::make_unique<security::bao_client>();
-  security->wait_for_ready(30s);
-  schwab::fetch_schwab_secrets(*security);
+  security::register_security_client();
+  schwab::fetch_schwab_secrets();
 
   execution_printer printer;
   trading_state state = load_trading_state(std::move(symbols));
@@ -187,7 +185,7 @@ void run() {
   executor e{state};
 
   auto watcher = std::make_unique<market_watch>();
-  std::unique_ptr<database> db = make_database(std::move(security));
+  std::unique_ptr<database> db = make_database();
 
   std::thread candle_streamer([&]() {
     auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));

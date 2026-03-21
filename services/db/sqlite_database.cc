@@ -314,8 +314,8 @@ int get_schema_version(sqlite3& db) {
 
 // TODO: Configure the sqlite logging system to use absl LOG.
 
-sqlite_database::sqlite_database(std::unique_ptr<security_client> security)
-    : _security(std::move(security)) {
+sqlite_database::sqlite_database(security_client& security)
+    : _security{security} {
   try {
     _check(sqlite3_open(absl::GetFlag(FLAGS_sqlite_db_path).c_str(), &_db));
   } catch (...) {
@@ -455,7 +455,7 @@ std::future<void> sqlite_database::save_refresh_token(
         updated_at = CURRENT_TIMESTAMP)sql"};
     q.bind_all(
         service_name,
-        _security->encrypt(absl::GetFlag(FLAGS_db_encryption_key_name), token));
+        _security.encrypt(absl::GetFlag(FLAGS_db_encryption_key_name), token));
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
@@ -553,7 +553,7 @@ sqlite_database::read_refresh_token(std::string_view service_name) {
     if (!q.step()) {
       p.set_value("");
     } else {
-      p.set_value(_security->decrypt(
+      p.set_value(_security.decrypt(
           absl::GetFlag(FLAGS_db_encryption_key_name), q.read<std::string>(0)));
     }
   } catch (...) { p.set_exception(std::current_exception()); }

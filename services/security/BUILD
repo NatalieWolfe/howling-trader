@@ -57,3 +57,18 @@ cc_library(
         "@boost.beast",
     ],
 )
+
+cc_library(
+    name = "register",
+    srcs = ["register.cc"],
+    hdrs = ["register.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":bao_client",
+        "//services/registry:register_service",
+        "//time:conversion",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/time",
+    ],
+)
