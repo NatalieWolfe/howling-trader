@@ -91,6 +91,7 @@ public:
       std::unique_ptr<token_refresher> refresher)
       : _auth_stub{std::move(auth_stub)}, _db{std::move(db)},
         _refresher{std::move(refresher)} {
+    if (!_refresher) _refresher = std::make_unique<real_token_refresher>();
     _start_pump();
   }
 
@@ -100,7 +101,9 @@ public:
       std::unique_ptr<database> db,
       std::unique_ptr<token_refresher> refresher)
       : _auth_stub{std::move(auth_stub)}, _db{std::move(db)},
-        _refresher{std::move(refresher)} {}
+        _refresher{std::move(refresher)} {
+    if (!_refresher) _refresher = std::make_unique<real_token_refresher>();
+  }
 
   ~implementation() { _continue_pumping = false; }
 

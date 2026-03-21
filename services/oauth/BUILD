@@ -3,7 +3,30 @@ load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 cc_library(
-    name = "auth_service_lib",
+    name = "auth_client",
+    srcs = ["auth_client.cc"],
+    hdrs = ["auth_client.h"],
+    deps = [
+        "//services/oauth/proto:auth_service_cc_grpc",
+        "@grpc//:grpc++",
+    ],
+)
+
+cc_binary(
+    name = "auth_refresh",
+    srcs = ["auth_refresh.cc"],
+    deps = [
+        ":auth_client",
+        "//api/schwab:configuration",
+        "//environment:init",
+        "//services:authenticate",
+        "//services/security:bao_client",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
+cc_library(
+    name = "auth_service",
     srcs = ["auth_service.cc"],
     hdrs = ["auth_service.h"],
     deps = [
@@ -22,7 +45,7 @@ cc_test(
     name = "auth_service_test",
     srcs = ["auth_service_test.cc"],
     deps = [
-        ":auth_service_lib",
+        ":auth_service",
         ":mock_telegram_server",
         "//services:mock_database",
         "//services:mock_security",
@@ -167,7 +190,7 @@ cc_binary(
     name = "server",
     srcs = ["server.cc"],
     deps = [
-        ":auth_service_lib",
+        ":auth_service",
         ":oauth_exchanger_impl",
         ":oauth_http_service",
         "//api/schwab:connect",
