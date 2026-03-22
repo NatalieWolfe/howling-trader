@@ -210,7 +210,7 @@ resource "kubernetes_cron_job_v1" "auth_refresh" {
       metadata {}
       spec {
         backoff_limit              = 10
-        ttl_seconds_after_finished = 3600 * 12 # 12 hours in seconds
+        ttl_seconds_after_finished = 3600 * 24 # 24 hours in seconds
 
         template {
           metadata {
