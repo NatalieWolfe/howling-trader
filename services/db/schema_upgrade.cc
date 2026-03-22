@@ -6,7 +6,9 @@
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "environment/init.h"
-#include "services/db/make_database.h"
+#include "services/database.h"
+#include "services/db/register.h"
+#include "services/registry/registry.h"
 #include "services/security/register.h"
 
 ABSL_FLAG(
@@ -22,11 +24,12 @@ namespace {
 void run() {
   using namespace std::chrono_literals;
   security::register_security_client();
+  register_database_client(use_admin_database_account);
 
-  auto db = make_database(use_admin_database_account);
+  database& db = registry::get_service<database>();
   LOG(INFO) << "Starting schema upgrade...";
   std::future<void> upgrade_state =
-      db->upgrade_schema(absl::GetFlag(FLAGS_app_db_user));
+      db.upgrade_schema(absl::GetFlag(FLAGS_app_db_user));
   if (upgrade_state.wait_for(10min) == std::future_status::ready) {
     try {
       upgrade_state.get();

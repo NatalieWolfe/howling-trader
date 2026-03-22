@@ -21,9 +21,9 @@
 #include "grpcpp/support/status.h"
 #include "net/connect.h"
 #include "services/database.h"
-#include "services/db/make_database.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 #include "services/oauth/proto/auth_service.pb.h"
+#include "services/registry/registry.h"
 #include "time/conversion.h"
 
 ABSL_FLAG(
@@ -71,7 +71,7 @@ public:
 
 class token_manager::implementation {
 public:
-  implementation() {
+  implementation() : _db{registry::get_service<database>()} {
     // TODO: Take in the auth service hostname/ip and port on the command line.
     // TODO: Use secure channel credentials for communication. Use the
     // howling::security::bao_client to retrieve and manage TLS certificates
@@ -79,16 +79,15 @@ public:
     std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(
         "localhost:50051", grpc::InsecureChannelCredentials());
     _auth_stub = AuthService::NewStub(channel);
-    _db = make_database();
     _refresher = std::make_unique<real_token_refresher>();
     _start_pump();
   }
 
   implementation(
       std::unique_ptr<AuthService::StubInterface> auth_stub,
-      std::unique_ptr<database> db,
+      database& db,
       std::unique_ptr<token_refresher> refresher)
-      : _auth_stub{std::move(auth_stub)}, _db{std::move(db)},
+      : _auth_stub{std::move(auth_stub)}, _db{db},
         _refresher{std::move(refresher)} {
     if (!_refresher) _refresher = std::make_unique<real_token_refresher>();
     _start_pump();
@@ -97,9 +96,9 @@ public:
   implementation(
       defer_pump_start_t,
       std::unique_ptr<AuthService::StubInterface> auth_stub,
-      std::unique_ptr<database> db,
+      database& db,
       std::unique_ptr<token_refresher> refresher)
-      : _auth_stub{std::move(auth_stub)}, _db{std::move(db)},
+      : _auth_stub{std::move(auth_stub)}, _db{db},
         _refresher{std::move(refresher)} {
     if (!_refresher) _refresher = std::make_unique<real_token_refresher>();
   }
@@ -127,7 +126,7 @@ private:
 
   int _pump_failure_count = 0;
   std::unique_ptr<AuthService::StubInterface> _auth_stub;
-  std::unique_ptr<database> _db;
+  database& _db;
   std::unique_ptr<token_refresher> _refresher;
   std::atomic_bool _continue_pumping = true;
   std::jthread _pump_thread;
@@ -165,7 +164,7 @@ void token_manager::implementation::_pump() {
   {
     std::lock_guard<std::mutex> lock(_mutex);
     if (_cached_refresh_token.empty()) {
-      _cached_refresh_token = _db->read_refresh_token(SERVICE_NAME).get();
+      _cached_refresh_token = _db.read_refresh_token(SERVICE_NAME).get();
     }
     refresh_token = _cached_refresh_token;
   }
@@ -179,7 +178,7 @@ void token_manager::implementation::_pump() {
       // TODO: #113 - Handle auth rejection (400/401) from schwab here.
       schwab::oauth_tokens tokens = _refresher->refresh_tokens(refresh_token);
       if (tokens.refresh_token != refresh_token) {
-        _db->save_refresh_token(SERVICE_NAME, tokens.refresh_token).get();
+        _db.save_refresh_token(SERVICE_NAME, tokens.refresh_token).get();
       }
 
       {
@@ -231,23 +230,20 @@ token_manager::token_manager()
 
 token_manager::token_manager(
     std::unique_ptr<AuthService::StubInterface> stub,
-    std::unique_ptr<database> db,
+    database& db,
     std::unique_ptr<token_refresher> refresher)
     : _implementation(
           std::make_unique<implementation>(
-              std::move(stub), std::move(db), std::move(refresher))) {}
+              std::move(stub), db, std::move(refresher))) {}
 
 token_manager::token_manager(
     defer_pump_start_t,
     std::unique_ptr<AuthService::StubInterface> stub,
-    std::unique_ptr<database> db,
+    database& db,
     std::unique_ptr<token_refresher> refresher)
     : _implementation(
           std::make_unique<implementation>(
-              defer_pump_start,
-              std::move(stub),
-              std::move(db),
-              std::move(refresher))) {}
+              defer_pump_start, std::move(stub), db, std::move(refresher))) {}
 
 token_manager::~token_manager() = default;
 

@@ -10,8 +10,8 @@ cc_library(
         "//api/schwab:oauth",
         "//net:connect",
         "//services:database",
-        "//services/db:make_database",
         "//services/oauth/proto:auth_service_cc_grpc",
+        "//services/registry",
         "//time:conversion",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
@@ -61,6 +61,7 @@ cc_library(
     hdrs = ["database.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":service_base",
         "//data:analyzer",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",

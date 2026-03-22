@@ -5,8 +5,8 @@
 
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
-#include "services/security.h"
 #include "services/registry/registry.h"
+#include "services/security.h"
 #include "json/value.h"
 
 ABSL_FLAG(std::string, schwab_api_key_id, "", "API key ID for Schwab.");

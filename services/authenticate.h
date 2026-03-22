@@ -5,6 +5,7 @@
 #include <string>
 
 #include "api/schwab/oauth.h"
+#include "services/database.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 
 namespace howling {
@@ -29,13 +30,13 @@ public:
 
   token_manager(
       std::unique_ptr<AuthService::StubInterface> stub,
-      std::unique_ptr<database> db,
+      database& db,
       std::unique_ptr<token_refresher> refresher);
 
   token_manager(
       defer_pump_start_t,
       std::unique_ptr<AuthService::StubInterface> stub,
-      std::unique_ptr<database> db,
+      database& db,
       std::unique_ptr<token_refresher> refresher);
 
   ~token_manager();

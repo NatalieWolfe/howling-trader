@@ -9,4 +9,4 @@ namespace howling {
  */
 void clear_service_registry_cache();
 
-}
+} // namespace howling

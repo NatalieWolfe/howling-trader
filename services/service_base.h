@@ -10,4 +10,4 @@ protected:
   service() = default;
 };
 
-}
+} // namespace howling

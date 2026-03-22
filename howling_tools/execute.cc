@@ -24,8 +24,9 @@
 #include "environment/configuration.h"
 #include "environment/init.h"
 #include "services/database.h"
-#include "services/db/make_database.h"
+#include "services/db/register.h"
 #include "services/market_watch.h"
+#include "services/registry/registry.h"
 #include "services/security/register.h"
 #include "time/conversion.h"
 #include "trading/executor.h"
@@ -177,6 +178,7 @@ void run() {
   stock::Symbol followed_stock = symbols.front();
 
   security::register_security_client();
+  register_database_client();
   schwab::fetch_schwab_secrets();
 
   execution_printer printer;
@@ -185,7 +187,7 @@ void run() {
   executor e{state};
 
   auto watcher = std::make_unique<market_watch>();
-  std::unique_ptr<database> db = make_database();
+  database& db = registry::get_service<database>();
 
   std::thread candle_streamer([&]() {
     auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));
@@ -219,7 +221,7 @@ void run() {
         record.set_quantity(trade->quantity);
         record.set_confidence(d.confidence);
         record.set_dry_run(!absl::GetFlag(FLAGS_use_real_money));
-        db->save_trade(record);
+        db.save_trade(record);
       }
 
       if (symbol == followed_stock && !absl::GetFlag(FLAGS_headless)) {
@@ -240,13 +242,13 @@ void run() {
 
   std::thread candle_saver([&]() {
     for (const auto& [symbol, candle] : watcher->candle_stream()) {
-      db->save(symbol, candle).get();
+      db.save(symbol, candle).get();
     }
   });
 
   std::thread market_saver([&]() {
     for (const Market& market : watcher->market_stream()) {
-      db->save(market).get();
+      db.save(market).get();
     }
   });
 

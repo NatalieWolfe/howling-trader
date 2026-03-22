@@ -1,4 +1,4 @@
-#include "services/db/make_database.h"
+#include "services/db/register.h"
 
 #include <memory>
 #include <string>
@@ -8,7 +8,7 @@
 #include "services/database.h"
 #include "services/db/postgres_database.h"
 #include "services/db/sqlite_database.h"
-#include "services/registry/registry.h"
+#include "services/registry/register_service.h"
 #include "services/security.h"
 
 ABSL_FLAG(
@@ -41,8 +41,8 @@ ABSL_FLAG(
 namespace howling {
 namespace {
 
-void fetch_db_secrets_internal(std::string_view path) {
-  auto& security = registry::get_service<security_client>();
+void fetch_db_secrets_internal(
+    security_client& security, std::string_view path) {
   if (absl::GetFlag(FLAGS_pg_user) != "postgres" ||
       absl::GetFlag(FLAGS_pg_password) != "password") {
     LOG(INFO) << "Database secrets already provided via flags, skipping "
@@ -60,16 +60,19 @@ void fetch_db_secrets_internal(std::string_view path) {
   }
 }
 
-void fetch_database_secrets() {
-  fetch_db_secrets_internal("howling/prod/database");
+void fetch_database_secrets(security_client& security) {
+  fetch_db_secrets_internal(security, "howling/prod/database");
 }
 
-void fetch_admin_database_secrets() {
-  fetch_db_secrets_internal("howling/admin/database");
+void fetch_admin_database_secrets(security_client& security) {
+  fetch_db_secrets_internal(security, "howling/admin/database");
 }
 
-std::unique_ptr<database> make_database_internal() {
-  auto& security = registry::get_service<security_client>();
+std::unique_ptr<database> database_client_factory(security_client& security) {
+  // TODO: Add a database connection pool. The pool should check that
+  // connections are still valid before passing them to callers. The connection
+  // should auto-release back to the pool upon destruction.
+
   if (absl::GetFlag(FLAGS_database) == "postgres") {
     bool encrypt = absl::GetFlag(FLAGS_pg_enable_encryption);
     LOG(INFO) << "Connecting to postgres database \""
@@ -92,16 +95,30 @@ std::unique_ptr<database> make_database_internal() {
 
 } // namespace
 
-std::unique_ptr<database> make_database() {
-  if (absl::GetFlag(FLAGS_database) == "postgres") fetch_database_secrets();
-  return make_database_internal();
+void register_database_client() {
+  registry::register_service_factory(
+      [](security_client& security) -> std::unique_ptr<database> {
+        if (absl::GetFlag(FLAGS_database) == "postgres") {
+          fetch_database_secrets(security);
+        }
+        LOG(INFO) << "Initializing database connection.";
+        auto db = database_client_factory(security);
+        db->check_schema_version().get();
+        return db;
+      });
 }
 
-std::unique_ptr<database> make_database(use_admin_database_account_t) {
-  if (absl::GetFlag(FLAGS_database) == "postgres") {
-    fetch_admin_database_secrets();
-  }
-  return make_database_internal();
+void register_database_client(use_admin_database_account_t) {
+  registry::register_service_factory(
+      [](security_client& security) -> std::unique_ptr<database> {
+        if (absl::GetFlag(FLAGS_database) == "postgres") {
+          fetch_admin_database_secrets(security);
+        }
+        // Admin does not automatically check the schema version because it may
+        // be used to perform schema upgrades.
+        LOG(INFO) << "Initializing admin database connection.";
+        return database_client_factory(security);
+      });
 }
 
 } // namespace howling

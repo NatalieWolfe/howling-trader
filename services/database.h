@@ -11,11 +11,11 @@
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "data/trade.pb.h"
-#include "services/security.h"
+#include "services/service_base.h"
 
 namespace howling {
 
-class database {
+class database : public service {
 public:
   virtual ~database() = default;
 

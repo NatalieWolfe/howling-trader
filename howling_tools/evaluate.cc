@@ -20,7 +20,8 @@
 #include "environment/init.h"
 #include "environment/runfiles.h"
 #include "services/database.h"
-#include "services/db/make_database.h"
+#include "services/db/register.h"
+#include "services/registry/registry.h"
 #include "services/security/register.h"
 #include "time/conversion.h"
 #include "trading/metrics.h"
@@ -72,10 +73,11 @@ struct day_data {
 std::generator<day_data> get_days(stock::Symbol symbol) {
   if (absl::GetFlag(FLAGS_use_database)) {
     security::register_security_client();
-    auto db = make_database();
+    register_database_client();
     vector<Candle> day_candles;
     std::string day_name;
-    for (const Candle& candle : db->read_candles(symbol)) {
+    for (const Candle& candle :
+         registry::get_service<database>().read_candles(symbol)) {
       std::string current_day = std::format(
           "{:%F}",
           std::chrono::floor<std::chrono::days>(
