@@ -198,6 +198,7 @@ cc_library(
         "//net:connect",
         "//services:database",
         "//services:security",
+        "//services/db/schema:auth_token",
         "@abseil-cpp//absl/log",
         "@boost.asio",
         "@boost.beast",

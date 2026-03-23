@@ -25,21 +25,26 @@
 #include "boost/beast/http/verb.hpp"
 #include "boost/beast/http/write.hpp"
 #include "boost/url/url_view.hpp"
+#include "services/database.h"
+#include "services/db/schema/auth_token.h"
 #include "services/oauth/oauth_exchanger.h"
 
 namespace howling {
+namespace {
 
 namespace asio = ::boost::asio;
 namespace beast = ::boost::beast;
 namespace http = ::boost::beast::http;
 namespace urls = ::boost::urls;
 
+using ::std::chrono::system_clock;
+
 using http_response =
     ::boost::beast::http::response<::boost::beast::http::dynamic_body>;
 using http_request =
     ::boost::beast::http::request<::boost::beast::http::dynamic_body>;
 
-namespace {
+constexpr system_clock::duration NOTICE_TTL = std::chrono::minutes(30);
 
 class oauth_http_connection :
     public std::enable_shared_from_this<oauth_http_connection> {
@@ -151,6 +156,30 @@ private:
   }
 
   void _get_schwab_oauth_callback(const urls::url_view& url_view) {
+    // Confirm the state matches an unexpired notice token.
+    auto state_itr = url_view.params().find("state");
+    if (state_itr == url_view.params().end() || (*state_itr).value.empty()) {
+      _response.result(http::status::bad_request);
+      _response.set(http::field::content_type, "text/plain");
+      beast::ostream(_response.body()) << "Missing state.\n";
+      return;
+    }
+    std::optional<storage::auth_token> db_token =
+        _db.get_auth_token("schwab").get();
+    if (!db_token || db_token->notice_token != (*state_itr).value) {
+      _response.result(http::status::not_found);
+      _response.set(http::field::content_type, "text/plain");
+      beast::ostream(_response.body()) << "Not found.\n";
+      return;
+    }
+    if (!db_token->last_notified_at ||
+        *db_token->last_notified_at + NOTICE_TTL < system_clock::now()) {
+      _response.result(http::status::bad_request);
+      _response.set(http::field::content_type, "text/plain");
+      beast::ostream(_response.body()) << "State is expired.\n";
+      return;
+    }
+
     auto code_itr = url_view.params().find("code");
     if (code_itr == url_view.params().end() || (*code_itr).value.empty()) {
       _response.result(http::status::bad_request);
@@ -158,12 +187,10 @@ private:
       beast::ostream(_response.body()) << "Missing code.\n";
       return;
     }
-
     LOG(INFO) << "Received OAuth code";
 
     schwab::oauth_tokens tokens = _exchanger->exchange((*code_itr).value);
     _db.save_refresh_token("schwab", tokens.refresh_token).get();
-
     _response.result(http::status::ok);
     _response.set(http::field::content_type, "text/plain");
     beast::ostream(_response.body())

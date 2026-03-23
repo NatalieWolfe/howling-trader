@@ -608,14 +608,16 @@ std::future<void> postgres_database::_prepare_queries() {
               ) VALUES ($1, $2, $3, $4, $5, $6, $7))sql"));
 
     _implementation->prepared_queries.emplace(
-        "refresh_token_insert",
+        "save_refresh_token",
         query::prepare<std::string_view, bytes>(
             *_implementation->conn,
             R"sql(
-              INSERT INTO auth_tokens (service_name, refresh_token, updated_at)
-              VALUES ($1, $2, CURRENT_TIMESTAMP)
+              INSERT INTO auth_tokens (
+                service_name, refresh_token, notice_token, updated_at
+              ) VALUES ($1, $2, NULL, CURRENT_TIMESTAMP)
               ON CONFLICT (service_name) DO UPDATE SET
                 refresh_token = EXCLUDED.refresh_token,
+                notice_token = EXCLUDED.notice_token,
                 updated_at = EXCLUDED.updated_at)sql"));
 
     _implementation->prepared_queries.emplace(
@@ -719,7 +721,7 @@ std::future<void> postgres_database::save_refresh_token(
     std::string_view service_name, std::string_view token) {
   std::promise<void> p;
   try {
-    query& q = *_implementation->prepared_queries.at("refresh_token_insert");
+    query& q = *_implementation->prepared_queries.at("save_refresh_token");
     q.bind_all(
         service_name,
         bytes{_implementation->security->encrypt(

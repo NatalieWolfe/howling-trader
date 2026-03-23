@@ -449,10 +449,11 @@ std::future<void> sqlite_database::save_refresh_token(
   try {
     query q{*_db, query::single_use, R"sql(
       INSERT INTO auth_tokens (
-        service_name, refresh_token, updated_at
-      ) VALUES (?1, ?2, CURRENT_TIMESTAMP)
+        service_name, refresh_token, notice_token, updated_at
+      ) VALUES (?1, ?2, NULL, CURRENT_TIMESTAMP)
       ON CONFLICT (service_name) DO UPDATE SET
         refresh_token = EXCLUDED.refresh_token,
+        notice_token = EXCLUDED.notice_token,
         updated_at = EXCLUDED.updated_at)sql"};
     q.bind_all(
         service_name,
