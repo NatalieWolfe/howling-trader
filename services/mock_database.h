@@ -2,10 +2,12 @@
 
 #include <future>
 #include <generator>
+#include <optional>
 #include <string>
 #include <string_view>
 
 #include "services/database.h"
+#include "services/db/schema/auth_token.h"
 #include "gmock/gmock.h"
 
 namespace howling {
@@ -45,21 +47,16 @@ public:
       read_trades,
       (stock::Symbol symbol),
       (override));
-  MOCK_METHOD(
-      std::future<std::string>,
-      read_refresh_token,
-      (std::string_view service_name),
-      (override));
 
   MOCK_METHOD(
-      (std::future<std::optional<std::chrono::system_clock::time_point>>),
-      get_last_notified_at,
+      std::future<std::optional<storage::auth_token>>,
+      get_auth_token,
       (std::string_view service_name),
       (override));
   MOCK_METHOD(
       std::future<void>,
-      update_last_notified_at,
-      (std::string_view service_name),
+      save_notice_token,
+      (std::string_view service_name, std::string_view notice_token),
       (override));
 };
 

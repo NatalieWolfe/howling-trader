@@ -52,18 +52,17 @@ protected:
   std::generator<trading::TradeRecord> read_trades(stock::Symbol symbol) {
     return db().read_trades(symbol);
   }
-  std::string read_refresh_token(std::string_view service_name) {
-    return db().read_refresh_token(service_name).get();
+
+  std::optional<storage::auth_token>
+  get_auth_token(std::string_view service_name) {
+    return db().get_auth_token(service_name).get();
   }
-  std::optional<std::chrono::system_clock::time_point>
-  get_last_notified_at(std::string_view service_name) {
-    return db().get_last_notified_at(service_name).get();
-  }
-  void update_last_notified_at(std::string_view service_name) {
-    db().update_last_notified_at(service_name).get();
+  void save_notice_token(
+      std::string_view service_name, std::string_view notice_token) {
+    db().save_notice_token(service_name, notice_token).get();
   }
 
-  mock_security_client* _mock_security = nullptr;
+  mock_security_client _mock_security;
 };
 
 // TODO: Add `check_schema_version` tests. Requires having a database reset
@@ -196,30 +195,40 @@ protected:
     std::string service = "schwab";                                            \
     std::string token = "my_secret_token";                                     \
     std::string encrypted = "vault:v1:encrypted";                              \
-    EXPECT_CALL(*_mock_security, encrypt("test_key_name", token))              \
+    EXPECT_CALL(_mock_security, encrypt("test_key_name", token))               \
         .WillOnce(testing::Return(encrypted));                                 \
-    EXPECT_CALL(*_mock_security, decrypt("test_key_name", encrypted))          \
+    EXPECT_CALL(_mock_security, decrypt("test_key_name", encrypted))           \
         .WillOnce(testing::Return(token));                                     \
     save_refresh_token(service, token);                                        \
-    EXPECT_EQ(read_refresh_token(service), token);                             \
+    EXPECT_EQ(get_auth_token(service)->refresh_token, token);                  \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, ReadingMissingRefreshTokenReturnsEmpty) {              \
     upgrade_schema();                                                          \
-    EXPECT_EQ(read_refresh_token("missing_service"), "");                      \
+    EXPECT_EQ(get_auth_token("missing_service"), std::nullopt);                \
   }                                                                            \
   TEST_F(FIXTURE_CLASS, CanRecordAndReadNotificationTime) {                    \
     upgrade_schema();                                                          \
     std::string service = "schwab";                                            \
-    EXPECT_CALL(*_mock_security, encrypt("test_key_name", "token"))            \
+    EXPECT_CALL(_mock_security, encrypt("test_key_name", "token"))             \
         .WillOnce(testing::Return("encrypted"));                               \
     save_refresh_token(service, "token");                                      \
-    EXPECT_FALSE(get_last_notified_at(service).has_value());                   \
-    update_last_notified_at(service);                                          \
-    auto last_notified = get_last_notified_at(service);                        \
-    ASSERT_TRUE(last_notified.has_value());                                    \
-    EXPECT_LT(                                                                 \
-        std::chrono::system_clock::now() - *last_notified,                     \
-        std::chrono::seconds(10));                                             \
+    EXPECT_FALSE(get_auth_token(service)->last_notified_at.has_value());       \
+    save_notice_token(service, "notice token");                                \
+    EXPECT_THAT(                                                               \
+        get_auth_token(service),                                               \
+        testing::Optional(                                                     \
+            testing::AllOf(                                                    \
+                testing::Field(                                                \
+                    "notice_token",                                            \
+                    &storage::auth_token::notice_token,                        \
+                    testing::Optional(testing::Eq("notice token"))),           \
+                testing::Field(                                                \
+                    "last_notified_at",                                        \
+                    &storage::auth_token::last_notified_at,                    \
+                    testing::Optional(                                         \
+                        testing::Gt(                                           \
+                            std::chrono::system_clock::now() -                 \
+                            std::chrono::seconds(10)))))));                    \
   }
 
 } // namespace howling

@@ -10,6 +10,7 @@
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "services/database.h"
+#include "services/db/schema/auth_token.h"
 #include "services/security.h"
 #include "sqlite3.h"
 
@@ -17,7 +18,7 @@ namespace howling {
 
 class sqlite_database : public database {
 public:
-  sqlite_database(std::unique_ptr<security_client> security);
+  sqlite_database(security_client& security);
   ~sqlite_database();
 
   std::future<void> upgrade_schema(std::string_view /*app_db_user*/) override;
@@ -33,19 +34,17 @@ public:
   std::generator<Market> read_market(stock::Symbol symbol) override;
   std::generator<trading::TradeRecord>
   read_trades(stock::Symbol symbol) override;
-  std::future<std::string>
-  read_refresh_token(std::string_view service_name) override;
 
-  std::future<std::optional<std::chrono::system_clock::time_point>>
-  get_last_notified_at(std::string_view service_name) override;
-  std::future<void>
-  update_last_notified_at(std::string_view service_name) override;
+  std::future<std::optional<storage::auth_token>>
+  get_auth_token(std::string_view service_name) override;
+  std::future<void> save_notice_token(
+      std::string_view service_name, std::string_view notice_token) override;
 
 private:
   void _check(int code, std::source_location loc = {});
 
   sqlite3* _db = nullptr;
-  std::unique_ptr<security_client> _security;
+  security_client& _security;
 };
 
 } // namespace howling

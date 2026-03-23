@@ -10,9 +10,9 @@ cc_library(
         "//api/schwab:oauth",
         "//net:connect",
         "//services:database",
-        "//services/db:make_database",
+        "//services/db/schema:auth_token",
         "//services/oauth/proto:auth_service_cc_grpc",
-        "//services/security:bao_client",
+        "//services/registry",
         "//time:conversion",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
@@ -29,6 +29,7 @@ cc_test(
         ":mock_database",
         ":mock_security",
         ":mock_token_refresher",
+        "//services/db/schema:auth_token",
         "//services/oauth:mock_auth_service",
         "//services/oauth/proto:auth_service_cc_grpc",
         "@abseil-cpp//absl/flags:flag",
@@ -62,11 +63,13 @@ cc_library(
     hdrs = ["database.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":service_base",
         "//data:analyzer",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
         "//data:trade_cc_proto",
+        "//services/db/schema:auth_token",
     ],
 )
 
@@ -100,7 +103,10 @@ cc_library(
     name = "security",
     hdrs = ["security.h"],
     visibility = ["//visibility:public"],
-    deps = ["@jsoncpp"],
+    deps = [
+        ":service_base",
+        "@jsoncpp",
+    ],
 )
 
 cc_library(
@@ -112,4 +118,10 @@ cc_library(
         ":security",
         "@googletest//:gtest",
     ],
+)
+
+cc_library(
+    name = "service_base",
+    hdrs = ["service_base.h"],
+    visibility = ["//services:__subpackages__"],
 )

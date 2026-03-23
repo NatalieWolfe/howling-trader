@@ -10,6 +10,7 @@
 #include "absl/time/time.h"
 #include "google/protobuf/empty.pb.h"
 #include "grpcpp/grpcpp.h"
+#include "services/db/schema/auth_token.h"
 #include "services/mock_database.h"
 #include "services/mock_token_refresher.h"
 #include "services/oauth/mock_auth_service.h"
@@ -35,16 +36,14 @@ protected:
     absl::SetFlag(&FLAGS_auth_token_pump_period, absl::Milliseconds(100));
 
     auto stub = std::make_unique<mock_auth_service_stub>();
-    auto db = std::make_unique<mock_database>();
     auto refresher = std::make_unique<mock_token_refresher>();
     _stub = stub.get();
-    _db = db.get();
     _refresher = refresher.get();
 
-    ON_CALL(*_db, read_refresh_token("schwab"))
+    ON_CALL(_db, get_auth_token("schwab"))
         .WillByDefault(InvokeWithoutArgs([]() {
-          std::promise<std::string> p;
-          p.set_value("");
+          std::promise<std::optional<storage::auth_token>> p;
+          p.set_value(std::nullopt);
           return p.get_future();
         }));
 
@@ -52,21 +51,20 @@ protected:
         .WillByDefault(Return(grpc::Status::OK));
 
     _manager = std::make_unique<token_manager>(
-        defer_pump_start, std::move(stub), std::move(db), std::move(refresher));
+        defer_pump_start, std::move(stub), _db, std::move(refresher));
   }
 
   mock_auth_service_stub* _stub;
-  mock_database* _db;
+  mock_database _db;
   mock_token_refresher* _refresher;
   std::unique_ptr<token_manager> _manager;
 };
 
 TEST_F(AuthenticateTest, GetBearerTokenFromCache) {
   // First call to populate cache.
-  std::promise<std::string> p;
-  p.set_value("refresh_token_1");
-  EXPECT_CALL(*_db, read_refresh_token("schwab"))
-      .WillOnce(Return(p.get_future()));
+  std::promise<std::optional<storage::auth_token>> p;
+  p.set_value(storage::auth_token{.refresh_token = "refresh_token_1"});
+  EXPECT_CALL(_db, get_auth_token("schwab")).WillOnce(Return(p.get_future()));
 
   EXPECT_CALL(*_refresher, refresh_tokens("refresh_token_1"))
       .WillOnce(Return(
@@ -83,10 +81,9 @@ TEST_F(AuthenticateTest, GetBearerTokenFromCache) {
 }
 
 TEST_F(AuthenticateTest, GetBearerTokenRefreshesWhenExpired) {
-  std::promise<std::string> p1;
-  p1.set_value("refresh_token_1");
-  EXPECT_CALL(*_db, read_refresh_token("schwab"))
-      .WillOnce(Return(p1.get_future()));
+  std::promise<std::optional<storage::auth_token>> p1;
+  p1.set_value(storage::auth_token{.refresh_token = "refresh_token_1"});
+  EXPECT_CALL(_db, get_auth_token("schwab")).WillOnce(Return(p1.get_future()));
 
   EXPECT_CALL(*_refresher, refresh_tokens("refresh_token_1"))
       .WillOnce(Return(
@@ -99,12 +96,11 @@ TEST_F(AuthenticateTest, GetBearerTokenRefreshesWhenExpired) {
   EXPECT_EQ(_manager->get_bearer_token(), "access_token_1");
 
   // Force clear cache
-  EXPECT_CALL(*_db, read_refresh_token("schwab"))
-      .WillOnce([&](std::string_view) {
-        std::promise<std::string> p;
-        p.set_value("refresh_token_2");
-        return p.get_future();
-      });
+  EXPECT_CALL(_db, get_auth_token("schwab")).WillOnce([&](std::string_view) {
+    std::promise<std::optional<storage::auth_token>> p;
+    p.set_value(storage::auth_token{.refresh_token = "refresh_token_2"});
+    return p.get_future();
+  });
 
   EXPECT_CALL(*_refresher, refresh_tokens("refresh_token_2"))
       .WillOnce(Return(
@@ -117,15 +113,15 @@ TEST_F(AuthenticateTest, GetBearerTokenRefreshesWhenExpired) {
 }
 
 TEST_F(AuthenticateTest, RequestLoginWhenNoRefreshToken) {
-  EXPECT_CALL(*_db, read_refresh_token("schwab"))
+  EXPECT_CALL(_db, get_auth_token("schwab"))
       .WillOnce([](std::string_view) {
-        std::promise<std::string> p;
-        p.set_value("");
+        std::promise<std::optional<storage::auth_token>> p;
+        p.set_value(std::nullopt);
         return p.get_future();
       })
       .WillOnce([](std::string_view) {
-        std::promise<std::string> p;
-        p.set_value("new_refresh_token");
+        std::promise<std::optional<storage::auth_token>> p;
+        p.set_value(storage::auth_token{.refresh_token = "new_refresh_token"});
         return p.get_future();
       });
 
@@ -143,10 +139,9 @@ TEST_F(AuthenticateTest, RequestLoginWhenNoRefreshToken) {
 }
 
 TEST_F(AuthenticateTest, UpdatesRefreshTokenIfChanged) {
-  std::promise<std::string> p;
-  p.set_value("old_refresh_token");
-  EXPECT_CALL(*_db, read_refresh_token("schwab"))
-      .WillOnce(Return(p.get_future()));
+  std::promise<std::optional<storage::auth_token>> p;
+  p.set_value(storage::auth_token{.refresh_token = "old_refresh_token"});
+  EXPECT_CALL(_db, get_auth_token("schwab")).WillOnce(Return(p.get_future()));
 
   EXPECT_CALL(*_refresher, refresh_tokens("old_refresh_token"))
       .WillOnce(Return(
@@ -157,7 +152,7 @@ TEST_F(AuthenticateTest, UpdatesRefreshTokenIfChanged) {
 
   std::promise<void> save_p;
   save_p.set_value();
-  EXPECT_CALL(*_db, save_refresh_token("schwab", "new_refresh_token"))
+  EXPECT_CALL(_db, save_refresh_token("schwab", "new_refresh_token"))
       .WillOnce(Return(save_p.get_future()));
 
   _manager->start_pump(); // Only necessary when pump start is deferred.
@@ -165,10 +160,10 @@ TEST_F(AuthenticateTest, UpdatesRefreshTokenIfChanged) {
 }
 
 TEST_F(AuthenticateTest, TimeoutsWhenNoTokenAvailable) {
-  EXPECT_CALL(*_db, read_refresh_token("schwab"))
+  EXPECT_CALL(_db, get_auth_token("schwab"))
       .WillRepeatedly([](std::string_view) {
-        std::promise<std::string> p;
-        p.set_value("");
+        std::promise<std::optional<storage::auth_token>> p;
+        p.set_value(std::nullopt);
         return p.get_future();
       });
 

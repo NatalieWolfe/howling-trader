@@ -102,13 +102,14 @@ resource "kubernetes_job" "db_bootstrap" {
         restart_policy = "OnFailure"
       }
     }
-    backoff_limit = 4
+    backoff_limit              = 4
+    ttl_seconds_after_finished = 3600 * 24 # 24 hours in seconds.
   }
 
   wait_for_completion = true
 
   timeouts {
-    create = "10m"
+    create = "30m"
     update = "10m"
   }
 }

@@ -4,6 +4,7 @@
 #include <string>
 #include <string_view>
 
+#include "services/service_base.h"
 #include "json/value.h"
 
 namespace howling {
@@ -14,7 +15,7 @@ namespace howling {
  * This interface provides methods for interacting with a security backend
  * (like OpenBao) for secret retrieval and encryption/decryption.
  */
-class security_client {
+class security_client : public service {
 public:
   virtual ~security_client() = default;
 

@@ -4,6 +4,7 @@
 #include <chrono>
 #include <future>
 #include <memory>
+#include <optional>
 #include <string>
 #include <thread>
 
@@ -17,6 +18,7 @@
 #include "services/authenticate.h"
 #include "services/authenticate_test_utils.h"
 #include "services/database.h"
+#include "services/db/schema/auth_token.h"
 #include "services/mock_database.h"
 #include "services/mock_token_refresher.h"
 #include "services/oauth/mock_auth_service.h"
@@ -33,7 +35,9 @@ namespace asio = ::boost::asio;
 namespace beast = ::boost::beast;
 namespace http = ::boost::beast::http;
 
+using ::std::chrono::system_clock;
 using ::testing::_;
+using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
 
 using http_response =
@@ -52,23 +56,27 @@ struct test_server {
 
     auto stub = std::make_unique<mock_auth_service_stub>();
     auto refresher = std::make_unique<mock_token_refresher>();
-    auto mock_db = std::make_unique<mock_database>();
-    db = mock_db.get();
 
     token_man = std::make_unique<token_manager>(
-        defer_pump_start,
-        std::move(stub),
-        std::move(mock_db),
-        std::move(refresher));
+        defer_pump_start, std::move(stub), db, std::move(refresher));
     set_test_token_manager(*token_man);
 
     exchanger = oauth_exchanger.get();
     service = std::make_unique<oauth_http_service>(
-        ioc, port, *db, std::move(oauth_exchanger));
+        ioc, port, db, std::move(oauth_exchanger));
     service->start();
     server_thread = std::jthread([this]() { ioc.run(); });
     // Give the server a moment to start and enter the accept loop.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    ON_CALL(db, get_auth_token(_)).WillByDefault(InvokeWithoutArgs([]() {
+      std::promise<std::optional<storage::auth_token>> p;
+      p.set_value(
+          storage::auth_token{
+              .notice_token = "state",
+              .last_notified_at = system_clock::now()});
+      return p.get_future();
+    }));
   }
 
   ~test_server() {
@@ -79,7 +87,7 @@ struct test_server {
 
   asio::io_context ioc;
   unsigned short port;
-  mock_database* db;
+  mock_database db;
   mock_oauth_exchanger* exchanger;
   std::unique_ptr<token_manager> token_man;
   std::unique_ptr<oauth_http_service> service;
@@ -128,7 +136,7 @@ TEST_F(SchwabOauthCallbackTest, ReturnsOkAndStoresToken) {
 
   std::promise<void> save_promise;
   std::future<void> save_future = save_promise.get_future();
-  EXPECT_CALL(*server.db, save_refresh_token("schwab", "refresh"))
+  EXPECT_CALL(server.db, save_refresh_token("schwab", "refresh"))
       .WillOnce([&](std::string_view, std::string_view) {
         save_promise.set_value();
         std::promise<void> p;
@@ -137,7 +145,7 @@ TEST_F(SchwabOauthCallbackTest, ReturnsOkAndStoresToken) {
       });
 
   http::request<http::string_body> req{
-      http::verb::get, "/schwab/oauth-callback?code=test_code", 11};
+      http::verb::get, "/schwab/oauth-callback?code=test_code&state=state", 11};
   req.set(http::field::host, "127.0.0.1");
   req.set(http::field::user_agent, "test-client");
 
@@ -156,12 +164,95 @@ TEST_F(SchwabOauthCallbackTest, ReturnsOkAndStoresToken) {
       save_future.wait_for(std::chrono::seconds(1)), std::future_status::ready);
 }
 
+TEST_F(SchwabOauthCallbackTest, MissingStateReturnsBadRequest) {
+  test_server server;
+  test_client client{server.port};
+
+  http::request<http::string_body> req{
+      http::verb::get, "/schwab/oauth-callback?code=test_code", 11};
+  req.set(http::field::host, "127.0.0.1");
+
+  http::write(client.stream, req);
+
+  beast::flat_buffer buffer;
+  http::response<http::string_body> res;
+  http::read(client.stream, buffer, res);
+
+  EXPECT_EQ(res.result(), http::status::bad_request);
+}
+
+TEST_F(SchwabOauthCallbackTest, WrongStateReturnsNotFound) {
+  test_server server;
+  test_client client{server.port};
+
+  http::request<http::string_body> req{
+      http::verb::get, "/schwab/oauth-callback?code=test_code&state=wrong", 11};
+  req.set(http::field::host, "127.0.0.1");
+
+  http::write(client.stream, req);
+
+  beast::flat_buffer buffer;
+  http::response<http::string_body> res;
+  http::read(client.stream, buffer, res);
+
+  EXPECT_EQ(res.result(), http::status::not_found);
+}
+
+TEST_F(SchwabOauthCallbackTest, NoSavedStateReturnsNotFound) {
+  test_server server;
+  test_client client{server.port};
+
+  EXPECT_CALL(server.db, get_auth_token(_)).WillOnce([](std::string_view) {
+    std::promise<std::optional<storage::auth_token>> p;
+    p.set_value(std::nullopt);
+    return p.get_future();
+  });
+
+  http::request<http::string_body> req{
+      http::verb::get, "/schwab/oauth-callback?code=test_code&state=state", 11};
+  req.set(http::field::host, "127.0.0.1");
+
+  http::write(client.stream, req);
+
+  beast::flat_buffer buffer;
+  http::response<http::string_body> res;
+  http::read(client.stream, buffer, res);
+
+  EXPECT_EQ(res.result(), http::status::not_found);
+}
+
+TEST_F(SchwabOauthCallbackTest, ExpiredStateReturnsBadRequest) {
+  test_server server;
+  test_client client{server.port};
+
+  EXPECT_CALL(server.db, get_auth_token(_)).WillOnce([](std::string_view) {
+    std::promise<std::optional<storage::auth_token>> p;
+    p.set_value(
+        storage::auth_token{
+            .notice_token = "state",
+            .last_notified_at = system_clock::now() - std::chrono::hours(48)});
+    return p.get_future();
+  });
+
+  http::request<http::string_body> req{
+      http::verb::get, "/schwab/oauth-callback?code=test_code&state=state", 11};
+  req.set(http::field::host, "127.0.0.1");
+
+  http::write(client.stream, req);
+
+  beast::flat_buffer buffer;
+  http::response<http::string_body> res;
+  http::read(client.stream, buffer, res);
+
+  EXPECT_EQ(res.result(), http::status::bad_request);
+}
+
 TEST_F(SchwabOauthCallbackTest, MissingCodeReturnsBadRequest) {
   test_server server;
   test_client client{server.port};
 
   http::request<http::string_body> req{
-      http::verb::get, "/schwab/oauth-callback", 11};
+      http::verb::get, "/schwab/oauth-callback?state=state", 11};
   req.set(http::field::host, "127.0.0.1");
 
   http::write(client.stream, req);

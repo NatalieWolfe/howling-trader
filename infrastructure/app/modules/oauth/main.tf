@@ -210,7 +210,7 @@ resource "kubernetes_cron_job_v1" "auth_refresh" {
       metadata {}
       spec {
         backoff_limit              = 10
-        ttl_seconds_after_finished = 3600 * 12 # 12 hours in seconds
+        ttl_seconds_after_finished = 3600 * 24 # 24 hours in seconds
 
         template {
           metadata {
@@ -248,3 +248,12 @@ resource "kubernetes_cron_job_v1" "auth_refresh" {
     }
   }
 }
+
+# 4. Verification Plan (Part 3)
+#  * Dry Run: Trigger the CronJob manually using
+#    kubectl create job --from=cronjob/howling-auth-refresh.
+#  * Log Verification: Check logs to confirm:
+#      * OpenBao proxy starts and authenticates successfully.
+#      * refresh_token is retrieved and decrypted.
+#      * New token is saved to Postgres.
+#  * Failure Test: Temporarily point --pg_host to a non-existent host and verify the gRPC call to howling-oauth is attempted and logged.

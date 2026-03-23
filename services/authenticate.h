@@ -5,14 +5,17 @@
 #include <string>
 
 #include "api/schwab/oauth.h"
+#include "services/database.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 
 namespace howling {
 
 class database;
 
-struct defer_pump_start_t {};
-static constexpr defer_pump_start_t defer_pump_start{};
+struct defer_pump_start_t {
+  explicit defer_pump_start_t() = default;
+};
+inline constexpr defer_pump_start_t defer_pump_start{};
 
 class token_refresher {
 public:
@@ -27,13 +30,13 @@ public:
 
   token_manager(
       std::unique_ptr<AuthService::StubInterface> stub,
-      std::unique_ptr<database> db,
+      database& db,
       std::unique_ptr<token_refresher> refresher);
 
   token_manager(
       defer_pump_start_t,
       std::unique_ptr<AuthService::StubInterface> stub,
-      std::unique_ptr<database> db,
+      database& db,
       std::unique_ptr<token_refresher> refresher);
 
   ~token_manager();

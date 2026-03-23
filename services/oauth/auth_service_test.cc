@@ -11,6 +11,7 @@
 #include "grpcpp/grpcpp.h"
 #include "grpcpp/support/channel_arguments.h"
 #include "grpcpp/support/status.h"
+#include "services/db/schema/auth_token.h"
 #include "services/mock_database.h"
 #include "services/oauth/mock_telegram_server.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
@@ -21,6 +22,7 @@ namespace howling {
 namespace {
 
 using ::std::chrono::system_clock;
+using ::testing::MatchesRegex;
 using ::testing::Return;
 
 class AuthServiceTest : public ::testing::Test {
@@ -55,10 +57,9 @@ TEST_F(AuthServiceTest, RequestLoginSkipsIfNotifiedRecently) {
   google::protobuf::Empty response;
   grpc::ClientContext context;
 
-  std::promise<std::optional<system_clock::time_point>> p;
-  p.set_value(system_clock::now());
-  EXPECT_CALL(_db, get_last_notified_at("schwab"))
-      .WillOnce(Return(p.get_future()));
+  std::promise<std::optional<storage::auth_token>> p;
+  p.set_value(storage::auth_token{.last_notified_at = system_clock::now()});
+  EXPECT_CALL(_db, get_auth_token("schwab")).WillOnce(Return(p.get_future()));
 
   grpc::Status status = _stub->RequestLogin(&context, request, &response);
 
@@ -74,14 +75,14 @@ TEST_F(AuthServiceTest, RequestLoginDispatchesNotificationOnFirstAttempt) {
   google::protobuf::Empty response;
   grpc::ClientContext context;
 
-  std::promise<std::optional<system_clock::time_point>> p;
+  std::promise<std::optional<storage::auth_token>> p;
   p.set_value(std::nullopt);
-  EXPECT_CALL(_db, get_last_notified_at("schwab"))
-      .WillOnce(Return(p.get_future()));
+  EXPECT_CALL(_db, get_auth_token("schwab")).WillOnce(Return(p.get_future()));
 
   std::promise<void> p_sent;
   p_sent.set_value();
-  EXPECT_CALL(_db, update_last_notified_at("schwab"))
+  EXPECT_CALL(
+      _db, save_notice_token("schwab", MatchesRegex(R"re([a-zA-Z0-9_-]{8})re")))
       .WillOnce(Return(p_sent.get_future()));
 
   grpc::Status status = _stub->RequestLogin(&context, request, &response);

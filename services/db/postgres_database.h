@@ -9,6 +9,7 @@
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "services/database.h"
+#include "services/db/schema/auth_token.h"
 #include "services/security.h"
 
 namespace howling {
@@ -24,8 +25,7 @@ struct postgres_options {
 
 class postgres_database : public database {
 public:
-  postgres_database(
-      postgres_options options, std::unique_ptr<security_client> security);
+  postgres_database(security_client& security, postgres_options options);
   ~postgres_database();
 
   std::future<void> upgrade_schema(std::string_view app_db_user) override;
@@ -42,13 +42,10 @@ public:
   std::generator<trading::TradeRecord>
   read_trades(stock::Symbol symbol) override;
 
-  std::future<std::string>
-  read_refresh_token(std::string_view service_name) override;
-
-  std::future<std::optional<std::chrono::system_clock::time_point>>
-  get_last_notified_at(std::string_view service_name) override;
-  std::future<void>
-  update_last_notified_at(std::string_view service_name) override;
+  std::future<std::optional<storage::auth_token>>
+  get_auth_token(std::string_view service_name) override;
+  std::future<void> save_notice_token(
+      std::string_view service_name, std::string_view notice_token) override;
 
 private:
   struct implementation;

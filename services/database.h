@@ -11,11 +11,12 @@
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "data/trade.pb.h"
-#include "services/security.h"
+#include "services/db/schema/auth_token.h"
+#include "services/service_base.h"
 
 namespace howling {
 
-class database {
+class database : public service {
 public:
   virtual ~database() = default;
 
@@ -47,13 +48,19 @@ public:
   virtual std::generator<Market> read_market(stock::Symbol symbol) = 0;
   virtual std::generator<trading::TradeRecord>
   read_trades(stock::Symbol symbol) = 0;
-  virtual std::future<std::string>
-  read_refresh_token(std::string_view service_name) = 0;
 
-  virtual std::future<std::optional<std::chrono::system_clock::time_point>>
-  get_last_notified_at(std::string_view service_name) = 0;
-  virtual std::future<void>
-  update_last_notified_at(std::string_view service_name) = 0;
+  /**
+   * @brief Retrieves the authorization information saved for the given service.
+   */
+  virtual std::future<std::optional<storage::auth_token>>
+  get_auth_token(std::string_view service_name) = 0;
+  /**
+   * @brief Saves the token for the authentication notification.
+   *
+   * This also updates the last_notified_at timestamp.
+   */
+  virtual std::future<void> save_notice_token(
+      std::string_view service_name, std::string_view notice_token) = 0;
 };
 
 } // namespace howling

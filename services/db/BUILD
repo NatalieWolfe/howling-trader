@@ -4,46 +4,6 @@ load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 
 cc_library(
-    name = "environment",
-    srcs = ["environment.cc"],
-    hdrs = ["environment.h"],
-    deps = ["@abseil-cpp//absl/flags:flag"],
-)
-
-cc_library(
-    name = "make_database",
-    srcs = ["make_database.cc"],
-    hdrs = ["make_database.h"],
-    visibility = ["//visibility:public"],
-    deps = [
-        ":postgres_database",
-        ":sqlite_database",
-        "//services:database",
-        "//services:security",
-        "@abseil-cpp//absl/flags:flag",
-        "@abseil-cpp//absl/log",
-    ],
-)
-
-cc_library(
-    name = "postgres_database",
-    srcs = ["postgres_database.cc"],
-    hdrs = ["postgres_database.h"],
-    deps = [
-        ":environment",
-        "//data:candle_cc_proto",
-        "//data:market_cc_proto",
-        "//data:stock_cc_proto",
-        "//services:database",
-        "//services:security",
-        "//services/db/schema",
-        "//time:conversion",
-        "@abseil-cpp//absl/log",
-        "@postgres//:libpq",
-    ],
-)
-
-cc_library(
     name = "database_test_interface",
     testonly = True,
     hdrs = ["database_test_interface.h"],
@@ -58,6 +18,32 @@ cc_library(
         "@googletest//:gtest",
         "@protobuf//:duration_cc_proto",
         "@protobuf//:timestamp_cc_proto",
+    ],
+)
+
+cc_library(
+    name = "environment",
+    srcs = ["environment.cc"],
+    hdrs = ["environment.h"],
+    deps = ["@abseil-cpp//absl/flags:flag"],
+)
+
+cc_library(
+    name = "postgres_database",
+    srcs = ["postgres_database.cc"],
+    hdrs = ["postgres_database.h"],
+    deps = [
+        ":environment",
+        "//data:candle_cc_proto",
+        "//data:market_cc_proto",
+        "//data:stock_cc_proto",
+        "//services:database",
+        "//services:security",
+        "//services/db/schema",
+        "//services/db/schema:auth_token",
+        "//time:conversion",
+        "@abseil-cpp//absl/log",
+        "@postgres//:libpq",
     ],
 )
 
@@ -95,14 +81,32 @@ sh_test(
     ],
 )
 
+cc_library(
+    name = "register",
+    srcs = ["register.cc"],
+    hdrs = ["register.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":postgres_database",
+        ":sqlite_database",
+        "//services:database",
+        "//services:security",
+        "//services/registry:register_service",
+        "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/log",
+    ],
+)
+
 cc_binary(
     name = "schema_upgrade",
     srcs = ["schema_upgrade.cc"],
     visibility = ["//visibility:public"],
     deps = [
-        ":make_database",
+        ":register",
         "//environment:init",
-        "//services/security:bao_client",
+        "//services:database",
+        "//services/registry",
+        "//services/security:register",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
     ],
@@ -120,6 +124,7 @@ cc_library(
         "//services:database",
         "//services:security",
         "//services/db/schema",
+        "//services/db/schema:auth_token",
         "//strings:format",
         "//strings:parse",
         "//time:conversion",

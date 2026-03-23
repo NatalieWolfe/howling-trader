@@ -8,26 +8,24 @@
 #include "environment/init.h"
 #include "services/authenticate.h"
 #include "services/database.h"
-#include "services/db/make_database.h"
+#include "services/db/register.h"
 #include "services/oauth/auth_client.h"
-#include "services/security/bao_client.h"
+#include "services/registry/registry.h"
+#include "services/security/register.h"
 
 namespace howling {
 namespace {
 
 void run() {
-  LOG(INFO) << "Initializing security service.";
-  auto security = std::make_unique<security::bao_client>();
-  security->wait_for_ready(std::chrono::minutes(10));
-  schwab::fetch_schwab_secrets(*security);
-
-  LOG(INFO) << "Initializing database connection.";
-  std::unique_ptr<database> db = make_database(std::move(security));
-  db->check_schema_version().get();
+  security::register_security_client();
+  register_database_client();
+  schwab::fetch_schwab_secrets();
 
   LOG(INFO) << "Refreshing token.";
   token_manager token_man{
-      make_auth_service_stub(), std::move(db), /*refresher=*/nullptr};
+      make_auth_service_stub(),
+      registry::get_service<database>(),
+      /*refresher=*/nullptr};
   token_man.get_bearer_token();
 }
 
