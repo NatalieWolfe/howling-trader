@@ -199,6 +199,7 @@ jobs:
           echo "* **OAuth Ingress IP:** $(tofu output -raw oauth_ingress_ip)" >> $GITHUB_STEP_SUMMARY
           # Cluster ID is a platform output, so we need to switch directories to get it
           cd ../platform
+          tofu init -input=false
           echo "* **Kube Cluster ID:** $(tofu output -raw kube_cluster_id)" >> $GITHUB_STEP_SUMMARY
 
           tofu output kube_cluster_id
@@ -211,6 +212,7 @@ jobs:
           AWS_REGION: us-east-va
         run: |
           cd infrastructure/platform
+          tofu init -input=false
           # Extract the kubeconfig from the tofu state
           tofu output -raw kubeconfig > kubeconfig.yaml
           export KUBECONFIG=$(pwd)/kubeconfig.yaml
