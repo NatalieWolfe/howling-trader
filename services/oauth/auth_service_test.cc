@@ -22,6 +22,7 @@ namespace howling {
 namespace {
 
 using ::std::chrono::system_clock;
+using ::testing::MatchesRegex;
 using ::testing::Return;
 
 class AuthServiceTest : public ::testing::Test {
@@ -80,7 +81,8 @@ TEST_F(AuthServiceTest, RequestLoginDispatchesNotificationOnFirstAttempt) {
 
   std::promise<void> p_sent;
   p_sent.set_value();
-  EXPECT_CALL(_db, update_last_notified_at("schwab"))
+  EXPECT_CALL(
+      _db, save_notice_token("schwab", MatchesRegex(R"re([a-zA-Z0-9_-]{8})re")))
       .WillOnce(Return(p_sent.get_future()));
 
   grpc::Status status = _stub->RequestLogin(&context, request, &response);

@@ -2,11 +2,13 @@
 
 #include <chrono>
 #include <format>
+#include <random>
 #include <string>
 #include <string_view>
 
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
+#include "absl/strings/escaping.h"
 #include "api/schwab/configuration.h"
 #include "api/schwab/oauth.h"
 #include "grpcpp/server_context.h"
@@ -20,6 +22,19 @@ namespace {
 using ::std::chrono::system_clock;
 
 constexpr std::chrono::minutes NOTIFICATION_COOLING_PERIOD{15};
+
+std::string generate_notice_token() {
+  std::random_device rand;
+  union {
+    uint64_t bits;
+    char chars[8];
+  } data;
+  data.bits = rand();
+  data.bits <<= 32;
+  data.bits |= rand();
+  return absl::WebSafeBase64Escape(std::string_view{data.chars, 8})
+      .substr(0, 8);
+}
 
 bool should_notify_again(system_clock::time_point last_notified_at) {
   return system_clock::now() - last_notified_at > NOTIFICATION_COOLING_PERIOD;
@@ -43,6 +58,7 @@ grpc::Status auth_service::RequestLogin(
   }
 
   std::string login_url;
+  std::string notice_token = generate_notice_token();
   if (request->service_name() == "schwab") {
     try {
       schwab::check_schwab_flags();
@@ -51,7 +67,8 @@ grpc::Status auth_service::RequestLogin(
     }
     login_url = schwab::make_schwab_authorize_url(
         absl::GetFlag(FLAGS_schwab_api_key_id),
-        absl::GetFlag(FLAGS_schwab_oauth_redirect_url));
+        absl::GetFlag(FLAGS_schwab_oauth_redirect_url),
+        /*state=*/notice_token);
   } else {
     return grpc::Status(
         grpc::StatusCode::INVALID_ARGUMENT, "Unsupported service name");
@@ -70,7 +87,7 @@ grpc::Status auth_service::RequestLogin(
   }
 
   // After successfully sending notification:
-  _db.update_last_notified_at(request->service_name()).get();
+  _db.save_notice_token(request->service_name(), notice_token).get();
   return grpc::Status::OK;
 }
 

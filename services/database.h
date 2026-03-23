@@ -49,10 +49,18 @@ public:
   virtual std::generator<trading::TradeRecord>
   read_trades(stock::Symbol symbol) = 0;
 
+  /**
+   * @brief Retrieves the authorization information saved for the given service.
+   */
   virtual std::future<std::optional<storage::auth_token>>
   get_auth_token(std::string_view service_name) = 0;
-  virtual std::future<void>
-  update_last_notified_at(std::string_view service_name) = 0;
+  /**
+   * @brief Saves the token for the authentication notification.
+   *
+   * This also updates the last_notified_at timestamp.
+   */
+  virtual std::future<void> save_notice_token(
+      std::string_view service_name, std::string_view notice_token) = 0;
 };
 
 } // namespace howling

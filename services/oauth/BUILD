@@ -71,6 +71,7 @@ cc_library(
         "//services/oauth/proto:auth_service_cc_grpc",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
     ],
 )
 

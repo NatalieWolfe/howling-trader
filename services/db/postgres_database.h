@@ -44,8 +44,8 @@ public:
 
   std::future<std::optional<storage::auth_token>>
   get_auth_token(std::string_view service_name) override;
-  std::future<void>
-  update_last_notified_at(std::string_view service_name) override;
+  std::future<void> save_notice_token(
+      std::string_view service_name, std::string_view notice_token) override;
 
 private:
   struct implementation;

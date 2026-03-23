@@ -57,8 +57,9 @@ protected:
   get_auth_token(std::string_view service_name) {
     return db().get_auth_token(service_name).get();
   }
-  void update_last_notified_at(std::string_view service_name) {
-    db().update_last_notified_at(service_name).get();
+  void save_notice_token(
+      std::string_view service_name, std::string_view notice_token) {
+    db().save_notice_token(service_name, notice_token).get();
   }
 
   mock_security_client _mock_security;
@@ -212,14 +213,22 @@ protected:
         .WillOnce(testing::Return("encrypted"));                               \
     save_refresh_token(service, "token");                                      \
     EXPECT_FALSE(get_auth_token(service)->last_notified_at.has_value());       \
-    update_last_notified_at(service);                                          \
+    save_notice_token(service, "notice token");                                \
     EXPECT_THAT(                                                               \
-        get_auth_token(service)->last_notified_at,                             \
+        get_auth_token(service),                                               \
         testing::Optional(                                                     \
-            testing::Gt(                                                       \
-                std::chrono::system_clock::now() -                             \
-                std::chrono::seconds(10))));                                   \
-    auto last_notified = get_auth_token(service);                              \
+            testing::AllOf(                                                    \
+                testing::Field(                                                \
+                    "notice_token",                                            \
+                    &storage::auth_token::notice_token,                        \
+                    testing::Optional(testing::Eq("notice token"))),           \
+                testing::Field(                                                \
+                    "last_notified_at",                                        \
+                    &storage::auth_token::last_notified_at,                    \
+                    testing::Optional(                                         \
+                        testing::Gt(                                           \
+                            std::chrono::system_clock::now() -                 \
+                            std::chrono::seconds(10)))))));                    \
   }
 
 } // namespace howling

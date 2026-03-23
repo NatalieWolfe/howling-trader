@@ -452,8 +452,8 @@ std::future<void> sqlite_database::save_refresh_token(
         service_name, refresh_token, updated_at
       ) VALUES (?1, ?2, CURRENT_TIMESTAMP)
       ON CONFLICT (service_name) DO UPDATE SET
-        refresh_token = excluded.refresh_token,
-        updated_at = CURRENT_TIMESTAMP)sql"};
+        refresh_token = EXCLUDED.refresh_token,
+        updated_at = EXCLUDED.updated_at)sql"};
     q.bind_all(
         service_name,
         _security.encrypt(absl::GetFlag(FLAGS_db_encryption_key_name), token));
@@ -576,18 +576,19 @@ sqlite_database::get_auth_token(std::string_view service_name) {
   return p.get_future();
 }
 
-std::future<void>
-sqlite_database::update_last_notified_at(std::string_view service_name) {
+std::future<void> sqlite_database::save_notice_token(
+    std::string_view service_name, std::string_view notice_token) {
   std::promise<void> p;
   try {
     query q{*_db, query::single_use, R"sql(
       INSERT INTO auth_tokens (
-        service_name, refresh_token, last_notified_at, updated_at
-      ) VALUES (?1, '', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        service_name, refresh_token, notice_token, last_notified_at, updated_at
+      ) VALUES (?1, '', ?2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       ON CONFLICT (service_name) DO UPDATE SET
-        last_notified_at = CURRENT_TIMESTAMP,
-        updated_at = CURRENT_TIMESTAMP)sql"};
-    q.bind_all(service_name);
+        notice_token = EXCLUDED.notice_token,
+        last_notified_at = EXCLUDED.last_notified_at,
+        updated_at = EXCLUDED.updated_at)sql"};
+    q.bind_all(service_name, notice_token);
     while (q.step());
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
