@@ -11,6 +11,7 @@
 #include "api/schwab/oauth.h"
 #include "grpcpp/server_context.h"
 #include "grpcpp/support/status.h"
+#include "services/db/schema/auth_token.h"
 #include "services/oauth/notification.h"
 
 namespace howling {
@@ -33,9 +34,9 @@ grpc::Status auth_service::RequestLogin(
   LOG(INFO) << "Received RequestLogin for service: " << request->service_name();
 
   // Check if we should send a notification based on cooling period.
-  auto last_notified_at =
-      _db.get_last_notified_at(request->service_name()).get();
-  if (last_notified_at && !should_notify_again(*last_notified_at)) {
+  auto auth_token = _db.get_auth_token(request->service_name()).get();
+  if (auth_token && auth_token->last_notified_at &&
+      !should_notify_again(*auth_token->last_notified_at)) {
     LOG(INFO) << "Skipping redundant notification for service: "
               << request->service_name();
     return grpc::Status::OK;

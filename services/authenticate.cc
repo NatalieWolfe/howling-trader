@@ -21,6 +21,7 @@
 #include "grpcpp/support/status.h"
 #include "net/connect.h"
 #include "services/database.h"
+#include "services/db/schema/auth_token.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 #include "services/oauth/proto/auth_service.pb.h"
 #include "services/registry/registry.h"
@@ -164,7 +165,8 @@ void token_manager::implementation::_pump() {
   {
     std::lock_guard<std::mutex> lock(_mutex);
     if (_cached_refresh_token.empty()) {
-      _cached_refresh_token = _db.read_refresh_token(SERVICE_NAME).get();
+      auto auth_token = _db.get_auth_token(SERVICE_NAME).get();
+      if (auth_token) _cached_refresh_token = auth_token->refresh_token;
     }
     refresh_token = _cached_refresh_token;
   }

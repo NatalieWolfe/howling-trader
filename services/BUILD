@@ -10,6 +10,7 @@ cc_library(
         "//api/schwab:oauth",
         "//net:connect",
         "//services:database",
+        "//services/db/schema:auth_token",
         "//services/oauth/proto:auth_service_cc_grpc",
         "//services/registry",
         "//time:conversion",
@@ -28,6 +29,7 @@ cc_test(
         ":mock_database",
         ":mock_security",
         ":mock_token_refresher",
+        "//services/db/schema:auth_token",
         "//services/oauth:mock_auth_service",
         "//services/oauth/proto:auth_service_cc_grpc",
         "@abseil-cpp//absl/flags:flag",
@@ -67,6 +69,7 @@ cc_library(
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
         "//data:trade_cc_proto",
+        "//services/db/schema:auth_token",
     ],
 )
 

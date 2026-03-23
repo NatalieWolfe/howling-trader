@@ -25,6 +25,7 @@
 #include "google/protobuf/util/time_util.h"
 #include "libpq/libpq-fe.h"
 #include "services/db/environment.h"
+#include "services/db/schema/auth_token.h"
 #include "services/db/schema/schema.h"
 #include "time/conversion.h"
 
@@ -616,20 +617,17 @@ std::future<void> postgres_database::_prepare_queries() {
                 updated_at = CURRENT_TIMESTAMP)sql"));
 
     _implementation->prepared_queries.emplace(
-        "refresh_token_select",
+        "get_auth_token",
         query::prepare<std::string_view>(
             *_implementation->conn,
             R"sql(
-              SELECT refresh_token
-              FROM auth_tokens
-              WHERE service_name = $1)sql"));
-
-    _implementation->prepared_queries.emplace(
-        "get_last_notified_at",
-        query::prepare<std::string_view>(
-            *_implementation->conn,
-            R"sql(
-              SELECT last_notified_at
+              SELECT
+                service_name,
+                refresh_token,
+                notice_token,
+                last_notified_at,
+                updated_at,
+                expires_at
               FROM auth_tokens
               WHERE service_name = $1)sql"));
 
@@ -789,36 +787,26 @@ postgres_database::read_trades(stock::Symbol symbol) {
   }
 }
 
-std::future<std::string>
-postgres_database::read_refresh_token(std::string_view service_name) {
-  std::promise<std::string> p;
+std::future<std::optional<storage::auth_token>>
+postgres_database::get_auth_token(std::string_view service_name) {
+  std::promise<std::optional<storage::auth_token>> p;
   try {
-    query& q = *_implementation->prepared_queries.at("refresh_token_select");
-    q.bind_all(service_name);
-    if (!q.step()) {
-      p.set_value("");
-    } else {
-      std::string encrypted_token;
-      q.read_all(encrypted_token);
-      p.set_value(_implementation->security->decrypt(
-          absl::GetFlag(FLAGS_db_encryption_key_name), encrypted_token));
-    }
-  } catch (...) { p.set_exception(std::current_exception()); }
-  return p.get_future();
-}
-
-std::future<std::optional<system_clock::time_point>>
-postgres_database::get_last_notified_at(std::string_view service_name) {
-  std::promise<std::optional<system_clock::time_point>> p;
-  try {
-    query& q = *_implementation->prepared_queries.at("get_last_notified_at");
+    query& q = *_implementation->prepared_queries.at("get_auth_token");
     q.bind_all(service_name);
     if (!q.step()) {
       p.set_value(std::nullopt);
     } else {
-      std::optional<system_clock::time_point> last_notified;
-      q.read_all(last_notified);
-      p.set_value(last_notified);
+      storage::auth_token row;
+      q.read_all(
+          row.service_name,
+          row.refresh_token,
+          row.notice_token,
+          row.last_notified_at,
+          row.updated_at,
+          row.expires_at);
+      row.refresh_token = _implementation->security->decrypt(
+          absl::GetFlag(FLAGS_db_encryption_key_name), row.refresh_token);
+      p.set_value(std::move(row));
     }
   } catch (...) { p.set_exception(std::current_exception()); }
   return p.get_future();

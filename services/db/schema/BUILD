@@ -14,6 +14,12 @@ filegroup(
 )
 
 cc_library(
+    name = "auth_token",
+    hdrs = ["auth_token.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "schema",
     srcs = ["schema.cc"],
     hdrs = ["schema.h"],
