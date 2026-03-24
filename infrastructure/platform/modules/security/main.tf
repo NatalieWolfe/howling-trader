@@ -1,3 +1,7 @@
+locals {
+  bao_host = "openbao.security.svc.cluster.local:8200"
+}
+
 resource "helm_release" "openbao" {
   name             = "openbao"
   repository       = "https://openbao.github.io/openbao-helm"
@@ -113,6 +117,44 @@ resource "vault_transit_secret_backend_key" "howling_db_key" {
   deletion_allowed      = true
   convergent_encryption = false
   auto_rotate_period    = 3600 * 24 * 365 # 1 year in seconds.
+}
+
+resource "vault_mount" "pki" {
+  path = "pki"
+  type = "pki"
+
+  default_lease_ttl_seconds = 3600 * 24 * 365      # 1 year in seconds.
+  max_lease_ttl_seconds     = 3600 * 24 * 365 * 10 # 10 years in seconds.
+
+  depends_on = [helm_release.openbao]
+}
+
+resource "vault_pki_secret_backend_root_cert" "howling_trader_root_cert" {
+  backend     = vault_mount.pki.path
+  type        = "internal"
+  common_name = "Howling Trader Root Cert"
+  key_type    = "ec"
+  key_bits    = 384
+  ttl         = "${24 * 365 * 10}h" # 10 years in hours.
+}
+
+resource "vault_pki_secret_backend_config_urls" "cert_urls" {
+  backend                 = vault_mount.pki.path
+  issuing_certificates    = ["http://${local.bao_host}/v1/pki/ca"]
+  crl_distribution_points = ["http://${local.bao_host}/v1/pki/crl"]
+}
+
+resource "vault_pki_secret_backend_role" "howling_node_role" {
+  backend          = vault_mount.pki.path
+  name             = "howling-node-role"
+  allow_ip_sans    = true
+  allow_localhost  = true
+  allow_subdomains = true
+  allowed_domains  = ["howling-app.svc.cluster.local"]
+  max_ttl          = "${24 * 30}h" # 30 days in hours.
+  server_flag      = true
+  client_flag      = true
+  no_store         = true
 }
 
 resource "vault_auth_backend" "kubernetes" {
@@ -238,6 +280,10 @@ path "transit/encrypt/howling-db-key" {
 }
 
 path "transit/decrypt/howling-db-key" {
+  capabilities = ["update"]
+}
+
+path "pki/issue/howling-node-role" {
   capabilities = ["update"]
 }
 EOT
