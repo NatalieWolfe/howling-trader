@@ -6,8 +6,11 @@ cc_library(
     name = "auth_client",
     srcs = ["auth_client.cc"],
     hdrs = ["auth_client.h"],
+    visibility = ["//services:__subpackages__"],
     deps = [
+        "//services:security",
         "//services/oauth/proto:auth_service_cc_grpc",
+        "//services/registry",
         "@grpc//:grpc++",
     ],
 )
@@ -236,6 +239,7 @@ cc_binary(
         "//services:security",
         "//services/db:register",
         "//services/registry",
+        "//services/security:certificate_bundle",
         "//services/security:register",
         "@abseil-cpp//absl/log",
         "@grpc//:grpc++",
