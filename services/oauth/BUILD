@@ -15,6 +15,39 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "auth_client_test",
+    srcs = ["auth_client_test.cc"],
+    deps = [
+        ":auth_client",
+        "//services:mock_security",
+        "//services/registry",
+        "//services/security:register",
+        "@googletest//:gtest_main",
+        "@grpc//:grpc++",
+    ],
+)
+
+cc_test(
+    name = "auth_service_integration_test",
+    srcs = ["auth_service_integration_test.cc"],
+    data = [
+        "//net:local.wolfe.dev.crt",
+        "//net:local.wolfe.dev.key",
+    ],
+    deps = [
+        ":auth_service",
+        ":mock_telegram_server",
+        "//environment:runfiles",
+        "//files",
+        "//services:mock_database",
+        "//services/db/schema:auth_token",
+        "//services/oauth/proto:auth_service_cc_grpc",
+        "@googletest//:gtest_main",
+        "@grpc//:grpc++",
+    ],
+)
+
 cc_binary(
     name = "auth_refresh",
     srcs = ["auth_refresh.cc"],
