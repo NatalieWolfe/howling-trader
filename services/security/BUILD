@@ -6,6 +6,7 @@ cc_library(
     hdrs = ["bao_client.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":certificate_bundle",
         "//files",
         "//net:connect",
         "//net:request",
@@ -31,6 +32,7 @@ cc_test(
     ],
     deps = [
         ":bao_client",
+        ":certificate_bundle",
         ":mock_bao_server",
         "//environment:runfiles",
         "//strings:json",
@@ -56,6 +58,12 @@ cc_library(
         "@boost.asio",
         "@boost.beast",
     ],
+)
+
+cc_library(
+    name = "certificate_bundle",
+    hdrs = ["certificate_bundle.h"],
+    visibility = ["//services:__subpackages__"],
 )
 
 cc_library(

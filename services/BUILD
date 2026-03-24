@@ -105,6 +105,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":service_base",
+        "//services/security:certificate_bundle",
         "@jsoncpp",
     ],
 )
@@ -116,6 +117,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":security",
+        "//services/security:certificate_bundle",
         "@googletest//:gtest",
     ],
 )
