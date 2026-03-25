@@ -19,6 +19,7 @@
 #include "net/connect.h"
 #include "net/request.h"
 #include "net/url.h"
+#include "services/security/certificate_bundle.h"
 #include "strings/json.h"
 #include "json/value.h"
 
@@ -183,6 +184,45 @@ bao_client::decrypt(std::string_view key_name, std::string_view ciphertext) {
     throw std::runtime_error("Failed to base64 decode plaintext from OpenBao.");
   }
   return plaintext;
+}
+
+certificate_bundle bao_client::create_certificate(
+    std::string_view role, std::string_view common_name) {
+  Json::Value body;
+  body["common_name"] = std::string{common_name};
+  auto res = post_bao(absl::StrCat("/v1/pki/issue/", role), body);
+  check_response(res, "create certificate");
+
+  Json::Value response = to_json(res.body());
+  const Json::Value* data_itr = response.find("data");
+  if (!data_itr) {
+    throw std::runtime_error("No `data` element in response from OpenBao!");
+  }
+
+  const Json::Value* cert_itr = data_itr->find("certificate");
+  const Json::Value* private_key_itr = data_itr->find("private_key");
+  const Json::Value* ca_chain_itr = data_itr->find("ca_chain");
+  if (!cert_itr || !private_key_itr || !ca_chain_itr) {
+    throw std::runtime_error(
+        "Unexpected response body. Missing required field(s).");
+  }
+
+  certificate_bundle bundle{
+      .certificate = cert_itr->asString(),
+      .private_key = private_key_itr->asString(),
+  };
+  bundle.ca_chain = absl::StrCat(bundle.certificate, "\n");
+  for (const Json::Value& ca : *ca_chain_itr) {
+    absl::StrAppend(&bundle.ca_chain, ca.asString(), "\n");
+  }
+
+  return bundle;
+}
+
+std::string bao_client::get_ca_certificate() {
+  auto res = get_bao("/v1/pki/ca/pem");
+  check_response(res, "get root certificate");
+  return res.body();
 }
 
 } // namespace howling::security

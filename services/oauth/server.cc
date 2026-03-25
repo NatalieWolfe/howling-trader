@@ -17,6 +17,7 @@
 #include "services/oauth/oauth_http_service.h"
 #include "services/registry/registry.h"
 #include "services/security.h"
+#include "services/security/certificate_bundle.h"
 #include "services/security/register.h"
 
 ABSL_DECLARE_FLAG(std::string, telegram_bot_token);
@@ -30,6 +31,20 @@ using namespace std::chrono_literals;
 // TODO: Take the port from a flag.
 constexpr std::string_view GRPC_ADDRESS = "0.0.0.0:50051";
 constexpr unsigned short HTTP_PORT = 8080;
+
+auto make_server_credentials() {
+  // TODO: Manage the certificate role and common name more flexibly using flags
+  // or other configuration values.
+  certificate_bundle grpc_cert =
+      registry::get_service<security_client>().create_certificate(
+          "howling-node-role", "howling-oauth.howling-app.svc.cluster.local");
+  grpc::SslServerCredentialsOptions ssl_options;
+  ssl_options.pem_root_certs = grpc_cert.ca_chain;
+  ssl_options.pem_key_cert_pairs.push_back(
+      {.private_key = grpc_cert.private_key,
+       .cert_chain = grpc_cert.certificate});
+  return grpc::SslServerCredentials(ssl_options);
+}
 
 void run_server() {
   LOG(INFO) << "Oauth server starting...";
@@ -57,10 +72,8 @@ void run_server() {
 
   auth_service service(db);
   grpc::ServerBuilder builder;
-  // TODO: Use secure server credentials. Use the howling::security::bao_client
-  // to retrieve and manage TLS certificates sourced from OpenBao.
   builder.AddListeningPort(
-      std::string{GRPC_ADDRESS}, grpc::InsecureServerCredentials());
+      std::string{GRPC_ADDRESS}, make_server_credentials());
   builder.RegisterService(&service);
 
   std::unique_ptr<grpc::Server> server(builder.BuildAndStart());

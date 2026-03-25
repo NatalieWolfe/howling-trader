@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include "services/security.h"
+#include "services/security/certificate_bundle.h"
 #include "json/value.h"
 
 namespace howling::security {
@@ -67,6 +68,11 @@ public:
    */
   [[nodiscard]] std::string
   decrypt(std::string_view key_name, std::string_view ciphertext) override;
+
+  [[nodiscard]] certificate_bundle create_certificate(
+      std::string_view role, std::string_view common_name) override;
+
+  [[nodiscard]] std::string get_ca_certificate() override;
 };
 
 } // namespace howling::security

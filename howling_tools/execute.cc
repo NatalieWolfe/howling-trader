@@ -2,6 +2,7 @@
 #include <chrono>
 #include <cstdint>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -23,11 +24,13 @@
 #include "data/utilities.h"
 #include "environment/configuration.h"
 #include "environment/init.h"
+#include "files/files.h"
 #include "services/database.h"
 #include "services/db/register.h"
 #include "services/market_watch.h"
 #include "services/registry/registry.h"
 #include "services/security/register.h"
+#include "strings/format.h"
 #include "time/conversion.h"
 #include "trading/executor.h"
 #include "trading/trading_state.h"
@@ -48,6 +51,9 @@ using namespace ::std::chrono_literals;
 using ::std::chrono::floor;
 using ::std::chrono::minutes;
 using ::std::chrono::system_clock;
+
+const std::filesystem::path CANDLE_BEAT_PATH = "/tmp/howling/candle-beat";
+const std::filesystem::path MARKET_BEAT_PATH = "/tmp/howling/market-beat";
 
 class execution_printer {
 public:
@@ -227,6 +233,8 @@ void run() {
       if (symbol == followed_stock && !absl::GetFlag(FLAGS_headless)) {
         printer.print(candle, d, trade);
       }
+
+      files::write_file(CANDLE_BEAT_PATH, to_string(system_clock::now()));
     }
   });
 
@@ -237,6 +245,8 @@ void run() {
         printer.print(market);
       }
       e.update_market(std::move(market));
+
+      files::write_file(MARKET_BEAT_PATH, to_string(system_clock::now()));
     }
   });
 

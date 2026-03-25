@@ -22,6 +22,7 @@
 #include "net/connect.h"
 #include "services/database.h"
 #include "services/db/schema/auth_token.h"
+#include "services/oauth/auth_client.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 #include "services/oauth/proto/auth_service.pb.h"
 #include "services/registry/registry.h"
@@ -73,13 +74,7 @@ public:
 class token_manager::implementation {
 public:
   implementation() : _db{registry::get_service<database>()} {
-    // TODO: Take in the auth service hostname/ip and port on the command line.
-    // TODO: Use secure channel credentials for communication. Use the
-    // howling::security::bao_client to retrieve and manage TLS certificates
-    // sourced from OpenBao.
-    std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(
-        "localhost:50051", grpc::InsecureChannelCredentials());
-    _auth_stub = AuthService::NewStub(channel);
+    _auth_stub = make_auth_service_stub();
     _refresher = std::make_unique<real_token_refresher>();
     _start_pump();
   }

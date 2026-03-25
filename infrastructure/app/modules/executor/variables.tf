@@ -1,27 +1,16 @@
-variable "domain_name" {
-  type        = string
-  default     = "howling-oauth.wolfe.dev"
-  description = "The domain name for the OAuth service"
-}
-
 variable "namespace" {
   type        = string
   description = "The namespace to deploy Kubernetes resources into"
 }
 
+variable "executor_image_repository" {
+  type    = string
+  default = "howling-executor"
+}
+
 variable "image_tag" {
   type        = string
   description = "The tag for the latest images."
-}
-
-variable "oauth_service_repository" {
-  type    = string
-  default = "howling-oauth"
-}
-
-variable "auth_refresh_repository" {
-  type    = string
-  default = "auth-refresh"
 }
 
 variable "registry_server" {
@@ -39,6 +28,11 @@ variable "registry_name" {
   description = "The container image registry."
 }
 
+variable "auth_service_address" {
+  type        = string
+  description = "Address for the auth service."
+}
+
 variable "db_host" {
   type        = string
   description = "The database hostname"
@@ -47,11 +41,6 @@ variable "db_host" {
 variable "db_port" {
   type        = string
   description = "The database port"
-}
-
-variable "db_bootstrap_job_name" {
-  type        = string
-  description = "The name of the DB bootstrap job"
 }
 
 variable "db_encryption_key_name" {

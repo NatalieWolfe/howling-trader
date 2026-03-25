@@ -1,6 +1,5 @@
 locals {
   registry             = "${var.registry_server}/${var.registry_name}"
-  registry_credentials = kubernetes_secret.registry_creds.metadata[0].name
   auth_service_address = "${kubernetes_service.oauth.metadata[0].name}:50051"
   service_account_name = kubernetes_service_account.oauth.metadata[0].name
   bao_sidecar_annotations = {
@@ -27,27 +26,6 @@ resource "kubernetes_service_account" "oauth" {
   metadata {
     name      = "howling-oauth"
     namespace = var.namespace
-  }
-}
-
-# MARK: Registry Image
-
-resource "kubernetes_secret" "registry_creds" {
-  metadata {
-    name      = "harbor-registry-creds"
-    namespace = var.namespace
-  }
-
-  type = "kubernetes.io/dockerconfigjson"
-
-  data = {
-    ".dockerconfigjson" = jsonencode({
-      auths = {
-        (var.registry_server) = {
-          auth = base64encode("${var.registry_username}:${var.registry_password}")
-        }
-      }
-    })
   }
 }
 
@@ -82,7 +60,7 @@ resource "kubernetes_deployment" "oauth" {
       spec {
         service_account_name = local.service_account_name
         image_pull_secrets {
-          name = local.registry_credentials
+          name = var.registry_credentials
         }
 
         container {
@@ -222,7 +200,7 @@ resource "kubernetes_cron_job_v1" "auth_refresh" {
           spec {
             service_account_name = local.service_account_name
             image_pull_secrets {
-              name = local.registry_credentials
+              name = var.registry_credentials
             }
 
             container {

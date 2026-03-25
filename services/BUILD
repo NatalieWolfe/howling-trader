@@ -11,6 +11,7 @@ cc_library(
         "//net:connect",
         "//services:database",
         "//services/db/schema:auth_token",
+        "//services/oauth:auth_client",
         "//services/oauth/proto:auth_service_cc_grpc",
         "//services/registry",
         "//time:conversion",
@@ -105,6 +106,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":service_base",
+        "//services/security:certificate_bundle",
         "@jsoncpp",
     ],
 )
@@ -116,6 +118,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":security",
+        "//services/security:certificate_bundle",
         "@googletest//:gtest",
     ],
 )

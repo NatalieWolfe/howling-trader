@@ -41,6 +41,16 @@ void handle_request(Stream& stream, std::string* last_request_body) {
     res.body() = "{\"initialized\": true, \"sealed\": false}";
   } else if (req.target().starts_with("/v1/secret/data/")) {
     res.body() = R"json({"data":{"data":{"key":"value"}}})json";
+  } else if (req.target().starts_with("/v1/pki/issue/")) {
+    res.body() = R"json({
+      "data": {
+        "certificate": "test_cert",
+        "private_key": "test_key",
+        "ca_chain": ["ca1", "ca2"]
+      }
+    })json";
+  } else if (req.target() == "/v1/pki/ca/pem") {
+    res.body() = "test_ca_cert";
   } else if (req.target().starts_with("/v1/transit/encrypt/")) {
     res.body() =
         R"json({"data":{"ciphertext":"vault:v1:test_ciphertext"}})json";

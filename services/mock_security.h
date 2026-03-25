@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include "services/security.h"
+#include "services/security/certificate_bundle.h"
 #include "gmock/gmock.h"
 
 namespace howling {
@@ -24,6 +25,12 @@ public:
       decrypt,
       (std::string_view key_name, std::string_view ciphertext),
       (override));
+  MOCK_METHOD(
+      certificate_bundle,
+      create_certificate,
+      (std::string_view role, std::string_view common_name),
+      (override));
+  MOCK_METHOD(std::string, get_ca_certificate, (), (override));
 };
 
 } // namespace howling

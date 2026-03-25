@@ -42,25 +42,6 @@ resource "ovh_cloud_project_database_postgresql_user" "admin" {
 
 # MARK: DB Bootstrap
 
-resource "kubernetes_secret" "registry_creds" {
-  metadata {
-    name      = "harbor-registry-creds-db"
-    namespace = var.namespace
-  }
-
-  type = "kubernetes.io/dockerconfigjson"
-
-  data = {
-    ".dockerconfigjson" = jsonencode({
-      auths = {
-        (var.registry_server) = {
-          auth = base64encode("${var.registry_username}:${var.registry_password}")
-        }
-      }
-    })
-  }
-}
-
 resource "kubernetes_job" "db_bootstrap" {
   metadata {
     name      = "howling-db-bootstrap"
@@ -82,7 +63,7 @@ resource "kubernetes_job" "db_bootstrap" {
       }
       spec {
         image_pull_secrets {
-          name = kubernetes_secret.registry_creds.metadata[0].name
+          name = var.registry_credentials
         }
 
         container {

@@ -4,6 +4,7 @@
 #include <string>
 #include <string_view>
 
+#include "services/security/certificate_bundle.h"
 #include "services/service_base.h"
 #include "json/value.h"
 
@@ -62,6 +63,23 @@ public:
    */
   virtual std::string
   decrypt(std::string_view key_name, std::string_view ciphertext) = 0;
+
+  /**
+   * @brief Creates a new certificate for the given service role.
+   *
+   * @param role
+   * @param common_name
+   * @return The newly created certificate bundle.
+   */
+  virtual certificate_bundle
+  create_certificate(std::string_view role, std::string_view common_name) = 0;
+
+  /**
+   * @brief Retrieves the root certificate in PEM format.
+   *
+   * @return The root cert.
+   */
+  virtual std::string get_ca_certificate() = 0;
 };
 
 } // namespace howling
