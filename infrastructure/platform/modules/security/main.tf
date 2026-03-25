@@ -227,6 +227,15 @@ path "sys/mounts/transit" {
   capabilities = ["create", "read", "update", "delete", "sudo"]
 }
 
+path "sys/mounts/pki" {
+  capabilities = ["create", "read", "update", "delete", "sudo"]
+}
+
+# PKI Management
+path "pki/*" {
+  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
+
 # Configure Kubernetes Backend
 path "auth/kubernetes/config" {
   capabilities = ["create", "read", "update", "delete"]
