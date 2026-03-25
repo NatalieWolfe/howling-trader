@@ -64,15 +64,9 @@ variable "registry_server" {
   description = "The registry server URL"
 }
 
-variable "registry_username" {
+variable "registry_credentials" {
   type        = string
-  description = "The registry username"
-}
-
-variable "registry_password" {
-  type        = string
-  sensitive   = true
-  description = "The registry password"
+  description = "The credentials to the container image registry."
 }
 
 variable "image_repository" {
