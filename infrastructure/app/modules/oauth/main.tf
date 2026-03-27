@@ -179,10 +179,12 @@ resource "kubernetes_cron_job_v1" "auth_refresh" {
     }
   }
   spec {
-    schedule                  = "0 17 * * 0-4" # Sunday - Thursday at 5pm Pacific.
-    timezone                  = "America/Los_Angeles"
-    concurrency_policy        = "Forbid"
-    failed_jobs_history_limit = 5
+    schedule           = "0 17 * * 0-4" # Sunday - Thursday at 5pm Pacific.
+    timezone           = "America/Los_Angeles"
+    concurrency_policy = "Forbid"
+
+    successful_jobs_history_limit = 5
+    failed_jobs_history_limit     = 5
 
     job_template {
       metadata {}
