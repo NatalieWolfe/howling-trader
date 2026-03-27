@@ -19,10 +19,12 @@ resource "kubernetes_cron_job_v1" "howling_trader" {
     }
   }
   spec {
-    schedule                  = "0 9 * * 1-5" # Monday - Friday at 9am Eastern.
-    timezone                  = "America/New_York"
-    concurrency_policy        = "Forbid"
-    failed_jobs_history_limit = 5
+    schedule           = "0 9 * * 1-5" # Monday - Friday at 9am Eastern.
+    timezone           = "America/New_York"
+    concurrency_policy = "Forbid"
+
+    successful_jobs_history_limit = 7
+    failed_jobs_history_limit     = 7
 
     job_template {
       metadata {}
@@ -37,11 +39,12 @@ resource "kubernetes_cron_job_v1" "howling_trader" {
               app = "howling-trader"
             }
             annotations = {
-              "vault.hashicorp.com/agent-inject"                    = "true"
-              "vault.hashicorp.com/role"                            = "howling-app-role"
+              "vault.hashicorp.com/role"         = "howling-app-role"
+              "vault.hashicorp.com/agent-inject" = "true"
+              "vault.hashicorp.com/agent-image"  = var.openbao_agent_image
+
               "vault.hashicorp.com/agent-cache-enable"              = "true"
               "vault.hashicorp.com/agent-cache-use-auto-auth-token" = "force"
-              "vault.hashicorp.com/agent-image"                     = var.openbao_agent_image
             }
           }
           spec {
