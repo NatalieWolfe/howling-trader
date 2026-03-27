@@ -84,3 +84,8 @@ path "sys/policies/acl/howling-ci-app" {
 path "sys/policies/acl/howling-app" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 }
+
+# Identity OIDC Management
+path "identity/oidc/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
