@@ -20,7 +20,7 @@ terraform {
   required_providers {
     ovh = {
       source  = "ovh/ovh"
-      version = "~> 2.11"
+      version = "~> 2.12"
     }
     harbor = {
       source  = "goharbor/harbor"

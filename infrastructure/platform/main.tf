@@ -170,6 +170,8 @@ provider "helm" {
   }
 }
 
+# MARK: OpenBao
+
 provider "vault" {
   address = var.vault_address
 
@@ -184,8 +186,6 @@ provider "vault" {
     }
   }
 }
-
-# MARK: OpenBao
 
 module "security" {
   source = "./modules/security"
@@ -216,5 +216,18 @@ module "runner" {
   providers = {
     kubernetes = kubernetes
     helm       = helm
+  }
+}
+
+# MARK: Storage
+
+module "storage" {
+  source         = "./modules/storage"
+  ovh_project_id = var.ovh_project_id
+  region         = local.clean_region
+
+  providers = {
+    ovh   = ovh
+    vault = vault
   }
 }
