@@ -62,6 +62,42 @@ resource "vault_transit_secret_backend_key" "howling_db_key" {
   auto_rotate_period    = 3600 * 24 * 365 # 1 year in seconds.
 }
 
+# MARK: OIDC
+
+resource "vault_identity_oidc_key" "grafana" {
+  name      = "grafana"
+  algorithm = "RS256"
+}
+
+resource "vault_identity_oidc_assignment" "grafana" {
+  name       = "grafana-users"
+  entity_ids = ["*"]
+  group_ids  = ["*"]
+}
+
+resource "vault_identity_oidc_client" "grafana" {
+  name          = "grafana"
+  key           = vault_identity_oidc_key.grafana.name
+  redirect_uris = ["https://howling-monitor.wolfe.dev/login/generic_oauth"]
+  assignments   = [vault_identity_oidc_assignment.grafana.name]
+}
+
+resource "vault_identity_oidc_provider" "howling" {
+  name               = "howling"
+  issuer_host        = "howling-oauth.wolfe.dev"
+  allowed_client_ids = [vault_identity_oidc_client.grafana.client_id]
+  scopes_supported   = ["openid", "profile", "email"]
+}
+
+resource "vault_kv_secret_v2" "monitoring_grafana" {
+  mount     = "secret"
+  name      = "howling/monitoring/grafana"
+  data_json = jsonencode({
+    client_id     = vault_identity_oidc_client.grafana.client_id
+    client_secret = vault_identity_oidc_client.grafana.client_secret
+  })
+}
+
 # MARK: PKI
 
 resource "vault_mount" "pki" {
@@ -152,6 +188,23 @@ resource "vault_kubernetes_auth_backend_role" "app" {
 
   bound_service_account_names      = ["*"]
   bound_service_account_namespaces = ["howling-app"]
+
+  depends_on = [vault_kubernetes_auth_backend_config.config]
+}
+
+resource "vault_policy" "monitoring" {
+  name   = "monitoring"
+  policy = file("${path.module}/policies/monitoring.hcl")
+}
+
+resource "vault_kubernetes_auth_backend_role" "monitoring" {
+  backend        = vault_auth_backend.kubernetes.path
+  role_name      = "monitoring-role"
+  token_policies = [vault_policy.monitoring.name]
+  token_ttl      = 3600
+
+  bound_service_account_names      = ["*"]
+  bound_service_account_namespaces = ["monitoring"]
 
   depends_on = [vault_kubernetes_auth_backend_config.config]
 }
