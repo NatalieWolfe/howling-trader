@@ -103,7 +103,7 @@ resource "ovh_cloud_project_kube_nodepool" "runner_pool" {
   service_name = var.ovh_project_id
   kube_id      = ovh_cloud_project_kube.kube_cluster.id
   name         = local.runner_pool_name
-  flavor_name  = "b2-30"
+  flavor_name  = "b3-32"
   max_nodes    = 3
   min_nodes    = 0
   autoscale    = true
