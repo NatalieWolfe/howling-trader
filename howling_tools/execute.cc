@@ -12,6 +12,7 @@
 
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
+#include "absl/strings/str_cat.h"
 #include "api/schwab.h"
 #include "api/schwab/configuration.h"
 #include "cli/printing.h"
@@ -195,7 +196,19 @@ void run() {
   auto watcher = std::make_unique<market_watch>();
   database& db = registry::get_service<database>();
 
-  std::thread candle_streamer([&]() {
+  std::jthread pre_market_beats([&](std::stop_token stop) {
+    while (!state.market_is_open() && !stop.stop_requested()) {
+      files::write_file(
+          CANDLE_BEAT_PATH,
+          absl::StrCat("Pre-market beat: ", to_string(system_clock::now())));
+      files::write_file(
+          MARKET_BEAT_PATH,
+          absl::StrCat("Pre-market beat: ", to_string(system_clock::now())));
+      std::this_thread::sleep_for(30s);
+    }
+  });
+
+  std::jthread candle_streamer([&]() {
     auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));
     for (const auto& [symbol, candle] : watcher->candle_stream()) {
       if (!trading_stocks.contains(symbol)) continue;
@@ -230,15 +243,22 @@ void run() {
         db.save_trade(record);
       }
 
-      if (symbol == followed_stock && !absl::GetFlag(FLAGS_headless)) {
-        printer.print(candle, d, trade);
+      if (symbol == followed_stock) {
+        if (absl::GetFlag(FLAGS_headless) && trade) {
+          LOG(INFO) << "TRADE: " << stock::Symbol_Name(symbol) << " "
+                    << (d.act == action::BUY ? " BUY" : "SELL") << " "
+                    << trade->quantity << " @ " << trade->price << " ("
+                    << d.confidence << ")";
+        } else {
+          printer.print(candle, d, trade);
+        }
       }
 
       files::write_file(CANDLE_BEAT_PATH, to_string(system_clock::now()));
     }
   });
 
-  std::thread market_streamer([&]() {
+  std::jthread market_streamer([&]() {
     for (const Market& market : watcher->market_stream()) {
       if (!trading_stocks.contains(market.symbol())) continue;
       if (market.symbol() == followed_stock && !absl::GetFlag(FLAGS_headless)) {
@@ -250,19 +270,19 @@ void run() {
     }
   });
 
-  std::thread candle_saver([&]() {
+  std::jthread candle_saver([&]() {
     for (const auto& [symbol, candle] : watcher->candle_stream()) {
       db.save(symbol, candle).get();
     }
   });
 
-  std::thread market_saver([&]() {
+  std::jthread market_saver([&]() {
     for (const Market& market : watcher->market_stream()) {
       db.save(market).get();
     }
   });
 
-  std::thread watcher_thread([&]() {
+  std::jthread watcher_thread([&]() {
     vector<stock::Symbol> all_stocks;
     for (stock::Symbol symbol : list_stock_symbols()) {
       all_stocks.push_back(symbol);
@@ -283,7 +303,6 @@ void run() {
     std::this_thread::sleep_for(1min);
   }
   watcher = nullptr;
-  watcher_thread.join();
 
   std::cout << "\n" << print_metrics(m) << std::endl;
 }

@@ -55,6 +55,8 @@ cc_binary(
         "//trading:executor",
         "//trading:trading_state",
         "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/log",
+        "@abseil-cpp//absl/strings",
     ],
 )
 
