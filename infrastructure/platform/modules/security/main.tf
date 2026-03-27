@@ -174,137 +174,37 @@ resource "vault_kubernetes_auth_backend_config" "config" {
 
 resource "vault_policy" "ci_app" {
   name   = "howling-ci-app"
-  policy = <<EOT
-# Application Secret Management
-path "secret/data/howling/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
-}
-
-path "secret/metadata/howling/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
-}
-
-path "secret/delete/howling/*" {
-  capabilities = ["update"]
-}
-
-path "secret/undelete/howling/*" {
-  capabilities = ["update"]
-}
-
-path "secret/destroy/howling/*" {
-  capabilities = ["update"]
-}
-
-# Transit Management
-path "transit/keys/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
-}
-
-# Session Management (Ephemeral tokens for Tofu)
-path "auth/token/create" {
-  capabilities = ["update"]
-}
-
-# Discover and Manage Auth Methods and Mounts
-path "sys/auth" {
-  capabilities = ["read", "list"]
-}
-
-path "sys/auth/kubernetes" {
-  capabilities = ["create", "read", "update", "delete", "sudo"]
-}
-
-path "sys/mounts" {
-  capabilities = ["read", "list"]
-}
-
-path "sys/mounts/secret" {
-  capabilities = ["create", "read", "update", "delete", "sudo"]
-}
-
-path "sys/mounts/transit" {
-  capabilities = ["create", "read", "update", "delete", "sudo"]
-}
-
-path "sys/mounts/pki" {
-  capabilities = ["create", "read", "update", "delete", "sudo"]
-}
-
-# PKI Management
-path "pki/*" {
-  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
-}
-
-# Configure Kubernetes Backend
-path "auth/kubernetes/config" {
-  capabilities = ["create", "read", "update", "delete"]
-}
-
-path "auth/kubernetes/role" {
-  capabilities = ["list"]
-}
-
-path "auth/kubernetes/role/*" {
-  capabilities = ["create", "read", "update", "delete", "list"]
-}
-
-# Manage Policies (Self-Management and App Policies)
-path "sys/policies/acl" {
-  capabilities = ["list"]
-}
-
-path "sys/policies/acl/howling-ci-app" {
-  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
-}
-
-path "sys/policies/acl/howling-app" {
-  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
-}
-EOT
+  policy = file("${path.module}/policies/howling-ci-app.hcl")
 }
 
 resource "vault_kubernetes_auth_backend_role" "ci_runner" {
-  backend                          = vault_auth_backend.kubernetes.path
-  role_name                        = "howling-ci-role"
-  bound_service_account_names      = ["*"]
-  bound_service_account_namespaces = [var.runner_namespace, "howling-admin"]
-  token_policies                   = [vault_policy.ci_app.name]
-  token_ttl                        = 3600
+  backend        = vault_auth_backend.kubernetes.path
+  role_name      = "howling-ci-role"
+  token_policies = [vault_policy.ci_app.name]
+  token_ttl      = 3600
+
+  bound_service_account_names = ["*"]
+  bound_service_account_namespaces = [
+    var.runner_namespace,
+    "howling-admin"
+  ]
 
   depends_on = [vault_kubernetes_auth_backend_config.config]
 }
 
 resource "vault_policy" "app" {
   name   = "howling-app"
-  policy = <<EOT
-# 1. Read-only access to application secrets (Runtime only)
-path "secret/data/howling/prod/*" {
-  capabilities = ["read", "list"]
-}
-
-# 2. Access to Transit engine for database encryption/decryption
-path "transit/encrypt/howling-db-key" {
-  capabilities = ["update"]
-}
-
-path "transit/decrypt/howling-db-key" {
-  capabilities = ["update"]
-}
-
-path "pki/issue/howling-node-role" {
-  capabilities = ["update"]
-}
-EOT
+  policy = file("${path.module}/policies/howling-app.hcl")
 }
 
 resource "vault_kubernetes_auth_backend_role" "app" {
-  backend                          = vault_auth_backend.kubernetes.path
-  role_name                        = "howling-app-role"
+  backend        = vault_auth_backend.kubernetes.path
+  role_name      = "howling-app-role"
+  token_policies = [vault_policy.app.name]
+  token_ttl      = 3600
+
   bound_service_account_names      = ["*"]
   bound_service_account_namespaces = ["howling-app"]
-  token_policies                   = [vault_policy.app.name]
-  token_ttl                        = 3600
 
   depends_on = [vault_kubernetes_auth_backend_config.config]
 }
