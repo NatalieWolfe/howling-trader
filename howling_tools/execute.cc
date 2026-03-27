@@ -198,12 +198,10 @@ void run() {
 
   std::jthread pre_market_beats([&](std::stop_token stop) {
     while (!state.market_is_open() && !stop.stop_requested()) {
-      files::write_file(
-          CANDLE_BEAT_PATH,
-          absl::StrCat("Pre-market beat: ", to_string(system_clock::now())));
-      files::write_file(
-          MARKET_BEAT_PATH,
-          absl::StrCat("Pre-market beat: ", to_string(system_clock::now())));
+      std::string beat_message =
+          absl::StrCat("Pre-market beat: ", to_string(system_clock::now()));
+      files::write_file(CANDLE_BEAT_PATH, beat_message);
+      files::write_file(MARKET_BEAT_PATH, beat_message);
       std::this_thread::sleep_for(30s);
     }
   });
