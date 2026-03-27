@@ -6,9 +6,10 @@ provider "ovh" {
 }
 
 locals {
-  clean_region     = replace(var.region, "-1", "")
-  system_pool_name = "howling-trader-cluster-nodepool"
-  runner_pool_name = "arc-runner-nodepool"
+  clean_region      = replace(var.region, "-1", "")
+  system_pool_name  = "howling-trader-cluster-nodepool"
+  runner_pool_name  = "arc-runner-nodepool"
+  monitor_pool_name = "monitor-nodepool"
 }
 
 # MARK: Tofu State
@@ -122,6 +123,32 @@ resource "ovh_cloud_project_kube_nodepool" "runner_pool" {
   }
 }
 
+resource "ovh_cloud_project_kube_nodepool" "monitor_pool" {
+  service_name = var.ovh_project_id
+  kube_id      = ovh_cloud_project_kube.kube_cluster.id
+  name         = local.monitor_pool_name
+  flavor_name  = "r2-15"
+  max_nodes    = 3
+  min_nodes    = 1
+  autoscale    = true
+
+  template {
+    metadata {
+      labels = {
+        nodepool = local.monitor_pool_name
+      }
+      annotations = {}
+      finalizers  = []
+    }
+    spec {
+      unschedulable = false
+      taints = [
+        { key = "dedicated", value = "monitoring", effect = "NoSchedule" }
+      ]
+    }
+  }
+}
+
 locals {
   kubeconfig_attrs = ovh_cloud_project_kube.kube_cluster.kubeconfig_attributes[0]
 }
@@ -143,6 +170,8 @@ provider "helm" {
   }
 }
 
+# MARK: OpenBao
+
 provider "vault" {
   address = var.vault_address
 
@@ -157,8 +186,6 @@ provider "vault" {
     }
   }
 }
-
-# MARK: OpenBao
 
 module "security" {
   source = "./modules/security"
@@ -189,5 +216,18 @@ module "runner" {
   providers = {
     kubernetes = kubernetes
     helm       = helm
+  }
+}
+
+# MARK: Storage
+
+module "storage" {
+  source         = "./modules/storage"
+  ovh_project_id = var.ovh_project_id
+  region         = local.clean_region
+
+  providers = {
+    ovh   = ovh
+    vault = vault
   }
 }
