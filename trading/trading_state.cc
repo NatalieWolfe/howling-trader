@@ -57,10 +57,9 @@ int trading_state::market_second() const {
 }
 
 bool trading_state::market_is_open() const {
-  const hh_mm_ss hms = to_market_hms(time_now);
-  if (hms.hours().count() < 9 || hms.hours().count() >= 16) return false;
-  if (hms.hours().count() == 9 && hms.minutes().count() < 30) return false;
-  return true;
+  using namespace std::chrono_literals;
+  const auto time_of_day = to_market_hms(time_now).to_duration();
+  return (time_of_day >= 9h + 30min) && (time_of_day < 16h);
 }
 
 } // namespace howling
