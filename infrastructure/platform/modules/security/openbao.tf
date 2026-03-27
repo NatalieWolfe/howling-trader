@@ -86,7 +86,7 @@ resource "vault_identity_oidc_provider" "howling" {
   name               = "howling"
   issuer_host        = "howling-oauth.wolfe.dev"
   allowed_client_ids = [vault_identity_oidc_client.grafana.client_id]
-  scopes_supported   = ["openid", "profile", "email"]
+  scopes_supported   = []
 }
 
 resource "vault_kv_secret_v2" "monitoring_grafana" {
