@@ -241,15 +241,15 @@ void run() {
         db.save_trade(record);
       }
 
-      if (symbol == followed_stock) {
-        if (absl::GetFlag(FLAGS_headless) && trade) {
+      if (absl::GetFlag(FLAGS_headless)) {
+        if (trade) {
           LOG(INFO) << "TRADE: " << stock::Symbol_Name(symbol) << " "
                     << (d.act == action::BUY ? " BUY" : "SELL") << " "
                     << trade->quantity << " @ " << trade->price << " ("
                     << d.confidence << ")";
-        } else {
-          printer.print(candle, d, trade);
         }
+      } else if (symbol == followed_stock) {
+        printer.print(candle, d, trade);
       }
 
       files::write_file(CANDLE_BEAT_PATH, to_string(system_clock::now()));
