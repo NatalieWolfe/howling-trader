@@ -72,7 +72,8 @@ path "auth/kubernetes/role/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
 
-# Manage Policies (Self-Management and App Policies)
+# MARK: ACLs
+
 path "sys/policies/acl" {
   capabilities = ["list"]
 }
@@ -85,7 +86,10 @@ path "sys/policies/acl/howling-app" {
   capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 }
 
-# Identity OIDC Management
+path "sys/policies/acl/monitoring" {
+  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
+
 path "identity/oidc/*" {
   capabilities = ["create", "read", "update", "delete", "list"]
 }
