@@ -82,11 +82,37 @@ resource "vault_identity_oidc_client" "grafana" {
   assignments   = [vault_identity_oidc_assignment.grafana.name]
 }
 
+resource "vault_identity_oidc_scope" "profile" {
+  name        = "profile"
+  description = "OIDC Profile Scope"
+  template    = <<EOF
+{
+  "name": {{identity.entity.name}},
+  "nickname": {{identity.entity.metadata.nickname}}
+}
+EOF
+}
+
+resource "vault_identity_oidc_scope" "email" {
+  name        = "email"
+  description = "OIDC Email Scope"
+  template    = <<EOF
+{
+  "email": {{identity.entity.metadata.email}},
+  "email_verified": true
+}
+EOF
+}
+
 resource "vault_identity_oidc_provider" "howling" {
   name               = "howling"
   issuer_host        = "howling-oauth.wolfe.dev"
   allowed_client_ids = [vault_identity_oidc_client.grafana.client_id]
-  scopes_supported   = []
+  scopes_supported = [
+    # "openid" -> implicitly supported scope
+    vault_identity_oidc_scope.profile.name,
+    vault_identity_oidc_scope.email.name
+  ]
 }
 
 resource "vault_kv_secret_v2" "monitoring_grafana" {
@@ -132,7 +158,7 @@ resource "vault_pki_secret_backend_role" "howling_node_role" {
   allow_localhost  = true
   allow_subdomains = true
   allowed_domains  = ["howling-app.svc.cluster.local"]
-  max_ttl          = "${24 * 30}h" # 30 days in hours.
+  max_ttl          = 3600 * 24 * 30 # 30 days in seconds.
   server_flag      = true
   client_flag      = true
   no_store         = true
