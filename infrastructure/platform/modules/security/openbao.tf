@@ -90,8 +90,8 @@ resource "vault_identity_oidc_provider" "howling" {
 }
 
 resource "vault_kv_secret_v2" "monitoring_grafana" {
-  mount     = "secret"
-  name      = "howling/monitoring/grafana"
+  mount = "secret"
+  name  = "howling/monitoring/grafana"
   data_json = jsonencode({
     client_id     = vault_identity_oidc_client.grafana.client_id
     client_secret = vault_identity_oidc_client.grafana.client_secret
