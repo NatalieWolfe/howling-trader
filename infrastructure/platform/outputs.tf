@@ -63,3 +63,9 @@ output "db_encryption_key_name" {
   value       = module.security.db_encryption_key_name
   description = "Name of the encryption key used by the database."
 }
+
+output "monitoring_bucket" {
+  value       = module.storage.monitoring_bucket
+  sensitive   = true
+  description = "Access information for the monitoring S3 bucket."
+}
