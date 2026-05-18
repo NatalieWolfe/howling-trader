@@ -17,56 +17,58 @@ using ::std::chrono::microseconds;
 using ::std::chrono::system_clock;
 
 TEST(ToStdChronoTest, AbslTime) {
-  absl::Time t = absl::FromUnixMicros(123456789);
-  system_clock::time_point tp = to_std_chrono(t);
-  EXPECT_EQ(system_clock::to_time_t(tp), 123);
+  absl::Time absl_time = absl::FromUnixMicros(123456789);
+  system_clock::time_point time_point = to_std_chrono(absl_time);
+  EXPECT_EQ(system_clock::to_time_t(time_point), 123);
   EXPECT_EQ(
-      duration_cast<microseconds>(tp.time_since_epoch()).count(), 123456789);
+      duration_cast<microseconds>(time_point.time_since_epoch()).count(),
+      123456789);
 }
 
 TEST(ToStdChronoTest, ProtoTimestamp) {
-  Timestamp ts;
-  ts.set_seconds(123);
-  ts.set_nanos(456000);
-  system_clock::time_point tp = to_std_chrono(ts);
+  Timestamp proto_timestamp;
+  proto_timestamp.set_seconds(123);
+  proto_timestamp.set_nanos(456000);
+  system_clock::time_point time_point = to_std_chrono(proto_timestamp);
   EXPECT_EQ(
-      duration_cast<microseconds>(tp.time_since_epoch()).count(), 123000456);
+      duration_cast<microseconds>(time_point.time_since_epoch()).count(),
+      123000456);
 }
 
 TEST(ToStdChronoTest, AbslDuration) {
-  absl::Duration d = absl::Microseconds(123456);
-  microseconds ms = to_std_chrono(d);
-  EXPECT_EQ(ms.count(), 123456);
+  absl::Duration absl_duration = absl::Microseconds(123456);
+  microseconds chrono_duration = to_std_chrono(absl_duration);
+  EXPECT_EQ(chrono_duration.count(), 123456);
 }
 
 TEST(ToStdChronoTest, ProtoDuration) {
-  Duration d;
-  d.set_seconds(123);
-  d.set_nanos(456000);
-  microseconds ms = to_std_chrono(d);
-  EXPECT_EQ(ms.count(), 123000456);
+  Duration proto_duration;
+  proto_duration.set_seconds(123);
+  proto_duration.set_nanos(456000);
+  microseconds chrono_duration = to_std_chrono(proto_duration);
+  EXPECT_EQ(chrono_duration.count(), 123000456);
 }
 
 TEST(ToProtoTest, TimePoint) {
-  system_clock::time_point tp =
+  system_clock::time_point time_point =
       system_clock::from_time_t(123) + microseconds(456);
-  Timestamp ts = to_proto(tp);
-  EXPECT_EQ(ts.seconds(), 123);
-  EXPECT_EQ(ts.nanos(), 456000);
+  Timestamp proto_timestamp = to_proto(time_point);
+  EXPECT_EQ(proto_timestamp.seconds(), 123);
+  EXPECT_EQ(proto_timestamp.nanos(), 456000);
 }
 
 TEST(ToProtoTest, AbslDuration) {
-  absl::Duration d = absl::Microseconds(123456);
-  Duration proto_d = to_proto(d);
-  EXPECT_EQ(proto_d.seconds(), 0);
-  EXPECT_EQ(proto_d.nanos(), 123456000);
+  absl::Duration absl_duration = absl::Microseconds(123456);
+  Duration proto_duration = to_proto(absl_duration);
+  EXPECT_EQ(proto_duration.seconds(), 0);
+  EXPECT_EQ(proto_duration.nanos(), 123456000);
 }
 
 TEST(ToProtoTest, ChronoDuration) {
-  microseconds d(123456789);
-  Duration proto_d = to_proto(d);
-  EXPECT_EQ(proto_d.seconds(), 123);
-  EXPECT_EQ(proto_d.nanos(), 456789000);
+  microseconds chrono_duration(123456789);
+  Duration proto_duration = to_proto(chrono_duration);
+  EXPECT_EQ(proto_duration.seconds(), 123);
+  EXPECT_EQ(proto_duration.nanos(), 456789000);
 }
 
 } // namespace

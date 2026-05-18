@@ -24,7 +24,8 @@ resource "helm_release" "stack" {
     templatefile("${path.module}/values.yaml.tftpl", {
       s3_endpoint = data.terraform_remote_state.platform.outputs.s3_endpoint
       s3_bucket   = data.terraform_remote_state.platform.outputs.monitoring_bucket.name
-      s3_region   = "us-east-va"
+      s3_region   = lower(replace(var.region, "-1", ""))
+      namespace   = kubernetes_namespace.monitoring.metadata[0].name
     })
   ]
 
