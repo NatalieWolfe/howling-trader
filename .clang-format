@@ -23,7 +23,7 @@ AllowShortIfStatementsOnASingleLine: WithoutElse
 AllowShortLoopsOnASingleLine: true
 IndentCaseLabels: true
 BreakInheritanceList: AfterColon
-AlwaysBreakTemplateDeclarations: true
+AlwaysBreakTemplateDeclarations: Yes
 SeparateDefinitionBlocks: Leave
 SortUsingDeclarations: Lexicographic
 PointerAlignment: Left
