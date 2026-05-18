@@ -216,17 +216,19 @@ protected:
     save_notice_token(service, "notice token");                                \
     EXPECT_THAT(                                                               \
         get_auth_token(service),                                               \
-        testing::Optional(testing::AllOf(                                      \
-            testing::Field(                                                    \
-                "notice_token",                                                \
-                &storage::auth_token::notice_token,                            \
-                testing::Optional(testing::Eq("notice token"))),               \
-            testing::Field(                                                    \
-                "last_notified_at",                                            \
-                &storage::auth_token::last_notified_at,                        \
-                testing::Optional(testing::Gt(                                 \
-                    std::chrono::system_clock::now() -                         \
-                    std::chrono::seconds(10)))))));                            \
+        testing::Optional(                                                     \
+            testing::AllOf(                                                    \
+                testing::Field(                                                \
+                    "notice_token",                                            \
+                    &storage::auth_token::notice_token,                        \
+                    testing::Optional(testing::Eq("notice token"))),           \
+                testing::Field(                                                \
+                    "last_notified_at",                                        \
+                    &storage::auth_token::last_notified_at,                    \
+                    testing::Optional(                                         \
+                        testing::Gt(                                           \
+                            std::chrono::system_clock::now() -                 \
+                            std::chrono::seconds(10)))))));                    \
   }
 
 } // namespace howling

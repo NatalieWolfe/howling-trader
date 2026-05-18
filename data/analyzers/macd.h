@@ -12,13 +12,13 @@ namespace howling {
  */
 class macd_crossover_analyzer : public analyzer {
 public:
-  macd_crossover_analyzer(vector<window> aggregations::*period)
+  macd_crossover_analyzer(vector<window> aggregations::* period)
       : _period{period} {}
 
   decision analyze(stock::Symbol symbol, const trading_state& data) override;
 
 private:
-  vector<window> aggregations::*_period;
+  vector<window> aggregations::* _period;
 };
 
 } // namespace howling

@@ -74,8 +74,9 @@ TEST_F(AuthServiceIntegrationTest, SecureConnectionWorks) {
   grpc::ClientContext context;
 
   std::promise<std::optional<storage::auth_token>> p;
-  p.set_value(storage::auth_token{
-      .last_notified_at = std::chrono::system_clock::now()});
+  p.set_value(
+      storage::auth_token{
+          .last_notified_at = std::chrono::system_clock::now()});
   EXPECT_CALL(_db, get_auth_token("schwab")).WillOnce(Return(p.get_future()));
 
   grpc::Status status = _stub->RequestLogin(&context, request, &response);

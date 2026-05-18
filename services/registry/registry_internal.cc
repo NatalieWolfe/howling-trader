@@ -36,8 +36,9 @@ service& retrieve_service(std::type_index service_type_id) {
     factory_map_t& factory_map = get_factory_map();
     auto factory_itr = factory_map.find(service_type_id);
     if (factory_itr == factory_map.end()) {
-      throw std::runtime_error(std::format(
-          "No factory registered for service {}", service_type_id.name()));
+      throw std::runtime_error(
+          std::format(
+              "No factory registered for service {}", service_type_id.name()));
     }
     cache_itr =
         service_cache.emplace(service_type_id, factory_itr->second()).first;
@@ -50,8 +51,9 @@ void store_service(
   service_cache_map_t& service_cache = get_service_cache_map();
   auto cache_itr = service_cache.find(service_type_id);
   if (cache_itr != service_cache.end()) {
-    throw std::runtime_error(std::format(
-        "Duplicate registration for service {}", service_type_id.name()));
+    throw std::runtime_error(
+        std::format(
+            "Duplicate registration for service {}", service_type_id.name()));
   }
   service_cache.emplace(service_type_id, std::move(service_ptr));
 }
@@ -61,8 +63,10 @@ void store_service_factory(
   factory_map_t& factory_map = get_factory_map();
   auto factory_itr = factory_map.find(service_type_id);
   if (factory_itr != factory_map.end()) {
-    throw std::runtime_error(std::format(
-        "Duplicate factory registered for service {}", service_type_id.name()));
+    throw std::runtime_error(
+        std::format(
+            "Duplicate factory registered for service {}",
+            service_type_id.name()));
   }
   factory_map.emplace(service_type_id, factory);
 }

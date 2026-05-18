@@ -47,8 +47,9 @@ struct bytes {
 void check_pgconn_err(PGconn& conn, std::source_location = {}) {
   int code = PQstatus(&conn);
   if (code != CONNECTION_OK) {
-    throw std::runtime_error(std::format(
-        "Postgres connection error ({}) {}", code, PQerrorMessage(&conn)));
+    throw std::runtime_error(
+        std::format(
+            "Postgres connection error ({}) {}", code, PQerrorMessage(&conn)));
   }
 }
 
@@ -505,10 +506,11 @@ std::future<void> postgres_database::check_schema_version() {
     int db_version = get_schema_version(*_implementation->conn);
     int expected_version = db_internal::get_schema_version();
     if (db_version != expected_version) {
-      throw std::runtime_error(std::format(
-          "Expected schema version {}, found {}",
-          expected_version,
-          db_version));
+      throw std::runtime_error(
+          std::format(
+              "Expected schema version {}, found {}",
+              expected_version,
+              db_version));
     }
 
     _prepare_queries().get();

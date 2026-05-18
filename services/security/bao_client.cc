@@ -75,11 +75,12 @@ post_bao(std::string_view target, const Json::Value& body) {
 void check_response(
     const http::response<http::string_body>& res, std::string_view action) {
   if (res.result() != http::status::ok) {
-    throw std::runtime_error(std::format(
-        "Failed to {} via OpenBao: {} {}",
-        action,
-        static_cast<int>(res.result()),
-        res.body()));
+    throw std::runtime_error(
+        std::format(
+            "Failed to {} via OpenBao: {} {}",
+            action,
+            static_cast<int>(res.result()),
+            res.body()));
   }
 }
 

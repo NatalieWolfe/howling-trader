@@ -80,8 +80,8 @@ public:
 
     if (_current_minute.open() == 0.0) {
       _current_minute.set_open(market.last());
-      *_current_minute.mutable_opened_at() =
-          to_proto(std::chrono::floor<std::chrono::minutes>(
+      *_current_minute.mutable_opened_at() = to_proto(
+          std::chrono::floor<std::chrono::minutes>(
               to_std_chrono(market.emitted_at())));
     }
     _current_minute.set_close(market.last());

@@ -67,12 +67,13 @@ bool operator==(const Json::Value& json, stream_code code) {
 void check_json(
     bool passed, std::source_location loc = std::source_location::current()) {
   if (!passed) {
-    throw std::runtime_error(absl::StrCat(
-        "[",
-        loc.file_name(),
-        ":",
-        loc.line(),
-        "] Invalid JSON schema received."));
+    throw std::runtime_error(
+        absl::StrCat(
+            "[",
+            loc.file_name(),
+            ":",
+            loc.line(),
+            "] Invalid JSON schema received."));
   }
 }
 
@@ -113,11 +114,12 @@ http_response send_request(
 
   if (res.result_int() != 200) {
     LOG(ERROR) << beast::buffers_to_string(res.body().data());
-    throw std::runtime_error(absl::StrCat(
-        "Bad response from Schwab API server: ",
-        res.result_int(),
-        " ",
-        std::string_view{res.reason()}));
+    throw std::runtime_error(
+        absl::StrCat(
+            "Bad response from Schwab API server: ",
+            res.result_int(),
+            " ",
+            std::string_view{res.reason()}));
   }
   return res;
 }
@@ -305,10 +307,11 @@ std::vector<Account> api_connection::get_accounts() {
 
     auto acct_itr = accounts_by_number.find(account_number->asString());
     if (acct_itr == accounts_by_number.end()) {
-      throw std::runtime_error(absl::StrCat(
-          "Unknown account details pulled: ",
-          account_number->asString().substr(
-              account_number->asString().size() - 3)));
+      throw std::runtime_error(
+          absl::StrCat(
+              "Unknown account details pulled: ",
+              account_number->asString().substr(
+                  account_number->asString().size() - 3)));
     }
     acct_itr->second->set_available_funds(cash->asDouble());
   }
@@ -459,13 +462,14 @@ void stream::add_symbol(stock::Symbol symbol) {
     if (*code != stream_code::SUCCESS) {
       const Json::Value* service = response.find("service");
       const Json::Value* msg = content->find("msg");
-      throw std::runtime_error(std::format(
-          "Failed to add {} ({}) to {} stream: [{}] {}",
-          stock::Symbol_Name(symbol),
-          static_cast<int>(symbol),
-          service ? service->asString() : "<unknown service>",
-          code->asInt(),
-          msg ? msg->asString() : "unknown"));
+      throw std::runtime_error(
+          std::format(
+              "Failed to add {} ({}) to {} stream: [{}] {}",
+              stock::Symbol_Name(symbol),
+              static_cast<int>(symbol),
+              service ? service->asString() : "<unknown service>",
+              code->asInt(),
+              msg ? msg->asString() : "unknown"));
     }
   };
 
@@ -530,9 +534,10 @@ void stream::on_chart(chart_callback_type cb) {
 
       stock::Symbol symbol;
       if (!stock::Symbol_Parse(json_candle.find("key")->asString(), &symbol)) {
-        throw std::runtime_error(absl::StrCat(
-            "Unknown stock symbol returned: ",
-            json_candle.find("key")->asString()));
+        throw std::runtime_error(
+            absl::StrCat(
+                "Unknown stock symbol returned: ",
+                json_candle.find("key")->asString()));
       }
 
       cb(symbol, std::move(candle));
@@ -546,8 +551,9 @@ void stream::on_market(market_callback_type cb) {
     const Json::Value* timestamp = data.find("timestamp");
     check_json(content && content->isArray());
     check_json(timestamp && timestamp->isInt64());
-    auto time = to_proto(std::chrono::system_clock::time_point{
-        std::chrono::milliseconds{timestamp->asInt64()}});
+    auto time = to_proto(
+        std::chrono::system_clock::time_point{
+            std::chrono::milliseconds{timestamp->asInt64()}});
 
     for (const Json::Value& json_market : *content) {
       Market market;
@@ -563,9 +569,10 @@ void stream::on_market(market_callback_type cb) {
 
       stock::Symbol symbol;
       if (!stock::Symbol_Parse(json_market.find("key")->asString(), &symbol)) {
-        throw std::runtime_error(absl::StrCat(
-            "Unknown stock symbol returned: ",
-            json_market.find("key")->asString()));
+        throw std::runtime_error(
+            absl::StrCat(
+                "Unknown stock symbol returned: ",
+                json_market.find("key")->asString()));
       }
       market.set_symbol(symbol);
 
@@ -692,11 +699,12 @@ void stream::_login() {
   check_json(code && code->isInt());
   if (*code != stream_code::SUCCESS) {
     const Json::Value* msg = content->find("msg");
-    throw std::runtime_error(absl::StrCat(
-        "Failed to login to streaming API (",
-        code->asInt(),
-        "): ",
-        msg ? msg->asString() : "unknown"));
+    throw std::runtime_error(
+        absl::StrCat(
+            "Failed to login to streaming API (",
+            code->asInt(),
+            "): ",
+            msg ? msg->asString() : "unknown"));
   }
 }
 
