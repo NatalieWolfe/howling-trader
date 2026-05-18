@@ -229,18 +229,16 @@ token_manager::token_manager(
     std::unique_ptr<AuthService::StubInterface> stub,
     database& db,
     std::unique_ptr<token_refresher> refresher)
-    : _implementation(
-          std::make_unique<implementation>(
-              std::move(stub), db, std::move(refresher))) {}
+    : _implementation(std::make_unique<implementation>(
+          std::move(stub), db, std::move(refresher))) {}
 
 token_manager::token_manager(
     defer_pump_start_t,
     std::unique_ptr<AuthService::StubInterface> stub,
     database& db,
     std::unique_ptr<token_refresher> refresher)
-    : _implementation(
-          std::make_unique<implementation>(
-              defer_pump_start, std::move(stub), db, std::move(refresher))) {}
+    : _implementation(std::make_unique<implementation>(
+          defer_pump_start, std::move(stub), db, std::move(refresher))) {}
 
 token_manager::~token_manager() = default;
 

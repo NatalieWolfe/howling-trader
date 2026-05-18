@@ -20,8 +20,8 @@ TEST(ToStdChronoTest, AbslTime) {
   absl::Time t = absl::FromUnixMicros(123456789);
   system_clock::time_point tp = to_std_chrono(t);
   EXPECT_EQ(system_clock::to_time_t(tp), 123);
-  EXPECT_EQ(duration_cast<microseconds>(tp.time_since_epoch()).count(),
-            123456789);
+  EXPECT_EQ(
+      duration_cast<microseconds>(tp.time_since_epoch()).count(), 123456789);
 }
 
 TEST(ToStdChronoTest, ProtoTimestamp) {
@@ -29,8 +29,8 @@ TEST(ToStdChronoTest, ProtoTimestamp) {
   ts.set_seconds(123);
   ts.set_nanos(456000);
   system_clock::time_point tp = to_std_chrono(ts);
-  EXPECT_EQ(duration_cast<microseconds>(tp.time_since_epoch()).count(),
-            123000456);
+  EXPECT_EQ(
+      duration_cast<microseconds>(tp.time_since_epoch()).count(), 123000456);
 }
 
 TEST(ToStdChronoTest, AbslDuration) {

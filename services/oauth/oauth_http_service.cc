@@ -274,9 +274,8 @@ oauth_http_service::oauth_http_service(
     unsigned short port,
     database& db,
     std::unique_ptr<oauth_exchanger> exchanger)
-    : _implementation(
-          std::make_unique<implementation>(
-              ioc, port, db, std::move(exchanger))) {}
+    : _implementation(std::make_unique<implementation>(
+          ioc, port, db, std::move(exchanger))) {}
 
 // Defined out-of-line due to incomplete `implementation` struct in header.
 oauth_http_service::~oauth_http_service() = default;

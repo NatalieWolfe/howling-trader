@@ -67,11 +67,10 @@ TEST_F(AuthenticateTest, GetBearerTokenFromCache) {
   EXPECT_CALL(_db, get_auth_token("schwab")).WillOnce(Return(p.get_future()));
 
   EXPECT_CALL(*_refresher, refresh_tokens("refresh_token_1"))
-      .WillOnce(Return(
-          schwab::oauth_tokens{
-              .access_token = "access_token_1",
-              .refresh_token = "refresh_token_1",
-              .expires_in = 3600}));
+      .WillOnce(Return(schwab::oauth_tokens{
+          .access_token = "access_token_1",
+          .refresh_token = "refresh_token_1",
+          .expires_in = 3600}));
 
   _manager->start_pump(); // Only necessary when pump start is deferred.
   EXPECT_EQ(_manager->get_bearer_token(), "access_token_1");
@@ -86,11 +85,10 @@ TEST_F(AuthenticateTest, GetBearerTokenRefreshesWhenExpired) {
   EXPECT_CALL(_db, get_auth_token("schwab")).WillOnce(Return(p1.get_future()));
 
   EXPECT_CALL(*_refresher, refresh_tokens("refresh_token_1"))
-      .WillOnce(Return(
-          schwab::oauth_tokens{
-              .access_token = "access_token_1",
-              .refresh_token = "refresh_token_1",
-              .expires_in = 3600}));
+      .WillOnce(Return(schwab::oauth_tokens{
+          .access_token = "access_token_1",
+          .refresh_token = "refresh_token_1",
+          .expires_in = 3600}));
 
   _manager->start_pump(); // Only necessary when pump start is deferred.
   EXPECT_EQ(_manager->get_bearer_token(), "access_token_1");
@@ -103,11 +101,10 @@ TEST_F(AuthenticateTest, GetBearerTokenRefreshesWhenExpired) {
   });
 
   EXPECT_CALL(*_refresher, refresh_tokens("refresh_token_2"))
-      .WillOnce(Return(
-          schwab::oauth_tokens{
-              .access_token = "access_token_2",
-              .refresh_token = "refresh_token_2",
-              .expires_in = 3600}));
+      .WillOnce(Return(schwab::oauth_tokens{
+          .access_token = "access_token_2",
+          .refresh_token = "refresh_token_2",
+          .expires_in = 3600}));
 
   EXPECT_EQ(_manager->get_bearer_token(true), "access_token_2");
 }
@@ -128,11 +125,10 @@ TEST_F(AuthenticateTest, RequestLoginWhenNoRefreshToken) {
   EXPECT_CALL(*_stub, RequestLogin(_, _, _)).WillOnce(Return(grpc::Status::OK));
 
   EXPECT_CALL(*_refresher, refresh_tokens("new_refresh_token"))
-      .WillOnce(Return(
-          schwab::oauth_tokens{
-              .access_token = "new_access_token",
-              .refresh_token = "new_refresh_token",
-              .expires_in = 3600}));
+      .WillOnce(Return(schwab::oauth_tokens{
+          .access_token = "new_access_token",
+          .refresh_token = "new_refresh_token",
+          .expires_in = 3600}));
 
   _manager->start_pump(); // Only necessary when pump start is deferred.
   EXPECT_EQ(_manager->get_bearer_token(), "new_access_token");
@@ -144,11 +140,10 @@ TEST_F(AuthenticateTest, UpdatesRefreshTokenIfChanged) {
   EXPECT_CALL(_db, get_auth_token("schwab")).WillOnce(Return(p.get_future()));
 
   EXPECT_CALL(*_refresher, refresh_tokens("old_refresh_token"))
-      .WillOnce(Return(
-          schwab::oauth_tokens{
-              .access_token = "access_token",
-              .refresh_token = "new_refresh_token",
-              .expires_in = 3600}));
+      .WillOnce(Return(schwab::oauth_tokens{
+          .access_token = "access_token",
+          .refresh_token = "new_refresh_token",
+          .expires_in = 3600}));
 
   std::promise<void> save_p;
   save_p.set_value();

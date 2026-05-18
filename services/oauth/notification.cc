@@ -46,11 +46,10 @@ void send_notification(std::string_view message) {
 
   try {
     const std::string target = std::format("/bot{}/sendMessage", token);
-    auto conn = net::make_connection(
-        net::url{
-            .service = std::to_string(absl::GetFlag(FLAGS_telegram_port)),
-            .host = host,
-            .target = target});
+    auto conn = net::make_connection(net::url{
+        .service = std::to_string(absl::GetFlag(FLAGS_telegram_port)),
+        .host = host,
+        .target = target});
 
     Json::Value body;
     body["chat_id"] = std::move(chat_id);
@@ -73,11 +72,10 @@ void send_notification(std::string_view message) {
     http::read(conn->stream(), buffer, res);
 
     if (res.result() != http::status::ok) {
-      throw std::runtime_error(
-          std::format(
-              "Telegram API returned error {}: {}",
-              static_cast<int>(res.result()),
-              res.body()));
+      throw std::runtime_error(std::format(
+          "Telegram API returned error {}: {}",
+          static_cast<int>(res.result()),
+          res.body()));
     }
 
     LOG(INFO) << "Telegram notification sent successfully.";

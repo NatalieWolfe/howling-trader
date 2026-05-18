@@ -59,11 +59,10 @@ exchange_code_for_tokens(net::connection& conn, std::string_view code) {
       http_headers::authorization,
       std::format(
           "Basic {}",
-          absl::Base64Escape(
-              absl::StrCat(
-                  absl::GetFlag(FLAGS_schwab_api_key_id),
-                  ":",
-                  absl::GetFlag(FLAGS_schwab_api_key_secret)))));
+          absl::Base64Escape(absl::StrCat(
+              absl::GetFlag(FLAGS_schwab_api_key_id),
+              ":",
+              absl::GetFlag(FLAGS_schwab_api_key_secret)))));
   req.set(http_headers::accept, "application/json");
 
   urls::url body;
@@ -83,11 +82,10 @@ exchange_code_for_tokens(net::connection& conn, std::string_view code) {
 
   if (res.result_int() != 200) {
     LOG(ERROR) << "Schwab API responded with " << res.result_int();
-    throw std::runtime_error(
-        std::format(
-            "Bad response from Schwab API server: {} {}",
-            res.result_int(),
-            std::string_view{res.reason()}));
+    throw std::runtime_error(std::format(
+        "Bad response from Schwab API server: {} {}",
+        res.result_int(),
+        std::string_view{res.reason()}));
   }
 
   Json::Value root = to_json(beast::buffers_to_string(res.body().data()));
@@ -111,11 +109,10 @@ refresh_tokens(net::connection& conn, std::string_view refresh_token) {
       http_headers::authorization,
       std::format(
           "Basic {}",
-          absl::Base64Escape(
-              absl::StrCat(
-                  absl::GetFlag(FLAGS_schwab_api_key_id),
-                  ":",
-                  absl::GetFlag(FLAGS_schwab_api_key_secret)))));
+          absl::Base64Escape(absl::StrCat(
+              absl::GetFlag(FLAGS_schwab_api_key_id),
+              ":",
+              absl::GetFlag(FLAGS_schwab_api_key_secret)))));
   req.set(http_headers::accept, "application/json");
 
   urls::url body;
@@ -133,11 +130,10 @@ refresh_tokens(net::connection& conn, std::string_view refresh_token) {
 
   if (res.result_int() != 200) {
     LOG(ERROR) << beast::buffers_to_string(res.body().data());
-    throw std::runtime_error(
-        std::format(
-            "Bad response from Schwab API server: {} {}",
-            res.result_int(),
-            std::string_view{res.reason()}));
+    throw std::runtime_error(std::format(
+        "Bad response from Schwab API server: {} {}",
+        res.result_int(),
+        std::string_view{res.reason()}));
   }
 
   Json::Value root = to_json(beast::buffers_to_string(res.body().data()));

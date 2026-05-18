@@ -71,10 +71,8 @@ struct test_server {
 
     ON_CALL(db, get_auth_token(_)).WillByDefault(InvokeWithoutArgs([]() {
       std::promise<std::optional<storage::auth_token>> p;
-      p.set_value(
-          storage::auth_token{
-              .notice_token = "state",
-              .last_notified_at = system_clock::now()});
+      p.set_value(storage::auth_token{
+          .notice_token = "state", .last_notified_at = system_clock::now()});
       return p.get_future();
     }));
   }
@@ -128,11 +126,10 @@ TEST_F(SchwabOauthCallbackTest, ReturnsOkAndStoresToken) {
   test_client client{server.port};
 
   EXPECT_CALL(*server.exchanger, exchange("test_code"))
-      .WillOnce(Return(
-          schwab::oauth_tokens{
-              .access_token = "access",
-              .refresh_token = "refresh",
-              .expires_in = 3600}));
+      .WillOnce(Return(schwab::oauth_tokens{
+          .access_token = "access",
+          .refresh_token = "refresh",
+          .expires_in = 3600}));
 
   std::promise<void> save_promise;
   std::future<void> save_future = save_promise.get_future();
@@ -227,10 +224,9 @@ TEST_F(SchwabOauthCallbackTest, ExpiredStateReturnsBadRequest) {
 
   EXPECT_CALL(server.db, get_auth_token(_)).WillOnce([](std::string_view) {
     std::promise<std::optional<storage::auth_token>> p;
-    p.set_value(
-        storage::auth_token{
-            .notice_token = "state",
-            .last_notified_at = system_clock::now() - std::chrono::hours(48)});
+    p.set_value(storage::auth_token{
+        .notice_token = "state",
+        .last_notified_at = system_clock::now() - std::chrono::hours(48)});
     return p.get_future();
   });
 

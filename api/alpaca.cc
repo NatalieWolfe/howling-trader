@@ -107,12 +107,11 @@ http_response send_request(
             << res.body().size() << " bytes)";
 
   if (res.result_int() != 200) {
-    throw std::runtime_error(
-        absl::StrCat(
-            "Bad response from Alpaca API server: ",
-            res.result_int(),
-            " ",
-            std::string_view{res.reason()}));
+    throw std::runtime_error(absl::StrCat(
+        "Bad response from Alpaca API server: ",
+        res.result_int(),
+        " ",
+        std::string_view{res.reason()}));
   }
 
   return res;
@@ -126,11 +125,10 @@ Candle to_candle(const Json::Value& val) {
   candle.set_low(val["l"].asDouble());
   candle.set_volume(val["v"].asInt64());
   if (!TimeUtil::FromString(val["t"].asString(), candle.mutable_opened_at())) {
-    throw std::runtime_error(
-        absl::StrCat(
-            "Invalid timestamp format: ",
-            Json::writeString(Json::StreamWriterBuilder{}, val["t"]),
-            "."));
+    throw std::runtime_error(absl::StrCat(
+        "Invalid timestamp format: ",
+        Json::writeString(Json::StreamWriterBuilder{}, val["t"]),
+        "."));
   }
   // TODO: Build duration from params.timeframe instead of assuming.
   *candle.mutable_duration() = TimeUtil::SecondsToDuration(60);

@@ -49,12 +49,8 @@ void check_sqlite_err(
     } else {
       message = sqlite3_errstr(code);
     }
-    throw std::runtime_error(
-        absl::StrCat(
-            "SQLite error (",
-            code,
-            ") ",
-            message.empty() ? "<unknown>" : message));
+    throw std::runtime_error(absl::StrCat(
+        "SQLite error (", code, ") ", message.empty() ? "<unknown>" : message));
   }
 }
 
@@ -141,13 +137,12 @@ public:
   void read_all(Args&&... args) {
     int column_count = sqlite3_data_count(_statement);
     if (column_count != sizeof...(Args)) {
-      throw std::runtime_error(
-          absl::StrCat(
-              "Query has ",
-              column_count,
-              " columns to read, but ",
-              sizeof...(Args),
-              " columns requested."));
+      throw std::runtime_error(absl::StrCat(
+          "Query has ",
+          column_count,
+          " columns to read, but ",
+          sizeof...(Args),
+          " columns requested."));
     }
     int counter = 0;
     (_read_column(counter++, std::forward<Args>(args)), ...);
@@ -185,11 +180,10 @@ private:
   // MARK: Read
   void _read_column(int index, int32_t& n) {
     if (sqlite3_column_type(_statement, index) != SQLITE_INTEGER) {
-      throw std::runtime_error(
-          absl::StrCat(
-              "Attempted to read non-integer column (",
-              sqlite3_column_type(_statement, index),
-              ") into an integer."));
+      throw std::runtime_error(absl::StrCat(
+          "Attempted to read non-integer column (",
+          sqlite3_column_type(_statement, index),
+          ") into an integer."));
     }
     n = sqlite3_column_int(_statement, index);
   }
@@ -358,11 +352,10 @@ std::future<void> sqlite_database::check_schema_version() {
     int db_version = get_schema_version(*_db);
     int expected_version = db_internal::get_schema_version();
     if (db_version != expected_version) {
-      throw std::runtime_error(
-          std::format(
-              "Expected schema version {}, found {}",
-              db_version,
-              expected_version));
+      throw std::runtime_error(std::format(
+          "Expected schema version {}, found {}",
+          db_version,
+          expected_version));
     }
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }

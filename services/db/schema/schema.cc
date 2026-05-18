@@ -62,10 +62,9 @@ int get_schema_version() {
     if (filename.starts_with(UPDATE_PREFIX)) {
       max_version = std::max(
           max_version,
-          parse_int(
-              std::string_view{
-                  filename.data() + UPDATE_PREFIX.length(),
-                  filename.length() - UPDATE_PREFIX.length()}));
+          parse_int(std::string_view{
+              filename.data() + UPDATE_PREFIX.length(),
+              filename.length() - UPDATE_PREFIX.length()}));
     }
   }
   return max_version;
