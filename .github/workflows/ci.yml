@@ -61,6 +61,11 @@ jobs:
           cd infrastructure/app
           tofu init -backend=false
           tofu validate
+      - name: OpenTofu Validate Monitoring
+        run: |
+          cd infrastructure/monitoring
+          tofu init -backend=false
+          tofu validate
 
   prime-arc-runner:
     if: github.ref == 'refs/heads/release'
@@ -157,8 +162,35 @@ jobs:
           tofu init -input=false
           tofu apply -auto-approve -input=false
 
-  infrastructure-app-apply:
+  infrastructure-monitoring-apply:
     needs: infrastructure-platform-apply
+    if: github.ref == 'refs/heads/release'
+    runs-on: arc-runner-set
+    environment: Publish Environment
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget curl ca-certificates software-properties-common nodejs
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+      - name: Get Vault JWT
+        run: echo "TF_VAR_vault_jwt=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" >> $GITHUB_ENV
+      - name: OpenTofu Apply (Monitoring)
+        env:
+          TF_VAR_ovh_project_id: ${{ secrets.OVH_PROJECT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.STATE_S3_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.STATE_S3_SECRET_KEY }}
+          AWS_DEFAULT_REGION: us-east-va
+          AWS_REGION: us-east-va
+        run: |
+          cd infrastructure/monitoring
+          tofu init -input=false
+          tofu apply -auto-approve -input=false
+
+  infrastructure-app-apply:
+    needs: infrastructure-monitoring-apply
     if: github.ref == 'refs/heads/release'
     runs-on: arc-runner-set
     environment: Publish Environment
