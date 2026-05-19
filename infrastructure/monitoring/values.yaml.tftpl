@@ -86,7 +86,6 @@ loki:
   resources:
     requests: { memory: 2Gi }
     limits: { memory: 3Gi }
-
 alloy:
   fullnameOverride: "alloy"
   rbac: { create: true }
@@ -95,7 +94,14 @@ alloy:
   resources:
     requests: { memory: 500Mi }
     limits: { memory: 1Gi }
-  controller:
+  alloy:
+    extraEnv:
+      - name: HOSTNAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
+    configContent: |
+
     extraVolumes:
       - name: varlog
         hostPath: { path: /var/log }
