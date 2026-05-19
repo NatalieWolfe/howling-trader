@@ -32,7 +32,6 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//api/schwab:connect",
-        "//services:authenticate",
         "//containers:vector",
         "//data:account_cc_proto",
         "//data:candle_cc_proto",
@@ -40,6 +39,7 @@ cc_library(
         "//data:stock_cc_proto",
         "//net:connect",
         "//net:url",
+        "//services:authenticate",
         "//strings:json",
         "//strings:parse",
         "//time:conversion",
