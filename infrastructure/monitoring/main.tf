@@ -38,12 +38,12 @@ resource "helm_release" "stack" {
   ]
 
   set_sensitive {
-    name  = "loki.loki.storage.s3.access_key"
+    name  = "loki.loki.storage.s3.accessKey"
     value = data.vault_kv_secret_v2.s3_credentials.data.access_key
   }
 
   set_sensitive {
-    name  = "loki.loki.storage.s3.secret_key"
+    name  = "loki.loki.storage.s3.secretKey"
     value = data.vault_kv_secret_v2.s3_credentials.data.secret_key
   }
 
