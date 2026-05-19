@@ -14,16 +14,25 @@ data "vault_kv_secret_v2" "grafana_creds" {
   name  = "howling/monitoring/grafana"
 }
 
+locals {
+  # Map human-readable regions to technical S3 region names.
+  region_map = {
+    "US-EAST-VA-1" = "us-east-va"
+  }
+  s3_region = lookup(local.region_map, var.region, lower(replace(var.region, "-1", "")))
+}
+
 resource "helm_release" "stack" {
-  name      = "stack"
-  chart     = "${path.module}/charts/stack"
-  namespace = kubernetes_namespace.monitoring.metadata[0].name
+  name              = "stack"
+  chart             = "${path.module}/charts/stack"
+  namespace         = kubernetes_namespace.monitoring.metadata[0].name
+  dependency_update = true
 
   values = [
     templatefile("${path.module}/values.yaml.tftpl", {
       s3_endpoint = data.terraform_remote_state.platform.outputs.s3_endpoint
       s3_bucket   = data.terraform_remote_state.platform.outputs.monitoring_bucket.name
-      s3_region   = lower(replace(var.region, "-1", ""))
+      s3_region   = local.s3_region
       namespace   = kubernetes_namespace.monitoring.metadata[0].name
     })
   ]
