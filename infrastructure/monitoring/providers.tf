@@ -32,7 +32,7 @@ provider "kubernetes" {
   host                   = data.terraform_remote_state.platform.outputs.kube_endpoint
   cluster_ca_certificate = base64decode(data.terraform_remote_state.platform.outputs.kube_ca_certificate)
   exec {
-    api_version = "client.authentication.k8s.io/v1beta1"
+    api_version = "client.authentication.k8s.io/v1"
     args        = ["project", "kube", "auth", "token", var.ovh_project_id]
     command     = "ovh"
   }
@@ -43,7 +43,7 @@ provider "helm" {
     host                   = data.terraform_remote_state.platform.outputs.kube_endpoint
     cluster_ca_certificate = base64decode(data.terraform_remote_state.platform.outputs.kube_ca_certificate)
     exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
+      api_version = "client.authentication.k8s.io/v1"
       args        = ["project", "kube", "auth", "token", var.ovh_project_id]
       command     = "ovh"
     }

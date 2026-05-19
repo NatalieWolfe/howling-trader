@@ -4,12 +4,12 @@ resource "kubernetes_namespace" "monitoring" {
   }
 }
 
-data "vault_kv_secret_v2" "s3_creds" {
+data "vault_kv_secret_v2" "s3_credentials" {
   mount = "secret"
   name  = "howling/monitoring/s3"
 }
 
-data "vault_kv_secret_v2" "grafana_creds" {
+data "vault_kv_secret_v2" "grafana_credentials" {
   mount = "secret"
   name  = "howling/monitoring/grafana"
 }
@@ -39,16 +39,16 @@ resource "helm_release" "stack" {
 
   set_sensitive {
     name  = "loki.loki.storage.s3.access_key"
-    value = data.vault_kv_secret_v2.s3_creds.data.access_key
+    value = data.vault_kv_secret_v2.s3_credentials.data.access_key
   }
 
   set_sensitive {
     name  = "loki.loki.storage.s3.secret_key"
-    value = data.vault_kv_secret_v2.s3_creds.data.secret_key
+    value = data.vault_kv_secret_v2.s3_credentials.data.secret_key
   }
 
   set_sensitive {
     name  = "prometheus.grafana.adminPassword"
-    value = data.vault_kv_secret_v2.grafana_creds.data.admin_password
+    value = data.vault_kv_secret_v2.grafana_credentials.data.admin_password
   }
 }
