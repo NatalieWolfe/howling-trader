@@ -15,10 +15,9 @@ data "vault_kv_secret_v2" "grafana_creds" {
 }
 
 resource "helm_release" "stack" {
-  name       = "stack"
-  chart      = "${path.module}/charts/stack"
-  namespace  = kubernetes_namespace.monitoring.metadata[0].name
-  depends_on = [kubernetes_namespace.monitoring]
+  name      = "stack"
+  chart     = "${path.module}/charts/stack"
+  namespace = kubernetes_namespace.monitoring.metadata[0].name
 
   values = [
     templatefile("${path.module}/values.yaml.tftpl", {

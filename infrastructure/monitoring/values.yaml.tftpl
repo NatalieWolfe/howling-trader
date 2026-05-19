@@ -116,7 +116,7 @@ alloy:
         targets = discovery.kubernetes.pods.targets
         rule {
           source_labels = ["__meta_kubernetes_namespace"]
-          regex         = "kube-system|${namespace}"
+          regex         = "kube-system"
           action        = "drop"
         }
         rule {
@@ -126,13 +126,6 @@ alloy:
           ]
           regex         = "(metrics|prometheus|9090|8080|80);.*|.*;(9090|8080|80)"
           action        = "keep"
-        }
-        rule {
-          source_labels = ["__address__", "__meta_kubernetes_pod_container_name"]
-          separator     = ";"
-          regex         = "(.+);(.+)"
-          target_label  = "__tmp_dedup"
-          action        = "replace"
         }
         rule {
           source_labels = [
