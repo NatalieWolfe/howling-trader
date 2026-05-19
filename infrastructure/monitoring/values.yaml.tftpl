@@ -24,8 +24,7 @@ prometheus:
     enabled: true
     config:
       route: { receiver: "null" }
-      receivers:
-        - name: "null"
+      receivers: [{ name: "null" }]
     alertmanagerSpec:
       storage:
         volumeClaimTemplate:
@@ -86,6 +85,7 @@ loki:
   resources:
     requests: { memory: 2Gi }
     limits: { memory: 3Gi }
+
 alloy:
   fullnameOverride: "alloy"
   rbac: { create: true }
@@ -100,8 +100,6 @@ alloy:
         valueFrom:
           fieldRef:
             fieldPath: spec.nodeName
-    configContent: |
-
     extraVolumes:
       - name: varlog
         hostPath: { path: /var/log }
@@ -114,7 +112,6 @@ alloy:
       - name: varlibdockercontainers
         mountPath: /var/lib/docker/containers
         readOnly: true
-  alloy:
     configContent: |
       discovery.kubernetes "pods" { role = "pod" }
 
