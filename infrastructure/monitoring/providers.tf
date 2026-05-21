@@ -32,8 +32,10 @@ provider "vault" {
 }
 
 provider "kubernetes" {
-  host                   = data.terraform_remote_state.platform.outputs.kube_endpoint
-  cluster_ca_certificate = base64decode(data.terraform_remote_state.platform.outputs.kube_ca_certificate)
+  host                   = data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].host
+  cluster_ca_certificate = base64decode(data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].cluster_ca_certificate)
+  client_certificate     = base64decode(data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].client_certificate)
+  client_key             = base64decode(data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].client_key)
   exec {
     api_version = "client.authentication.k8s.io/v1"
     args        = ["project", "kube", "auth", "token", var.ovh_project_id]
@@ -43,8 +45,10 @@ provider "kubernetes" {
 
 provider "helm" {
   kubernetes {
-    host                   = data.terraform_remote_state.platform.outputs.kube_endpoint
-    cluster_ca_certificate = base64decode(data.terraform_remote_state.platform.outputs.kube_ca_certificate)
+    host                   = data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].host
+    cluster_ca_certificate = base64decode(data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].cluster_ca_certificate)
+    client_certificate     = base64decode(data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].client_certificate)
+    client_key             = base64decode(data.terraform_remote_state.platform.outputs.kubeconfig_attributes[0].client_key)
     exec {
       api_version = "client.authentication.k8s.io/v1"
       args        = ["project", "kube", "auth", "token", var.ovh_project_id]
