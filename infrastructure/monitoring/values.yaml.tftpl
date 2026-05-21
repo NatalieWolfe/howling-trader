@@ -67,12 +67,12 @@ loki:
   loki:
     storage:
       type: s3
+      bucketNames:
+        chunks: ${s3_bucket}
+        ruler: ${s3_bucket}
+        admin: ${s3_bucket}
       s3:
         endpoint: ${s3_endpoint}
-        bucketNames:
-          chunks: ${s3_bucket}
-          ruler: ${s3_bucket}
-          admin: ${s3_bucket}
         region: ${s3_region}
         s3ForcePathStyle: true
     limits_config: { retention_period: 336h }
