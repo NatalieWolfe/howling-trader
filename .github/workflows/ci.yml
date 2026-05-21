@@ -68,7 +68,7 @@ jobs:
           tofu validate
 
   infrastructure-plan:
-    if: github.event_name == 'pull_request' && github.base_ref == 'release'
+    if: github.ref == 'refs/heads/release'
     runs-on: arc-runner-set
     environment: Publish Environment
     steps:
@@ -138,7 +138,7 @@ jobs:
         run: echo 'Done.'
 
   publish:
-    needs: [format, test, infrastructure-check]
+    needs: [format, test, infrastructure-check, infrastructure-plan]
     if: github.ref == 'refs/heads/release'
     runs-on: arc-runner-set
     environment: Publish Environment
