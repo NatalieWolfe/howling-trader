@@ -1,0 +1,21 @@
+name: Tofu Setup
+description: Checks out code, prepares the system environment, installs OpenTofu, and gets the Vault JWT.
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Prepare Environment
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget curl ca-certificates software-properties-common nodejs
+
+    - name: Setup OpenTofu
+      uses: opentofu/setup-opentofu@v1
+
+    - name: Get Vault JWT
+      shell: bash
+      run: echo "TF_VAR_vault_jwt=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" >> $GITHUB_ENV
