@@ -37,6 +37,7 @@ prometheus:
         jwk_set_url: "http://openbao.security.svc.cluster.local:8200/v1/identity/oidc/provider/howling/.well-known/keys"
         issuer_url: "https://howling-admin.wolfe.dev/v1/identity/oidc/provider/howling"
         validate_id_token: true
+        use_pkce: true
         skip_org_role_sync: true
         role_attribute_strict: false
   alertmanager:

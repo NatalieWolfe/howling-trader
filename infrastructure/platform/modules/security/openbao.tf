@@ -240,3 +240,42 @@ resource "vault_kubernetes_auth_backend_role" "monitoring" {
 
   depends_on = [vault_kubernetes_auth_backend_config.config]
 }
+
+resource "kubernetes_ingress_v1" "openbao_oidc" {
+  metadata {
+    name      = "openbao-oidc"
+    namespace = "security"
+    annotations = {
+      "cert-manager.io/cluster-issuer"           = "letsencrypt-prod"
+      "nginx.ingress.kubernetes.io/ssl-redirect" = "true"
+    }
+  }
+
+  spec {
+    ingress_class_name = "nginx"
+
+    tls {
+      hosts       = ["howling-admin.wolfe.dev"]
+      secret_name = "howling-admin-tls"
+    }
+
+    rule {
+      host = "howling-admin.wolfe.dev"
+      http {
+        path {
+          path      = "/v1/identity/oidc"
+          path_type = "Prefix"
+          backend {
+            service {
+              name = "openbao"
+              port {
+                number = 8200
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
