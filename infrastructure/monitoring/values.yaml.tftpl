@@ -20,6 +20,26 @@ prometheus:
         type: loki
         url: http://loki.${namespace}:3100
         access: proxy
+    grafana.ini:
+      server:
+        domain: howling-monitor.wolfe.dev
+        root_url: https://howling-monitor.wolfe.dev/
+      users:
+        auto_assign_org_role: "Viewer"
+      auth.generic_oauth:
+        enabled: true
+        name: "OpenBao"
+        allow_sign_up: true
+        scopes: "openid profile email"
+        auth_url: "https://howling-admin.wolfe.dev/v1/identity/oidc/provider/howling/authorize"
+        token_url: "http://openbao.security.svc.cluster.local:8200/v1/identity/oidc/provider/howling/token"
+        api_url: "http://openbao.security.svc.cluster.local:8200/v1/identity/oidc/provider/howling/userinfo"
+        jwk_set_url: "http://openbao.security.svc.cluster.local:8200/v1/identity/oidc/provider/howling/.well-known/keys"
+        issuer_url: "https://howling-admin.wolfe.dev/v1/identity/oidc/provider/howling"
+        validate_id_token: true
+        use_pkce: true
+        skip_org_role_sync: true
+        role_attribute_strict: false
   alertmanager:
     enabled: true
     config:
