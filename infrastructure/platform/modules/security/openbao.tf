@@ -106,7 +106,7 @@ EOF
 
 resource "vault_identity_oidc_provider" "howling" {
   name               = "howling"
-  issuer_host        = "howling-oauth.wolfe.dev"
+  issuer_host        = "howling-admin.wolfe.dev"
   allowed_client_ids = [vault_identity_oidc_client.grafana.client_id]
   scopes_supported = [
     # "openid" -> implicitly supported scope
