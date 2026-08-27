@@ -75,6 +75,7 @@ jobs:
     runs-on: arc-runner-set
     environment: Publish Environment
     steps:
+      - uses: actions/checkout@v4
       - name: Setup OpenTofu Environment
         uses: ./.github/actions/tofu-setup
       - name: OpenTofu Plan (Platform)
@@ -157,6 +158,7 @@ jobs:
     runs-on: arc-runner-set
     environment: Publish Environment
     steps:
+      - uses: actions/checkout@v4
       - name: Setup OpenTofu Environment
         uses: ./.github/actions/tofu-setup
       - name: OpenTofu Apply (Platform)
@@ -178,6 +180,7 @@ jobs:
     runs-on: arc-runner-set
     environment: Publish Environment
     steps:
+      - uses: actions/checkout@v4
       - name: Setup OpenTofu Environment
         uses: ./.github/actions/tofu-setup
       - name: OpenTofu Apply (Monitoring)
@@ -191,6 +194,7 @@ jobs:
     runs-on: arc-runner-set
     environment: Publish Environment
     steps:
+      - uses: actions/checkout@v4
       - name: Setup OpenTofu Environment
         uses: ./.github/actions/tofu-setup
       - name: OpenTofu Apply (Application)
