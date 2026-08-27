@@ -1,6 +1,0 @@
-# Tofu files
-*.tf
-*.tfvars
-.terraform/
-.terraform.lock.hcl
-terraform.tfstate*

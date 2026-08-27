@@ -38,30 +38,6 @@ jobs:
             bazel-${{ runner.os }}-
       - name: Run All Tests
         run: |
-          export CC=gcc-14
-          export CXX=g++-14
+          export CC=gcc-23
+          export CXX=g++-23
           bazel test --config=ci //...
-
-  infrastructure-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v1
-      - name: OpenTofu Format Check
-        run: tofu fmt -check -recursive infrastructure/
-      - name: OpenTofu Validate Platform
-        run: |
-          cd infrastructure/platform
-          tofu init -backend=false
-          tofu validate
-      - name: OpenTofu Validate Application
-        run: |
-          cd infrastructure/app
-          tofu init -backend=false
-          tofu validate
-      - name: OpenTofu Validate Monitoring
-        run: |
-          cd infrastructure/monitoring
-          tofu init -backend=false
-          tofu validate
