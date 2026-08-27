@@ -4,9 +4,6 @@ description: Checks out code, prepares the system environment, installs OpenTofu
 runs:
   using: "composite"
   steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
     - name: Prepare Environment
       shell: bash
       run: |
