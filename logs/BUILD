@@ -6,6 +6,7 @@ cc_library(
     hdrs = ["stdout_sink.h"],
     visibility = ["//visibility:public"],
     deps = [
+        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log:log_entry",
         "@abseil-cpp//absl/log:log_sink",
     ],
