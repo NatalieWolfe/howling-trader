@@ -115,9 +115,7 @@ void base_resource_pool::release(std::unique_ptr<poolable_resource> resource) {
   if (healthy) {
     try {
       resource->reset();
-    } catch (...) {
-      healthy = false;
-    }
+    } catch (...) { healthy = false; }
   }
 
   std::unique_ptr<poolable_resource> to_destroy;
@@ -148,8 +146,8 @@ size_t base_resource_pool::available() const {
 size_t base_resource_pool::in_use() const {
   std::lock_guard<std::mutex> lock{_mutex};
   return _total_allocated >= _available.size()
-             ? _total_allocated - _available.size()
-             : 0;
+      ? _total_allocated - _available.size()
+      : 0;
 }
 
 size_t base_resource_pool::capacity() const {

@@ -22,9 +22,7 @@ public:
   [[nodiscard]] bool is_healthy() const override { return _healthy; }
   void set_healthy(bool healthy) { _healthy = healthy; }
 
-  void reset() override {
-    ++_reset_count;
-  }
+  void reset() override { ++_reset_count; }
 
   [[nodiscard]] int reset_count() const { return _reset_count; }
 
@@ -118,9 +116,7 @@ TEST(ResourcePoolTest, BlocksAndAcquiresWhenFull) {
   std::atomic<bool> acquired_by_thread = false;
   std::jthread worker([&]() {
     resource_pool<mock_resource>::scoped_resource resource2 = pool.acquire();
-    if (resource2) {
-      acquired_by_thread = true;
-    }
+    if (resource2) { acquired_by_thread = true; }
   });
 
   std::this_thread::sleep_for(50ms);
@@ -164,9 +160,7 @@ TEST(ResourcePoolTest, ConcurrentAccessStressTest) {
     });
   }
 
-  for (std::jthread& thread : threads) {
-    thread.join();
-  }
+  for (std::jthread& thread : threads) { thread.join(); }
 
   EXPECT_LE(pool.size(), 4u);
   EXPECT_EQ(pool.in_use(), 0u);

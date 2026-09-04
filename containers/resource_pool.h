@@ -188,8 +188,7 @@ public:
             pool_options) {}
 
   [[nodiscard]] scoped_resource acquire() {
-    std::unique_ptr<poolable_resource> resource =
-        base_resource_pool::acquire();
+    std::unique_ptr<poolable_resource> resource = base_resource_pool::acquire();
     return scoped_resource{*this, std::move(resource)};
   }
 };
