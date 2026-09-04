@@ -38,3 +38,20 @@ cc_library(
     hdrs = ["vector.h"],
     visibility = ["//visibility:public"],
 )
+
+cc_library(
+    name = "resource_pool",
+    srcs = ["resource_pool.cc"],
+    hdrs = ["resource_pool.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "resource_pool_test",
+    size = "small",
+    srcs = ["resource_pool_test.cc"],
+    deps = [
+        ":resource_pool",
+        "@googletest//:gtest_main",
+    ],
+)
