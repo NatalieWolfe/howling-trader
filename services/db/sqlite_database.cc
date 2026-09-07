@@ -573,8 +573,10 @@ sqlite_database::get_auth_token(std::string_view service_name) {
           row.last_notified_at,
           row.updated_at,
           row.expires_at);
-      row.refresh_token = _security.decrypt(
-          absl::GetFlag(FLAGS_db_encryption_key_name), row.refresh_token);
+      if (!row.refresh_token.empty()) {
+        row.refresh_token = _security.decrypt(
+            absl::GetFlag(FLAGS_db_encryption_key_name), row.refresh_token);
+      }
       p.set_value(std::move(row));
     }
   } catch (...) { p.set_exception(std::current_exception()); }

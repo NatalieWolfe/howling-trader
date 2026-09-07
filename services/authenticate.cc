@@ -160,8 +160,13 @@ void token_manager::implementation::_pump() {
   {
     std::lock_guard<std::mutex> lock(_mutex);
     if (_cached_refresh_token.empty()) {
-      auto auth_token = _db.get_auth_token(SERVICE_NAME).get();
-      if (auth_token) _cached_refresh_token = auth_token->refresh_token;
+      try {
+        auto auth_token = _db.get_auth_token(SERVICE_NAME).get();
+        if (auth_token) _cached_refresh_token = auth_token->refresh_token;
+      } catch (const std::exception& e) {
+        LOG(WARNING) << "Error retrieving auth token from DB: " << e.what();
+        _cached_refresh_token.clear();
+      }
     }
     refresh_token = _cached_refresh_token;
   }
