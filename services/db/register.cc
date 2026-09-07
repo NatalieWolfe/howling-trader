@@ -37,6 +37,16 @@ ABSL_FLAG(
     pg_enable_encryption,
     false,
     "Enable encryption for the Postgres connection.");
+ABSL_FLAG(
+    size_t,
+    db_pool_min_size,
+    1,
+    "Minimum number of database connections in pool.");
+ABSL_FLAG(
+    size_t,
+    db_pool_max_size,
+    10,
+    "Maximum number of database connections in pool.");
 
 namespace howling {
 namespace {
@@ -69,10 +79,6 @@ void fetch_admin_database_secrets(security_client& security) {
 }
 
 std::unique_ptr<database> database_client_factory(security_client& security) {
-  // TODO: Add a database connection pool. The pool should check that
-  // connections are still valid before passing them to callers. The connection
-  // should auto-release back to the pool upon destruction.
-
   if (absl::GetFlag(FLAGS_database) == "postgres") {
     bool encrypt = absl::GetFlag(FLAGS_pg_enable_encryption);
     LOG(INFO) << "Connecting to postgres database \""
@@ -102,9 +108,27 @@ void register_database_client() {
           fetch_database_secrets(security);
         }
         LOG(INFO) << "Initializing database connection.";
-        auto db = database_client_factory(security);
+        std::unique_ptr<database> db = database_client_factory(security);
         db->check_schema_version().get();
         return db;
+      });
+
+  registry::register_service_factory(
+      [](security_client& security) -> std::unique_ptr<database_pool> {
+        if (absl::GetFlag(FLAGS_database) == "postgres") {
+          fetch_database_secrets(security);
+        }
+        LOG(INFO) << "Initializing database connection pool.";
+        return std::make_unique<database_pool>(
+            [&security]() -> std::unique_ptr<database> {
+              std::unique_ptr<database> db = database_client_factory(security);
+              db->check_schema_version().get();
+              return db;
+            },
+            database_pool::options{
+                .min_size = absl::GetFlag(FLAGS_db_pool_min_size),
+                .max_size = absl::GetFlag(FLAGS_db_pool_max_size),
+            });
       });
 }
 

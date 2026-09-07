@@ -65,6 +65,7 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":service_base",
+        "//containers:resource_pool",
         "//data:analyzer",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
@@ -126,5 +127,5 @@ cc_library(
 cc_library(
     name = "service_base",
     hdrs = ["service_base.h"],
-    visibility = ["//services:__subpackages__"],
+    visibility = ["//visibility:public"],
 )

@@ -14,6 +14,12 @@ namespace howling {
 
 class mock_database : public database {
 public:
+  mock_database() {
+    ON_CALL(*this, is_healthy()).WillByDefault(::testing::Return(true));
+  }
+
+  MOCK_METHOD(bool, is_healthy, (), (const, override));
+
   MOCK_METHOD(
       std::future<void>,
       upgrade_schema,

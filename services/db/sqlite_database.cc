@@ -332,6 +332,10 @@ sqlite_database::~sqlite_database() {
   if (_db) sqlite3_close_v2(_db);
 }
 
+bool sqlite_database::is_healthy() const {
+  return _db != nullptr;
+}
+
 std::future<void> sqlite_database::upgrade_schema(std::string_view) {
   std::promise<void> p;
   try {

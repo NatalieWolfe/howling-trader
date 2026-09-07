@@ -21,6 +21,8 @@ public:
   sqlite_database(security_client& security);
   ~sqlite_database();
 
+  [[nodiscard]] bool is_healthy() const override;
+
   std::future<void> upgrade_schema(std::string_view /*app_db_user*/) override;
   std::future<void> check_schema_version() override;
 
