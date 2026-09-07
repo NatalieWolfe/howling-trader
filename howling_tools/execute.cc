@@ -261,8 +261,7 @@ void run() {
   std::jthread market_streamer([&]() {
     for (const Market& market : watcher->market_stream()) {
       if (!trading_stocks.contains(market.symbol())) continue;
-      if (printer && market.symbol() == followed_stock &&
-          !absl::GetFlag(FLAGS_headless)) {
+      if (printer && market.symbol() == followed_stock) {
         printer->print(market);
       }
       e.update_market(std::move(market));
