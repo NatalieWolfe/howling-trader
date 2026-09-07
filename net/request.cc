@@ -2,6 +2,7 @@
 
 #include <string>
 #include <utility>
+#include <variant>
 
 #include "boost/asio/buffer.hpp"
 #include "boost/beast/core/flat_buffer.hpp"
@@ -23,18 +24,31 @@ namespace beast = ::boost::beast;
 namespace http = ::boost::beast::http;
 
 template <typename Stream>
-http::response<http::string_body> do_post(
-    Stream& stream,
-    std::string_view host,
-    std::string_view target,
-    const Json::Value& body) {
-  http::request<http::string_body> req{http::verb::post, target, 11};
-  req.set(http::field::host, host);
+http::response<http::string_body>
+do_post(Stream& stream, const post_request& request) {
+  http::request<http::string_body> req{http::verb::post, request.target, 11};
+  req.set(http::field::host, request.host);
   req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
   req.set(http::field::content_type, "application/json");
-  req.body() = howling::to_string(body);
+  for (const auto& [key, value] : request.headers) req.set(key, value);
+  req.body() = howling::to_string(request.body);
   req.prepare_payload();
+  http::write(stream, req);
 
+  beast::flat_buffer buffer;
+  http::response<http::string_body> res;
+  http::read(stream, buffer, res);
+
+  return res;
+}
+
+template <typename Stream>
+http::response<http::string_body>
+do_get(Stream& stream, const get_request& request) {
+  http::request<http::empty_body> req{http::verb::get, request.target, 11};
+  req.set(http::field::host, request.host);
+  req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  for (const auto& [key, value] : request.headers) req.set(key, value);
   http::write(stream, req);
 
   beast::flat_buffer buffer;
@@ -46,35 +60,15 @@ http::response<http::string_body> do_post(
 
 } // namespace
 
-http::response<http::string_body> post(
-    connection& conn,
-    std::string_view host,
-    std::string_view target,
-    const Json::Value& body) {
-  return do_post(conn.stream(), host, target, body);
+http::response<http::string_body> post(const post_request& req) {
+  return std::visit(
+      [&](auto& conn) { return do_post(conn.get().stream(), req); }, req.conn);
 }
 
-http::response<http::string_body> post(
-    insecure_connection& conn,
-    std::string_view host,
-    std::string_view target,
-    const Json::Value& body) {
-  return do_post(conn.stream(), host, target, body);
-}
-
-http::response<http::string_body>
-get(insecure_connection& conn, std::string_view host, std::string_view target) {
-  http::request<http::empty_body> req{http::verb::get, target, 11};
-  req.set(http::field::host, host);
-  req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-
-  http::write(conn.stream(), req);
-
-  beast::flat_buffer buffer;
-  http::response<http::string_body> res;
-  http::read(conn.stream(), buffer, res);
-
-  return res;
+http::response<http::string_body> get(const get_request& request) {
+  return std::visit(
+      [&](auto& conn) { return do_get(conn.get().stream(), request); },
+      request.conn);
 }
 
 } // namespace howling::net
