@@ -203,7 +203,9 @@ private:
         http::field::content_length, std::to_string(_response.body().size()));
 
     http::async_write(_stream, _response, [self](beast::error_code ec, size_t) {
-      self->_stream.socket().shutdown(asio::ip::tcp::socket::shutdown_send, ec);
+      beast::error_code ignore_ec;
+      self->_stream.socket().shutdown(
+          asio::ip::tcp::socket::shutdown_send, ignore_ec);
       self->_deadline.cancel();
     });
   }
@@ -263,6 +265,8 @@ struct oauth_http_service::implementation {
             std::make_shared<oauth_http_connection>(
                 std::move(socket), db, exchanger.get())
                 ->start();
+          } else {
+            LOG(WARNING) << "HTTP accept error: " << ec.message();
           }
           do_accept();
         });

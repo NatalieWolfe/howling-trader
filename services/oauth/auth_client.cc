@@ -16,6 +16,12 @@ ABSL_FLAG(
     "localhost:50051",
     "Address of the howling.AuthService.");
 
+ABSL_FLAG(
+    std::string,
+    auth_service_ssl_target_name,
+    "howling-oauth.howling-app.svc.cluster.local",
+    "Expected TLS server name for the howling.AuthService.");
+
 namespace howling {
 namespace {
 
@@ -32,8 +38,13 @@ std::unique_ptr<AuthService::Stub>
 make_auth_service_stub(std::shared_ptr<grpc::Channel> channel) {
   // TODO: Refactor this into a service registry factory.
   if (!channel) {
-    channel = grpc::CreateChannel(
-        absl::GetFlag(FLAGS_auth_service_address), make_channel_credentials());
+    grpc::ChannelArguments args;
+    std::string ssl_target = absl::GetFlag(FLAGS_auth_service_ssl_target_name);
+    if (!ssl_target.empty()) { args.SetSslTargetNameOverride(ssl_target); }
+    channel = grpc::CreateCustomChannel(
+        absl::GetFlag(FLAGS_auth_service_address),
+        make_channel_credentials(),
+        args);
   }
   return AuthService::NewStub(channel);
 }
