@@ -1,6 +1,5 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("//infrastructure:containers.bzl", "package_binary")
 
 cc_library(
     name = "auth_client",
@@ -64,33 +63,11 @@ cc_binary(
     ],
 )
 
-pkg_tar(
-    name = "auth_refresh_package",
-    srcs = [":auth_refresh"],
-    include_runfiles = True,
-    package_dir = "/services/oauth",
-)
-
-oci_image(
+package_binary(
     name = "auth_refresh_image",
-    base = "@ubuntu_noble",
-    entrypoint = ["/services/oauth/auth_refresh"],
-    env = {
-        "RUNFILES_DIR": "/services/oauth/auth_refresh.runfiles",
-    },
-    tars = [":auth_refresh_package"],
-)
-
-oci_load(
-    name = "auth_refresh_load",
-    image = ":auth_refresh_image",
-    repo_tags = ["auth-refresh:latest"],
-)
-
-oci_push(
-    name = "auth_refresh_push",
-    image = ":auth_refresh_image",
-    remote_tags = ["latest"],
+    image_name = "howling-auth-refresh",
+    binary = ":auth_refresh",
+    visibility = ["//infrastructure:visibility"],
 )
 
 cc_library(
@@ -279,31 +256,9 @@ cc_binary(
     ],
 )
 
-pkg_tar(
-    name = "server_layer",
-    srcs = [":server"],
-    include_runfiles = True,
-    package_dir = "/services/oauth",
-)
-
-oci_image(
-    name = "image",
-    base = "@ubuntu_noble",
-    entrypoint = ["/services/oauth/server"],
-    env = {
-        "RUNFILES_DIR": "/services/oauth/server.runfiles",
-    },
-    tars = [":server_layer"],
-)
-
-oci_load(
-    name = "load",
-    image = ":image",
-    repo_tags = ["howling-oauth:latest"],
-)
-
-oci_push(
-    name = "push",
-    image = ":image",
-    remote_tags = ["latest"],
+package_binary(
+    name = "server_image",
+    image_name = "howling-auth-service",
+    binary = ":server",
+    visibility = ["//infrastructure:visibility"],
 )

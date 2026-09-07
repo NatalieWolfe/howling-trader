@@ -1,7 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load", "oci_push")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//infrastructure:containers.bzl", "package_binary")
 
 cc_library(
     name = "database_test_interface",
@@ -155,31 +154,9 @@ cc_test(
     ],
 )
 
-pkg_tar(
-    name = "schema_upgrade_layer",
-    srcs = [":schema_upgrade"],
-    include_runfiles = True,
-    package_dir = "/services/db",
-)
-
-oci_image(
-    name = "image",
-    base = "@ubuntu_noble",
-    entrypoint = ["/services/db/schema_upgrade"],
-    env = {
-        "RUNFILES_DIR": "/services/db/schema_upgrade.runfiles",
-    },
-    tars = [":schema_upgrade_layer"],
-)
-
-oci_load(
-    name = "load",
-    image = ":image",
-    repo_tags = ["schema-upgrade:latest"],
-)
-
-oci_push(
-    name = "push",
-    image = ":image",
-    remote_tags = ["latest"],
+package_binary(
+    name = "schema_upgrade_image",
+    binary = ":schema_upgrade",
+    image_name = "howling-schema-upgrade",
+    visibility = ["//infrastructure:visibility"],
 )
