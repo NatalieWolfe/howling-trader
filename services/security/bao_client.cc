@@ -30,6 +30,13 @@ ABSL_FLAG(
     "OpenBao server address.");
 
 ABSL_FLAG(
+    std::string,
+    bao_token,
+    "",
+    "OpenBao token to include in requests. If empty, relies on an agent "
+    "proxy.");
+
+ABSL_FLAG(
     bool,
     bao_shutdown_on_destroy,
     false,
@@ -57,6 +64,15 @@ net::url make_bao_url() {
   return bao_url;
 }
 
+net::headers_map make_bao_headers() {
+  net::headers_map headers;
+  std::string bao_token = absl::GetFlag(FLAGS_bao_token);
+  if (!bao_token.empty()) {
+    headers.emplace("X-Vault-Token", std::move(bao_token));
+  }
+  return headers;
+}
+
 http::response<http::string_body> get_bao(std::string_view target) {
   net::url bao_url = make_bao_url();
   // TODO: #106 - Check the url scheme and use a secure connection if it is
@@ -66,6 +82,7 @@ http::response<http::string_body> get_bao(std::string_view target) {
       .conn = *conn,
       .host = bao_url.host,
       .target = target,
+      .headers = make_bao_headers(),
   });
 }
 
@@ -77,6 +94,7 @@ post_bao(std::string_view target, const Json::Value& body) {
       .conn = *conn,
       .host = bao_url.host,
       .target = target,
+      .headers = make_bao_headers(),
       .body = body,
   });
 }
@@ -171,6 +189,7 @@ Json::Value bao_client::get_secret(std::string_view path) {
 
 std::string
 bao_client::encrypt(std::string_view key_name, std::string_view plaintext) {
+  if (plaintext.empty()) return "";
   Json::Value body;
   body["plaintext"] = absl::Base64Escape(plaintext);
   auto res = post_bao(absl::StrCat("/v1/transit/encrypt/", key_name), body);
@@ -181,6 +200,7 @@ bao_client::encrypt(std::string_view key_name, std::string_view plaintext) {
 
 std::string
 bao_client::decrypt(std::string_view key_name, std::string_view ciphertext) {
+  if (ciphertext.empty()) return "";
   Json::Value body;
   body["ciphertext"] = std::string(ciphertext);
   auto res = post_bao(absl::StrCat("/v1/transit/decrypt/", key_name), body);
