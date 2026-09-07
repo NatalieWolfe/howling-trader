@@ -5,6 +5,23 @@ set -euo pipefail
 CONTAINER_NAME="pg_test_$(openssl rand -hex 6)"
 # Pick a random high port to avoid collisions during parallel test execution
 DB_PORT=$(python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()')
+# Auto-detect Docker socket if DOCKER_HOST is not already set
+if [ -z "${DOCKER_HOST:-}" ]; then
+  USER_HOME="${HOME:-}"
+  if command -v getent >/dev/null 2>&1; then
+    USER_HOME="$(getent passwd "$(id -u)" | cut -d: -f6)"
+  fi
+
+  if [ -S "/var/run/docker.sock" ]; then
+    export DOCKER_HOST="unix:///var/run/docker.sock"
+  elif [ -n "$USER_HOME" ] && [ -S "$USER_HOME/.docker/desktop/docker.sock" ]; then
+    export DOCKER_HOST="unix://$USER_HOME/.docker/desktop/docker.sock"
+  elif [ -n "${XDG_RUNTIME_DIR:-}" ] && [ -S "$XDG_RUNTIME_DIR/docker.sock" ]; then
+    export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/docker.sock"
+  elif [ -S "/run/user/$(id -u)/docker.sock" ]; then
+    export DOCKER_HOST="unix:///run/user/$(id -u)/docker.sock"
+  fi
+fi
 
 # 2. Cleanup: Ensure container is killed on exit/failure
 cleanup() {
