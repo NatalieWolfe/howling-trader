@@ -818,8 +818,17 @@ postgres_database::get_auth_token(std::string_view service_name) {
           row.last_notified_at,
           row.updated_at,
           row.expires_at);
-      row.refresh_token = _implementation->security->decrypt(
-          absl::GetFlag(FLAGS_db_encryption_key_name), row.refresh_token);
+      if (!row.refresh_token.empty()) {
+        try {
+          row.refresh_token = _implementation->security->decrypt(
+              absl::GetFlag(FLAGS_db_encryption_key_name), row.refresh_token);
+        } catch (const std::exception& e) {
+          LOG(WARNING) << "Failed to decrypt refresh token for service \""
+                       << service_name << "\": " << e.what()
+                       << ". Treating token as expired/invalid.";
+          row.refresh_token.clear();
+        }
+      }
       p.set_value(std::move(row));
     }
   } catch (...) { p.set_exception(std::current_exception()); }
