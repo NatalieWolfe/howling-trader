@@ -443,6 +443,11 @@ postgres_database::~postgres_database() {
   }
 }
 
+bool postgres_database::is_healthy() const {
+  if (!_implementation || !_implementation->conn) return false;
+  return PQstatus(_implementation->conn) == CONNECTION_OK;
+}
+
 std::future<void>
 postgres_database::upgrade_schema(std::string_view app_db_user) {
   std::promise<void> p;

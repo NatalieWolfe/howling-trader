@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 
+#include "containers/resource_pool.h"
 #include "data/analyzer.h"
 #include "data/candle.pb.h"
 #include "data/market.pb.h"
@@ -16,7 +17,7 @@
 
 namespace howling {
 
-class database : public service {
+class database : public service, public poolable_resource {
 public:
   virtual ~database() = default;
 
@@ -61,6 +62,27 @@ public:
    */
   virtual std::future<void> save_notice_token(
       std::string_view service_name, std::string_view notice_token) = 0;
+};
+
+class database_pool : public service {
+public:
+  using options = resource_pool<database>::options;
+  using scoped_resource = resource_pool<database>::scoped_resource;
+
+  explicit database_pool(
+      resource_pool<database>::resource_factory factory,
+      options pool_options = {})
+      : _pool{std::move(factory), pool_options} {}
+
+  [[nodiscard]] scoped_resource acquire() { return _pool.acquire(); }
+
+  [[nodiscard]] resource_pool<database>& pool() noexcept { return _pool; }
+  [[nodiscard]] const resource_pool<database>& pool() const noexcept {
+    return _pool;
+  }
+
+private:
+  resource_pool<database> _pool;
 };
 
 } // namespace howling

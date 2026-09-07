@@ -194,7 +194,7 @@ void run() {
   executor e{state};
 
   auto watcher = std::make_unique<market_watch>();
-  database& db = registry::get_service<database>();
+  database_pool& db_pool = registry::get_service<database_pool>();
 
   std::jthread pre_market_beats([&](std::stop_token stop) {
     while (!state.market_is_open() && !stop.stop_requested()) {
@@ -238,7 +238,7 @@ void run() {
         record.set_quantity(trade->quantity);
         record.set_confidence(d.confidence);
         record.set_dry_run(!absl::GetFlag(FLAGS_use_real_money));
-        db.save_trade(record);
+        db_pool.acquire()->save_trade(record);
       }
 
       if (absl::GetFlag(FLAGS_headless)) {
@@ -270,13 +270,13 @@ void run() {
 
   std::jthread candle_saver([&]() {
     for (const auto& [symbol, candle] : watcher->candle_stream()) {
-      db.save(symbol, candle).get();
+      db_pool.acquire()->save(symbol, candle).get();
     }
   });
 
   std::jthread market_saver([&]() {
     for (const Market& market : watcher->market_stream()) {
-      db.save(market).get();
+      db_pool.acquire()->save(market).get();
     }
   });
 
