@@ -53,9 +53,6 @@ using ::std::chrono::floor;
 using ::std::chrono::minutes;
 using ::std::chrono::system_clock;
 
-const std::filesystem::path CANDLE_BEAT_PATH = "/tmp/howling/candle-beat";
-const std::filesystem::path MARKET_BEAT_PATH = "/tmp/howling/market-beat";
-
 class execution_printer {
 public:
   execution_printer() {}
@@ -138,11 +135,16 @@ private:
 };
 
 Account get_account(schwab::api_connection& api) {
-  for (const Account& account : api.get_accounts()) {
+  std::vector<Account> accounts = api.get_accounts();
+  for (const Account& account : accounts) {
     if (account.name() == absl::GetFlag(FLAGS_account)) return account;
   }
+  LOG(INFO) << "Available accounts:";
+  for (const Account& account : accounts) {
+    LOG(INFO) << " - " << account.name();
+  }
   throw std::runtime_error(
-      "No account found with name " + absl::GetFlag(FLAGS_account));
+      "No account found with name '" + absl::GetFlag(FLAGS_account) + "'");
 }
 
 void load_positions(
@@ -198,16 +200,6 @@ void run() {
   auto watcher = std::make_unique<market_watch>();
   database_pool& db_pool = registry::get_service<database_pool>();
 
-  std::jthread pre_market_beats([&](std::stop_token stop) {
-    while (!state.market_is_open() && !stop.stop_requested()) {
-      std::string beat_message =
-          absl::StrCat("Pre-market beat: ", to_string(system_clock::now()));
-      files::write_file(CANDLE_BEAT_PATH, beat_message);
-      files::write_file(MARKET_BEAT_PATH, beat_message);
-      std::this_thread::sleep_for(30s);
-    }
-  });
-
   std::jthread candle_streamer([&]() {
     auto anal = load_analyzer(absl::GetFlag(FLAGS_analyzer));
     for (const auto& [symbol, candle] : watcher->candle_stream()) {
@@ -253,8 +245,6 @@ void run() {
       } else if (printer && symbol == followed_stock) {
         printer->print(candle, d, trade);
       }
-
-      files::write_file(CANDLE_BEAT_PATH, to_string(system_clock::now()));
     }
   });
 
@@ -265,8 +255,6 @@ void run() {
         printer->print(market);
       }
       e.update_market(std::move(market));
-
-      files::write_file(MARKET_BEAT_PATH, to_string(system_clock::now()));
     }
   });
 
