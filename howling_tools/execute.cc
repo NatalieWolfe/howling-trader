@@ -188,7 +188,9 @@ void run() {
   register_database_client();
   schwab::fetch_schwab_secrets();
 
-  execution_printer printer;
+  std::optional<execution_printer> printer;
+  if (!absl::GetFlag(FLAGS_headless)) printer.emplace();
+
   trading_state state = load_trading_state(std::move(symbols));
   metrics m{.name = "Summary", .initial_funds = state.initial_funds};
   executor e{state};
@@ -248,8 +250,8 @@ void run() {
                     << trade->quantity << " @ " << trade->price << " ("
                     << d.confidence << ")";
         }
-      } else if (symbol == followed_stock) {
-        printer.print(candle, d, trade);
+      } else if (printer && symbol == followed_stock) {
+        printer->print(candle, d, trade);
       }
 
       files::write_file(CANDLE_BEAT_PATH, to_string(system_clock::now()));
@@ -259,8 +261,9 @@ void run() {
   std::jthread market_streamer([&]() {
     for (const Market& market : watcher->market_stream()) {
       if (!trading_stocks.contains(market.symbol())) continue;
-      if (market.symbol() == followed_stock && !absl::GetFlag(FLAGS_headless)) {
-        printer.print(market);
+      if (printer && market.symbol() == followed_stock &&
+          !absl::GetFlag(FLAGS_headless)) {
+        printer->print(market);
       }
       e.update_market(std::move(market));
 
