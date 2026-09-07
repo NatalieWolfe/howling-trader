@@ -62,14 +62,23 @@ http::response<http::string_body> get_bao(std::string_view target) {
   // TODO: #106 - Check the url scheme and use a secure connection if it is
   // https.
   auto conn = net::make_insecure_connection(bao_url);
-  return net::get(*conn, bao_url.host, target);
+  return net::get({
+      .conn = *conn,
+      .host = bao_url.host,
+      .target = target,
+  });
 }
 
 http::response<http::string_body>
 post_bao(std::string_view target, const Json::Value& body) {
   net::url bao_url = make_bao_url();
   auto conn = net::make_insecure_connection(bao_url);
-  return net::post(*conn, bao_url.host, target, body);
+  return net::post({
+      .conn = *conn,
+      .host = bao_url.host,
+      .target = target,
+      .body = body,
+  });
 }
 
 void check_response(
