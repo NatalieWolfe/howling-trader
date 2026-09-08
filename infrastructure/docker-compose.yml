@@ -1,0 +1,204 @@
+name: howling
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: howling
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d howling"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  bao:
+    image: openbao/openbao:latest
+    restart: unless-stopped
+    command: server -dev -dev-listen-address=0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    environment:
+      BAO_DEV_ROOT_TOKEN_ID: root
+      VAULT_DEV_ROOT_TOKEN_ID: root
+      BAO_ADDR: http://127.0.0.1:8200
+      VAULT_ADDR: http://127.0.0.1:8200
+    ports:
+      - "8200:8200"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8200/v1/sys/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  bao_init:
+    image: openbao/openbao:latest
+    restart: no
+    depends_on:
+      bao:
+        condition: service_healthy
+    environment:
+      BAO_ADDR: http://bao:8200
+      VAULT_ADDR: http://bao:8200
+      BAO_TOKEN: root
+      VAULT_TOKEN: root
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        bao kv put secret/howling/prod/schwab api_key="${SCHWAB_API_KEY:-}" api_secret="${SCHWAB_API_SECRET:-}"
+        bao kv put secret/howling/prod/telegram token="${TELEGRAM_BOT_TOKEN:-}" chat_id="${TELEGRAM_CHAT_ID:-}"
+        bao kv put secret/howling/prod/database username="postgres" password="password"
+        bao kv put secret/howling/admin/database username="postgres" password="password"
+        bao secrets enable transit || true
+        bao write transit/restore/default backup="${BAO_BACKUP_KEY:-}" force=true || bao write -f transit/keys/default
+        bao secrets enable pki || true
+        bao write pki/root/generate/internal common_name="howling.local" ttl=87600h || true
+        bao write pki/roles/howling-node-role allow_any_name=true max_ttl="720h" || true
+
+  schema_upgrade:
+    image: howling-schema-upgrade:latest
+    restart: no
+    depends_on:
+      postgres:
+        condition: service_healthy
+      bao:
+        condition: service_healthy
+      bao_init:
+        condition: service_completed_successfully
+    command:
+      - "--database=postgres"
+      - "--pg_host=postgres"
+      - "--pg_port=5432"
+      - "--pg_user=postgres"
+      - "--pg_password=password"
+      - "--pg_database=howling"
+      - "--bao_address=http://bao:8200"
+      - "--bao_token=root"
+      - "--app_db_user=postgres"
+      - "--db_encryption_key_name=default"
+      - "--logging_always_flush"
+
+  auth_service:
+    image: howling-auth-service:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    networks:
+      default:
+        aliases:
+          - howling-oauth.howling-app.svc.cluster.local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      bao:
+        condition: service_healthy
+      bao_init:
+        condition: service_completed_successfully
+      schema_upgrade:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "/bin/bash", "-c", "</dev/tcp/127.0.0.1/8080"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    command:
+      - "--database=postgres"
+      - "--pg_host=postgres"
+      - "--pg_port=5432"
+      - "--pg_user=postgres"
+      - "--pg_password=password"
+      - "--pg_database=howling"
+      - "--bao_address=http://bao:8200"
+      - "--bao_token=root"
+      - "--db_encryption_key_name=default"
+      - "--logging_always_flush"
+      - "--schwab_oauth_redirect_url=https://local.wolfe.dev/schwab/oauth-callback"
+
+  gateway:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../net/local.wolfe.dev.crt:/etc/nginx/certs/local.wolfe.dev.crt:ro
+      - ../net/local.wolfe.dev.key:/etc/nginx/certs/local.wolfe.dev.key:ro
+    depends_on:
+      auth_service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- --no-check-certificate https://127.0.0.1/status > /dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  auth_refresh:
+    image: howling-auth-refresh:latest
+    restart: no
+    depends_on:
+      postgres:
+        condition: service_healthy
+      bao:
+        condition: service_healthy
+      bao_init:
+        condition: service_completed_successfully
+      schema_upgrade:
+        condition: service_completed_successfully
+      auth_service:
+        condition: service_healthy
+      gateway:
+        condition: service_healthy
+    command:
+      - "--database=postgres"
+      - "--pg_host=postgres"
+      - "--pg_port=5432"
+      - "--pg_user=postgres"
+      - "--pg_password=password"
+      - "--pg_database=howling"
+      - "--bao_address=http://bao:8200"
+      - "--bao_token=root"
+      - "--auth_service_address=howling-oauth.howling-app.svc.cluster.local:50051"
+      - "--db_encryption_key_name=default"
+      - "--logging_always_flush"
+
+  executor:
+    image: howling-execute:latest
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy
+      bao:
+        condition: service_healthy
+      bao_init:
+        condition: service_completed_successfully
+      auth_refresh:
+        condition: service_completed_successfully
+      schema_upgrade:
+        condition: service_completed_successfully
+    command:
+      - "--stocks=NVDA"
+      - "--account=620"
+      - "--database=postgres"
+      - "--pg_host=postgres"
+      - "--pg_port=5432"
+      - "--pg_user=postgres"
+      - "--pg_password=password"
+      - "--pg_database=howling"
+      - "--bao_address=http://bao:8200"
+      - "--bao_token=root"
+      - "--auth_service_address=howling-oauth.howling-app.svc.cluster.local:50051"
+      - "--db_encryption_key_name=default"
+      - "--logging_always_flush"
+      - "--headless"
+
+volumes:
+  postgres_data:
