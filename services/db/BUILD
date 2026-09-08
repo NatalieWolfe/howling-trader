@@ -75,6 +75,7 @@ sh_test(
     args = ["$(location :postgres_database_test_bin)"],
     data = [":postgres_database_test_bin"],
     tags = [
+        "local",
         "no-remote",
         "requires-network",
     ],
