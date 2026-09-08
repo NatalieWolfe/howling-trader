@@ -36,6 +36,7 @@ cc_library(
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
+        "//data:trade_cc_proto",
         "//services:database",
         "//services:security",
         "//services/db/schema",
