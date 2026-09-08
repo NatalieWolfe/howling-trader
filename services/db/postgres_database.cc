@@ -22,6 +22,7 @@
 #include "absl/log/log.h"
 #include "data/candle.pb.h"
 #include "data/stock.pb.h"
+#include "data/trade.pb.h"
 #include "google/protobuf/util/time_util.h"
 #include "libpq/libpq-fe.h"
 #include "services/db/environment.h"
@@ -32,6 +33,8 @@
 namespace howling {
 namespace {
 
+using ::google::protobuf::EnumDescriptor;
+using ::google::protobuf::EnumValueDescriptor;
 using ::std::chrono::duration_cast;
 using ::std::chrono::microseconds;
 using ::std::chrono::system_clock;
@@ -359,6 +362,33 @@ void full_schema_install(PGconn& conn) {
   }
 }
 
+void sync_proto_enums(PGconn& conn) {
+  LOG(INFO) << "Syncing proto enums to database...";
+  const EnumDescriptor* symbol_desc = howling::stock::Symbol_descriptor();
+  auto insert_symbol = query::prepare<int, std::string_view>(conn, R"sql(
+    INSERT INTO enum_symbols (id, name)
+    VALUES ($1, $2)
+    ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name
+  )sql");
+  for (int i = 0; i < symbol_desc->value_count(); ++i) {
+    const EnumValueDescriptor* val = symbol_desc->value(i);
+    insert_symbol->bind_all(val->number(), val->name());
+    insert_symbol->execute();
+  }
+
+  const EnumDescriptor* action_desc = howling::trading::Action_descriptor();
+  auto insert_action = query::prepare<int, std::string_view>(conn, R"sql(
+    INSERT INTO enum_actions (id, name)
+    VALUES ($1, $2)
+    ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name
+  )sql");
+  for (int i = 0; i < action_desc->value_count(); ++i) {
+    const EnumValueDescriptor* val = action_desc->value(i);
+    insert_action->bind_all(val->number(), val->name());
+    insert_action->execute();
+  }
+}
+
 int get_schema_version(PGconn& conn) {
   LOG(INFO) << "Checking for howling_version table existence.";
   bool has_version_table = false;
@@ -464,6 +494,8 @@ postgres_database::upgrade_schema(std::string_view app_db_user) {
         execute(*_implementation->conn, std::string{statement});
       }
     }
+
+    sync_proto_enums(*_implementation->conn);
 
     if (!app_db_user.empty()) {
       std::string escaped_user =

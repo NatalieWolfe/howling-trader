@@ -65,7 +65,13 @@ TEST(GetFullSchema, InsertsVersion) {
 
 TEST(GetFullSchema, CreatesAllExpectedTables) {
   const std::unordered_set<std::string> expected_tables{
-      "howling_version", "auth_tokens", "candles", "market", "trades"};
+      "howling_version",
+      "auth_tokens",
+      "candles",
+      "market",
+      "trades",
+      "enum_symbols",
+      "enum_actions"};
   std::unordered_set<std::string> missing_tables = expected_tables;
   std::regex table_regex{R"re(CREATE TABLE (\w+))re"};
   for (std::string_view command : get_full_schema()) {
