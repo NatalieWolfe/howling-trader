@@ -1,0 +1,992 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "datasource": {
+          "type": "postgres",
+          "uid": "howling-postgres"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgb(38, 166, 91)",
+        "name": "Buy Executions",
+        "rawQuery": "SELECT t.executed_at AS time, CONCAT('BUY ', t.quantity, ' shares @ $', t.price, ' (conf: ', t.confidence, ')') AS text, 'BUY' AS tags FROM trades t JOIN enum_actions a ON t.action = a.id WHERE t.symbol = ${symbol} AND a.name = 'BUY' AND $__timeFilter(t.executed_at) ORDER BY t.executed_at ASC;",
+        "showIn": 0
+      },
+      {
+        "datasource": {
+          "type": "postgres",
+          "uid": "howling-postgres"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgb(234, 53, 70)",
+        "name": "Sell Executions",
+        "rawQuery": "SELECT t.executed_at AS time, CONCAT('SELL ', t.quantity, ' shares @ $', t.price, ' (conf: ', t.confidence, ')') AS text, 'SELL' AS tags FROM trades t JOIN enum_actions a ON t.action = a.id WHERE t.symbol = ${symbol} AND a.name = 'SELL' AND $__timeFilter(t.executed_at) ORDER BY t.executed_at ASC;",
+        "showIn": 0
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 100,
+      "title": "Overview",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "howling-postgres"
+      },
+      "description": "Latest traded price for selected symbol",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "13.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "howling-postgres"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT emitted_at AS time, last FROM market WHERE symbol = ${symbol} ORDER BY emitted_at ASC;",
+          "refId": "A"
+        }
+      ],
+      "title": "Latest Market Price",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "howling-postgres"
+      },
+      "description": "Current Bid, Ask and Spread",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Spread"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 0.5
+                    },
+                    {
+                      "color": "red",
+                      "value": 2
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "13.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "howling-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT bid AS \"Bid\", ask AS \"Ask\", (ask - bid) AS \"Spread\" FROM market WHERE symbol = ${symbol} ORDER BY emitted_at DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Bid / Ask / Spread",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "howling-postgres"
+      },
+      "description": "Most recent algorithm execution",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "13.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "howling-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CONCAT(a.name, ' ', t.quantity, ' @ $', t.price) AS \"Execution\" FROM trades t JOIN enum_actions a ON t.action = a.id WHERE t.symbol = ${symbol} ORDER BY t.executed_at DESC LIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Last Trade Fill",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "howling-postgres"
+      },
+      "description": "Total executed trades, volume and dollar delta today",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "$Δ"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "thresholds"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "green",
+                      "value": 0
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "vertical",
+        "wideLayout": true,
+        "text": {
+          "titleSize": 13,
+          "valueSize": 17
+        },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "13.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "howling-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(COUNT(*), 0) AS \"Trades\", COALESCE(SUM(t.quantity), 0) AS \"Volume\", COALESCE(SUM(CASE WHEN a.name = 'SELL' THEN t.quantity * t.price ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN a.name = 'BUY' THEN t.quantity * t.price ELSE 0 END), 0) AS \"$Δ\" FROM trades t JOIN enum_actions a ON t.action = a.id WHERE t.symbol = ${symbol} AND t.executed_at >= date_trunc('day', to_timestamp($__from / 1000.0) AT TIME ZONE 'UTC') AND t.executed_at < date_trunc('day', to_timestamp($__to / 1000.0) AT TIME ZONE 'UTC') + INTERVAL '1 day';",
+          "refId": "A"
+        }
+      ],
+      "title": "Trades",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 101,
+      "title": "Market",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "howling-postgres"
+      },
+      "description": "Candlestick OHLC chart with trade execution overlay. Trade points are marked at execution fill prices.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Price ($)",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyUSD"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Buy Fill"
+            },
+            "properties": [
+              {
+                "id": "custom.pointSize",
+                "value": 10
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "always"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "rgb(38, 166, 91)",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sell Fill"
+            },
+            "properties": [
+              {
+                "id": "custom.pointSize",
+                "value": 10
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "always"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "rgb(234, 53, 70)",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 5,
+      "options": {
+        "candleStyle": "candles",
+        "colorStrategy": "open-vs-close",
+        "colors": {
+          "down": "rgb(234, 53, 70)",
+          "flat": "rgb(170, 170, 170)",
+          "up": "rgb(38, 166, 91)"
+        },
+        "fields": {
+          "close": "close",
+          "high": "high",
+          "low": "low",
+          "open": "open",
+          "volume": "volume"
+        },
+        "includeAbsChange": true,
+        "includeRelChange": true,
+        "includeVolume": true,
+        "mode": "candles+volume",
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "13.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "howling-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH time_calc AS (\n  SELECT\n    CASE\n      WHEN '${resolution}' = '1m'  THEN INTERVAL '1 minute'\n      WHEN '${resolution}' = '5m'  THEN INTERVAL '5 minutes'\n      WHEN '${resolution}' = '15m' THEN INTERVAL '15 minutes'\n      WHEN '${resolution}' = '1h'  THEN INTERVAL '1 hour'\n      WHEN '${resolution}' = '1d'  THEN INTERVAL '1 day'\n      ELSE\n        CASE\n          WHEN ($__to - $__from) / 1000 <= 14400   THEN INTERVAL '1 minute'\n          WHEN ($__to - $__from) / 1000 <= 86400   THEN INTERVAL '5 minutes'\n          WHEN ($__to - $__from) / 1000 <= 604800  THEN INTERVAL '1 hour'\n          ELSE INTERVAL '1 day'\n        END\n    END AS step\n),\ncombined_candles AS (\n  SELECT\n    opened_at,\n    open,\n    high,\n    low,\n    close,\n    volume\n  FROM candles\n  WHERE symbol = ${symbol}\n    AND $__timeFilter(opened_at)\n\n  UNION ALL\n\n  SELECT\n    date_trunc('minute', emitted_at) AS opened_at,\n    (array_agg(last ORDER BY emitted_at ASC))[1] AS open,\n    MAX(last) AS high,\n    MIN(last) AS low,\n    (array_agg(last ORDER BY emitted_at DESC))[1] AS close,\n    COALESCE(SUM(last_lots), 0) AS volume\n  FROM market\n  WHERE symbol = ${symbol}\n    AND emitted_at >= date_trunc('minute', NOW())\n    AND to_timestamp($__to / 1000.0) >= date_trunc('minute', NOW())\n    AND last > 0\n    AND NOT EXISTS (\n      SELECT 1 FROM candles\n      WHERE symbol = ${symbol}\n        AND opened_at = date_trunc('minute', NOW())\n    )\n  GROUP BY date_trunc('minute', emitted_at)\n)\nSELECT\n  date_bin(tc.step, c.opened_at, TIMESTAMP '2000-01-01') AS \"time\",\n  (array_agg(c.open ORDER BY c.opened_at ASC))[1] AS \"open\",\n  MAX(c.high) AS \"high\",\n  MIN(c.low) AS \"low\",\n  (array_agg(c.close ORDER BY c.opened_at DESC))[1] AS \"close\",\n  SUM(c.volume) AS \"volume\"\nFROM combined_candles c\nCROSS JOIN time_calc tc\nGROUP BY 1\nORDER BY 1 ASC;",
+          "refId": "Candles"
+        },
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "howling-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT t.executed_at AS time, CASE WHEN a.name = 'BUY' THEN t.price END AS \"Buy Fill\", CASE WHEN a.name = 'SELL' THEN t.price END AS \"Sell Fill\" FROM trades t JOIN enum_actions a ON t.action = a.id WHERE t.symbol = ${symbol} AND a.name IN ('BUY', 'SELL') AND $__timeFilter(t.executed_at) ORDER BY t.executed_at ASC;",
+          "refId": "Trades"
+        }
+      ],
+      "title": "Market & Trades",
+      "type": "candlestick"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 103,
+      "title": "Trade Execution Log & System Health",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "howling-postgres"
+      },
+      "description": "Historical log of trade decisions and fills",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Symbol"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Action"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 70
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "BUY": {
+                        "color": "green",
+                        "index": 0
+                      },
+                      "HOLD": {
+                        "color": "blue",
+                        "index": 2
+                      },
+                      "SELL": {
+                        "color": "red",
+                        "index": 1
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mode"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "Dry Run": {
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "Live": {
+                        "color": "green",
+                        "index": 0
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Price"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 85
+              },
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Qty"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 40
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total ($)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.width",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Confidence"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "custom.width",
+                "value": 90
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 16,
+        "x": 0,
+        "y": 27
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": true,
+          "fields": "",
+          "reducer": [
+            "count"
+          ],
+          "show": true
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Executed At"
+          }
+        ]
+      },
+      "pluginVersion": "13.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "howling-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT t.executed_at AS \"Executed At\", s.name AS \"Symbol\", a.name AS \"Action\", t.price AS \"Price\", t.quantity AS \"Qty\", (t.price * t.quantity) AS \"Total ($)\", t.confidence AS \"Confidence\", CASE WHEN t.dry_run THEN 'Dry Run' ELSE 'Live' END AS \"Mode\" FROM trades t LEFT JOIN enum_symbols s ON t.symbol = s.id LEFT JOIN enum_actions a ON t.action = a.id WHERE (${symbol} = -1 OR t.symbol = ${symbol}) AND t.executed_at >= date_trunc('day', to_timestamp($__from / 1000.0) AT TIME ZONE 'UTC') AND t.executed_at < date_trunc('day', to_timestamp($__to / 1000.0) AT TIME ZONE 'UTC') + INTERVAL '1 day' ORDER BY t.executed_at DESC LIMIT 100;",
+          "refId": "A"
+        }
+      ],
+      "title": "Trade Log",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "howling-postgres"
+      },
+      "description": "Auth token expiration times and service status",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Hours Remaining"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 12
+                    },
+                    {
+                      "color": "green",
+                      "value": 48
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 27
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "13.2.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "howling-postgres"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT service_name AS \"Service\", updated_at AS \"Updated At\", expires_at AS \"Expires At\", ROUND(CAST(EXTRACT(EPOCH FROM (expires_at - CURRENT_TIMESTAMP)) / 3600 AS NUMERIC), 1) AS \"Hours Remaining\" FROM auth_tokens ORDER BY service_name;",
+          "refId": "A"
+        }
+      ],
+      "title": "Auth Tokens & Status",
+      "type": "table"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "trading",
+    "howling",
+    "market"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "NVDA",
+          "value": "1"
+        },
+        "datasource": {
+          "type": "postgres",
+          "uid": "howling-postgres"
+        },
+        "definition": "SELECT id AS __value, name AS __text FROM enum_symbols WHERE id > 0 ORDER BY name;",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Symbol",
+        "multi": false,
+        "name": "symbol",
+        "options": [],
+        "query": "SELECT id AS __value, name AS __text FROM enum_symbols WHERE id > 0 ORDER BY name;",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "selected": true,
+          "text": "Auto",
+          "value": "Auto"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Resolution",
+        "multi": false,
+        "name": "resolution",
+        "options": [
+          {
+            "selected": true,
+            "text": "Auto",
+            "value": "Auto"
+          },
+          {
+            "selected": false,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": false,
+            "text": "5m",
+            "value": "5m"
+          },
+          {
+            "selected": false,
+            "text": "15m",
+            "value": "15m"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d"
+          }
+        ],
+        "query": "Auto, 1m, 5m, 15m, 1h, 1d",
+        "queryValue": "",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "1s",
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "timezone": "browser",
+  "title": "Howling Trader - Market & Trading Console",
+  "uid": "howling-trading-console",
+  "version": 1
+}
