@@ -19,6 +19,8 @@ sh_binary(
     data = [
         "docker-compose.yml",
         "nginx.conf",
+        "//grafana:dashboards",
+        "//grafana:provisioning",
         "//net:local.wolfe.dev.crt",
         "//net:local.wolfe.dev.key",
     ],
