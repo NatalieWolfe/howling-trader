@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 package(default_visibility = ["//api:__subpackages__"])
 
@@ -43,8 +43,8 @@ cc_library(
     deps = [
         ":configuration",
         ":connect",
+        ":utils",
         "//net:connect",
-        "//net:gzip",
         "//services/oauth:errors",
         "//strings:json",
         "@abseil-cpp//absl/flags:flag",
@@ -53,5 +53,30 @@ cc_library(
         "@boost.beast",
         "@boost.url",
         "@jsoncpp",
+    ],
+)
+
+cc_library(
+    name = "utils",
+    srcs = ["utils.cc"],
+    hdrs = ["utils.h"],
+    visibility = [
+        "//api:__pkg__",
+        "//api:__subpackages__",
+    ],
+    deps = [
+        "//net:gzip",
+        "@boost.beast",
+    ],
+)
+
+cc_test(
+    name = "utils_test",
+    srcs = ["utils_test.cc"],
+    deps = [
+        ":utils",
+        "//net:gzip",
+        "@boost.beast",
+        "@googletest//:gtest_main",
     ],
 )

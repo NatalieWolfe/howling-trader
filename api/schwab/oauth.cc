@@ -10,6 +10,7 @@
 #include "absl/strings/str_cat.h"
 #include "api/schwab/configuration.h"
 #include "api/schwab/connect.h"
+#include "api/schwab/utils.h"
 #include "boost/beast/core/buffers_to_string.hpp"
 #include "boost/beast/http/field.hpp"
 #include "boost/beast/http/read.hpp"
@@ -18,7 +19,6 @@
 #include "boost/beast/http/write.hpp"
 #include "boost/url/url.hpp"
 #include "net/connect.h"
-#include "net/gzip.h"
 #include "services/oauth/errors.h"
 #include "strings/json.h"
 #include "json/json.h"
@@ -29,15 +29,6 @@ namespace {
 namespace beast = ::boost::beast;
 namespace http = ::boost::beast::http;
 namespace urls = ::boost::urls;
-
-std::string get_response_body(const http::response<http::dynamic_body>& res) {
-  std::string body = beast::buffers_to_string(res.body().data());
-  if (net::is_compressed_encoding(res[http::field::content_encoding]) ||
-      net::is_compressed_encoding(res[http::field::transfer_encoding])) {
-    return net::gzip_decompress(body);
-  }
-  return body;
-}
 
 void _check_auth_error(const http::response<http::dynamic_body>& res) {
   if (res.result_int() == 400 || res.result_int() == 401) {

@@ -17,6 +17,7 @@
 #include "absl/log/log_entry.h"
 #include "absl/strings/str_cat.h"
 #include "api/schwab/connect.h"
+#include "api/schwab/utils.h"
 #include "boost/asio.hpp"
 #include "boost/asio/ssl.hpp"
 #include "boost/beast.hpp"
@@ -28,7 +29,6 @@
 #include "data/stock.pb.h"
 #include "google/protobuf/util/time_util.h"
 #include "net/connect.h"
-#include "net/gzip.h"
 #include "net/url.h"
 #include "services/authenticate.h"
 #include "strings/json.h"
@@ -102,15 +102,6 @@ http_request make_request(
   req.set(http_headers::accept_encoding, "gzip, deflate");
   req.set(http_headers::authorization, absl::StrCat("Bearer ", bearer_token));
   return req;
-}
-
-std::string get_response_body(const http_response& res) {
-  std::string body = beast::buffers_to_string(res.body().data());
-  if (net::is_compressed_encoding(res[http_headers::content_encoding]) ||
-      net::is_compressed_encoding(res[http_headers::transfer_encoding])) {
-    return net::gzip_decompress(body);
-  }
-  return body;
 }
 
 http_response send_request(
