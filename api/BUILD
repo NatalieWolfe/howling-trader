@@ -37,6 +37,7 @@ cc_library(
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
+        "//api/schwab:utils",
         "//net:connect",
         "//net:url",
         "//services:authenticate",

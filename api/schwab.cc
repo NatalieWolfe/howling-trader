@@ -17,6 +17,7 @@
 #include "absl/log/log_entry.h"
 #include "absl/strings/str_cat.h"
 #include "api/schwab/connect.h"
+#include "api/schwab/utils.h"
 #include "boost/asio.hpp"
 #include "boost/asio/ssl.hpp"
 #include "boost/beast.hpp"
@@ -98,6 +99,7 @@ http_request make_request(
   // TODO: Set custom user agent.
   req.set(http_headers::host, url.host);
   req.set(http_headers::accept, "application/json");
+  req.set(http_headers::accept_encoding, "gzip, deflate");
   req.set(http_headers::authorization, absl::StrCat("Bearer ", bearer_token));
   return req;
 }
@@ -113,7 +115,7 @@ http_response send_request(
             << res.body().size() << " bytes)";
 
   if (res.result_int() != 200) {
-    LOG(ERROR) << beast::buffers_to_string(res.body().data());
+    LOG(ERROR) << get_response_body(res);
     throw std::runtime_error(
         absl::StrCat(
             "Bad response from Schwab API server: ",
@@ -133,7 +135,7 @@ Json::Value send_request(
   beast::http::request<beast::http::string_body> req =
       make_request(beast::http::verb::get, url, bearer_token);
   http_response res = send_request(conn, req);
-  return to_json(beast::buffers_to_string(res.body().data()));
+  return to_json(get_response_body(res));
 }
 
 Json::Value send_request(
@@ -150,7 +152,7 @@ Json::Value send_request(
   req.set(http_headers::content_type, "application/json");
   req.body() = std::move(body_str);
   http_response res = send_request(conn, req);
-  return to_json(beast::buffers_to_string(res.body().data()));
+  return to_json(get_response_body(res));
 }
 
 std::string format_time(const std::chrono::system_clock::time_point& time) {
