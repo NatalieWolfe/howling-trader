@@ -13,8 +13,8 @@ namespace howling::schwab {
  *
  * @param res The HTTP response to extract the body from.
  *
- * @throws std::runtime_error If decompression fails on corrupted or invalid
- * data.
+ * @throws std::runtime_error
+ *    If decompression fails on corrupted or invalid data.
  *
  * @return The decompressed response body as a string.
  */
