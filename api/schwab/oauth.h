@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include "net/connect.h"
+#include "services/oauth/errors.h"
 
 namespace howling::schwab {
 
@@ -20,11 +21,23 @@ std::string make_schwab_authorize_url(
     std::string_view redirect_url,
     std::string_view state);
 
-// Exchanges an authorization code for access and refresh tokens.
+/**
+ * @brief Exchanges an authorization code for access and refresh tokens.
+ *
+ * @throws auth_rejected_error if the server rejects authentication (HTTP
+ * 400/401).
+ * @throws std::runtime_error on other communication or server errors.
+ */
 oauth_tokens
 exchange_code_for_tokens(net::connection& conn, std::string_view code);
 
-// Refreshes the access token using a refresh token.
+/**
+ * @brief Refreshes the access token using a refresh token.
+ *
+ * @throws auth_rejected_error if the server rejects authentication (HTTP
+ * 400/401).
+ * @throws std::runtime_error on other communication or server errors.
+ */
 oauth_tokens
 refresh_tokens(net::connection& conn, std::string_view refresh_token);
 

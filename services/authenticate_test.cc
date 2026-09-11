@@ -13,6 +13,7 @@
 #include "services/db/schema/auth_token.h"
 #include "services/mock_database.h"
 #include "services/mock_token_refresher.h"
+#include "services/oauth/errors.h"
 #include "services/oauth/mock_auth_service.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 #include "services/oauth/proto/auth_service.pb.h"
@@ -174,6 +175,58 @@ TEST_F(AuthenticateTest, TimeoutsWhenNoTokenAvailable) {
   EXPECT_THROW(
       _manager->get_bearer_token(false, std::chrono::milliseconds(500)),
       std::runtime_error);
+}
+
+TEST_F(AuthenticateTest, ImmediateReauthOnAuthRejection) {
+  EXPECT_CALL(_db, get_auth_token("schwab"))
+      .WillOnce([](std::string_view) {
+        std::promise<std::optional<storage::auth_token>> p;
+        p.set_value(storage::auth_token{.refresh_token = "rejected_token"});
+        return p.get_future();
+      })
+      .WillOnce([](std::string_view) {
+        std::promise<std::optional<storage::auth_token>> p;
+        p.set_value(storage::auth_token{.refresh_token = "new_refresh_token"});
+        return p.get_future();
+      });
+
+  EXPECT_CALL(*_refresher, refresh_tokens("rejected_token"))
+      .WillOnce(testing::Throw(
+          auth_rejected_error("Schwab auth rejected: 400 Bad Request")));
+
+  // RequestLogin should be called immediately on attempt #1.
+  EXPECT_CALL(*_stub, RequestLogin(_, _, _)).WillOnce(Return(grpc::Status::OK));
+
+  EXPECT_CALL(*_refresher, refresh_tokens("new_refresh_token"))
+      .WillOnce(Return(
+          schwab::oauth_tokens{
+              .access_token = "new_access_token",
+              .refresh_token = "new_refresh_token",
+              .expires_in = 3600}));
+
+  _manager->start_pump();
+  EXPECT_EQ(_manager->get_bearer_token(), "new_access_token");
+}
+
+TEST_F(AuthenticateTest, TransientErrorDoesNotTriggerImmediateRequestLogin) {
+  std::promise<std::optional<storage::auth_token>> p;
+  p.set_value(storage::auth_token{.refresh_token = "token_1"});
+  EXPECT_CALL(_db, get_auth_token("schwab")).WillOnce(Return(p.get_future()));
+
+  // Refresher throws a transient runtime_error on the first attempt.
+  EXPECT_CALL(*_refresher, refresh_tokens("token_1"))
+      .WillOnce(testing::Throw(std::runtime_error("temporary network error")))
+      .WillOnce(Return(
+          schwab::oauth_tokens{
+              .access_token = "access_token_1",
+              .refresh_token = "token_1",
+              .expires_in = 3600}));
+
+  // RequestLogin should NOT be called on a transient failure.
+  EXPECT_CALL(*_stub, RequestLogin(_, _, _)).Times(0);
+
+  _manager->start_pump();
+  EXPECT_EQ(_manager->get_bearer_token(), "access_token_1");
 }
 
 } // namespace

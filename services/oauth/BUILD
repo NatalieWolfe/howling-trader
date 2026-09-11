@@ -105,6 +105,12 @@ cc_test(
 )
 
 cc_library(
+    name = "errors",
+    hdrs = ["errors.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "mock_auth_service",
     testonly = True,
     hdrs = ["mock_auth_service.h"],

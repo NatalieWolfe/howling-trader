@@ -23,6 +23,7 @@
 #include "services/database.h"
 #include "services/db/schema/auth_token.h"
 #include "services/oauth/auth_client.h"
+#include "services/oauth/errors.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 #include "services/oauth/proto/auth_service.pb.h"
 #include "services/registry/registry.h"
@@ -177,7 +178,6 @@ void token_manager::implementation::_pump() {
     _request_login_notification();
   } else {
     try {
-      // TODO: #113 - Handle auth rejection (400/401) from schwab here.
       schwab::oauth_tokens tokens = _refresher->refresh_tokens(refresh_token);
       if (tokens.refresh_token != refresh_token) {
         _db.save_refresh_token(SERVICE_NAME, tokens.refresh_token).get();
@@ -191,6 +191,12 @@ void token_manager::implementation::_pump() {
         _pump_failure_count = 0;
         return;
       }
+    } catch (const auth_rejected_error& e) {
+      LOG(WARNING) << "Authentication rejected by Schwab (permanent failure): "
+                   << e.what();
+      _pump_failure_count = 0;
+      check_cache(/*clear_cache=*/true);
+      _request_login_notification();
     } catch (const std::exception& e) {
       ++_pump_failure_count;
       LOG(WARNING) << "Failed to refresh token: " << e.what();
