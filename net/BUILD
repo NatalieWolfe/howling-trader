@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
     name = "connect",
@@ -36,5 +36,26 @@ cc_library(
         "//strings:json",
         "@boost.beast",
         "@jsoncpp",
+    ],
+)
+
+cc_library(
+    name = "gzip",
+    srcs = ["gzip.cc"],
+    hdrs = ["gzip.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@abseil-cpp//absl/strings",
+        "@zlib",
+    ],
+)
+
+cc_test(
+    name = "gzip_test",
+    srcs = ["gzip_test.cc"],
+    deps = [
+        ":gzip",
+        "@googletest//:gtest_main",
+        "@zlib",
     ],
 )

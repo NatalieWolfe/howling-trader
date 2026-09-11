@@ -18,6 +18,8 @@
 #include "boost/beast/http/write.hpp"
 #include "boost/url/url.hpp"
 #include "net/connect.h"
+#include "net/gzip.h"
+#include "services/oauth/errors.h"
 #include "strings/json.h"
 #include "json/json.h"
 
@@ -27,6 +29,17 @@ namespace {
 namespace beast = ::boost::beast;
 namespace http = ::boost::beast::http;
 namespace urls = ::boost::urls;
+
+std::string get_response_body(const http::response<http::dynamic_body>& res) {
+  std::string body = beast::buffers_to_string(res.body().data());
+  auto content_encoding = res[http::field::content_encoding];
+  auto transfer_encoding = res[http::field::transfer_encoding];
+  if (net::is_compressed_encoding(content_encoding) ||
+      net::is_compressed_encoding(transfer_encoding)) {
+    return net::gzip_decompress(body);
+  }
+  return body;
+}
 
 void _check_auth_error(const http::response<http::dynamic_body>& res) {
   if (res.result_int() == 400 || res.result_int() == 401) {
@@ -75,6 +88,7 @@ exchange_code_for_tokens(net::connection& conn, std::string_view code) {
                   ":",
                   absl::GetFlag(FLAGS_schwab_api_key_secret)))));
   req.set(http_headers::accept, "application/json");
+  req.set(http_headers::accept_encoding, "gzip, deflate");
 
   urls::url body;
   body.params().append({"grant_type", "authorization_code"});
@@ -92,7 +106,8 @@ exchange_code_for_tokens(net::connection& conn, std::string_view code) {
   http::read(conn.stream(), buffer, res);
 
   if (res.result_int() != 200) {
-    LOG(ERROR) << "Schwab API responded with " << res.result_int();
+    LOG(ERROR) << "Schwab API responded with " << res.result_int() << ": "
+               << get_response_body(res);
     _check_auth_error(res);
     throw std::runtime_error(
         std::format(
@@ -101,7 +116,7 @@ exchange_code_for_tokens(net::connection& conn, std::string_view code) {
             res.reason()));
   }
 
-  Json::Value root = to_json(beast::buffers_to_string(res.body().data()));
+  Json::Value root = to_json(get_response_body(res));
   return oauth_tokens{
       .access_token = root["access_token"].asString(),
       .refresh_token = root["refresh_token"].asString(),
@@ -128,6 +143,7 @@ refresh_tokens(net::connection& conn, std::string_view refresh_token) {
                   ":",
                   absl::GetFlag(FLAGS_schwab_api_key_secret)))));
   req.set(http_headers::accept, "application/json");
+  req.set(http_headers::accept_encoding, "gzip, deflate");
 
   urls::url body;
   body.params().append({"grant_type", "refresh_token"});
@@ -143,7 +159,7 @@ refresh_tokens(net::connection& conn, std::string_view refresh_token) {
   http::read(conn.stream(), buffer, res);
 
   if (res.result_int() != 200) {
-    LOG(ERROR) << beast::buffers_to_string(res.body().data());
+    LOG(ERROR) << get_response_body(res);
     _check_auth_error(res);
     throw std::runtime_error(
         std::format(
@@ -152,7 +168,7 @@ refresh_tokens(net::connection& conn, std::string_view refresh_token) {
             res.reason()));
   }
 
-  Json::Value root = to_json(beast::buffers_to_string(res.body().data()));
+  Json::Value root = to_json(get_response_body(res));
   return oauth_tokens{
       .access_token = root["access_token"].asString(),
       .refresh_token =

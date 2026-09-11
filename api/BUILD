@@ -38,6 +38,7 @@ cc_library(
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
         "//net:connect",
+        "//net:gzip",
         "//net:url",
         "//services:authenticate",
         "//strings:json",

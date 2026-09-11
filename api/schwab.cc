@@ -28,6 +28,7 @@
 #include "data/stock.pb.h"
 #include "google/protobuf/util/time_util.h"
 #include "net/connect.h"
+#include "net/gzip.h"
 #include "net/url.h"
 #include "services/authenticate.h"
 #include "strings/json.h"
@@ -98,8 +99,20 @@ http_request make_request(
   // TODO: Set custom user agent.
   req.set(http_headers::host, url.host);
   req.set(http_headers::accept, "application/json");
+  req.set(http_headers::accept_encoding, "gzip, deflate");
   req.set(http_headers::authorization, absl::StrCat("Bearer ", bearer_token));
   return req;
+}
+
+std::string get_response_body(const http_response& res) {
+  std::string body = beast::buffers_to_string(res.body().data());
+  auto content_encoding = res[http_headers::content_encoding];
+  auto transfer_encoding = res[http_headers::transfer_encoding];
+  if (net::is_compressed_encoding(content_encoding) ||
+      net::is_compressed_encoding(transfer_encoding)) {
+    return net::gzip_decompress(body);
+  }
+  return body;
 }
 
 http_response send_request(
@@ -113,7 +126,7 @@ http_response send_request(
             << res.body().size() << " bytes)";
 
   if (res.result_int() != 200) {
-    LOG(ERROR) << beast::buffers_to_string(res.body().data());
+    LOG(ERROR) << get_response_body(res);
     throw std::runtime_error(
         absl::StrCat(
             "Bad response from Schwab API server: ",
@@ -133,7 +146,7 @@ Json::Value send_request(
   beast::http::request<beast::http::string_body> req =
       make_request(beast::http::verb::get, url, bearer_token);
   http_response res = send_request(conn, req);
-  return to_json(beast::buffers_to_string(res.body().data()));
+  return to_json(get_response_body(res));
 }
 
 Json::Value send_request(
@@ -150,7 +163,7 @@ Json::Value send_request(
   req.set(http_headers::content_type, "application/json");
   req.body() = std::move(body_str);
   http_response res = send_request(conn, req);
-  return to_json(beast::buffers_to_string(res.body().data()));
+  return to_json(get_response_body(res));
 }
 
 std::string format_time(const std::chrono::system_clock::time_point& time) {
