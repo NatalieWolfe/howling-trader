@@ -29,6 +29,7 @@ namespace {
 using ::testing::_;
 using ::testing::InvokeWithoutArgs;
 using ::testing::Return;
+using ::testing::Throw;
 
 class AuthenticateTest : public ::testing::Test {
 protected:
@@ -191,8 +192,8 @@ TEST_F(AuthenticateTest, ImmediateReauthOnAuthRejection) {
       });
 
   EXPECT_CALL(*_refresher, refresh_tokens("rejected_token"))
-      .WillOnce(testing::Throw(
-          auth_rejected_error("Schwab auth rejected: 400 Bad Request")));
+      .WillOnce(
+          Throw(auth_rejected_error("Schwab auth rejected: 400 Bad Request")));
 
   // RequestLogin should be called immediately on attempt #1.
   EXPECT_CALL(*_stub, RequestLogin(_, _, _)).WillOnce(Return(grpc::Status::OK));
@@ -215,7 +216,7 @@ TEST_F(AuthenticateTest, TransientErrorDoesNotTriggerImmediateRequestLogin) {
 
   // Refresher throws a transient runtime_error on the first attempt.
   EXPECT_CALL(*_refresher, refresh_tokens("token_1"))
-      .WillOnce(testing::Throw(std::runtime_error("temporary network error")))
+      .WillOnce(Throw(std::runtime_error("temporary network error")))
       .WillOnce(Return(
           schwab::oauth_tokens{
               .access_token = "access_token_1",
