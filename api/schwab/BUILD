@@ -44,6 +44,7 @@ cc_library(
         ":configuration",
         ":connect",
         "//net:connect",
+        "//services/oauth:errors",
         "//strings:json",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",

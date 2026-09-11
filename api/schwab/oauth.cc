@@ -28,6 +28,16 @@ namespace beast = ::boost::beast;
 namespace http = ::boost::beast::http;
 namespace urls = ::boost::urls;
 
+void _check_auth_error(const http::response<http::dynamic_body>& res) {
+  if (res.result_int() == 400 || res.result_int() == 401) {
+    throw auth_rejected_error(
+        std::format(
+            "Authentication rejected by Schwab API server: {} {}",
+            res.result_int(),
+            res.reason()));
+  }
+}
+
 } // namespace
 
 std::string make_schwab_authorize_url(
@@ -83,11 +93,12 @@ exchange_code_for_tokens(net::connection& conn, std::string_view code) {
 
   if (res.result_int() != 200) {
     LOG(ERROR) << "Schwab API responded with " << res.result_int();
+    _check_auth_error(res);
     throw std::runtime_error(
         std::format(
             "Bad response from Schwab API server: {} {}",
             res.result_int(),
-            std::string_view{res.reason()}));
+            res.reason()));
   }
 
   Json::Value root = to_json(beast::buffers_to_string(res.body().data()));
@@ -133,11 +144,12 @@ refresh_tokens(net::connection& conn, std::string_view refresh_token) {
 
   if (res.result_int() != 200) {
     LOG(ERROR) << beast::buffers_to_string(res.body().data());
+    _check_auth_error(res);
     throw std::runtime_error(
         std::format(
             "Bad response from Schwab API server: {} {}",
             res.result_int(),
-            std::string_view{res.reason()}));
+            res.reason()));
   }
 
   Json::Value root = to_json(beast::buffers_to_string(res.body().data()));
