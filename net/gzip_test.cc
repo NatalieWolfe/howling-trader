@@ -3,8 +3,8 @@
 #include <string>
 #include <string_view>
 
+#include "zlib.h"
 #include "gtest/gtest.h"
-#include <zlib.h>
 
 namespace howling::net {
 namespace {
@@ -35,8 +35,7 @@ TEST(GzipTest, LargePayloadRoundtrip) {
   std::string original;
   original.reserve(250000);
   for (int i = 0; i < 5000; ++i) {
-    original.append(
-        R"({"datetime":1630000000,"open":100.5,"close":104.1},)");
+    original.append(R"({"datetime":1630000000,"open":100.5,"close":104.1},)");
   }
 
   std::string compressed = gzip_compress(original);
@@ -85,24 +84,24 @@ TEST(GzipTest, IsCompressedEncodingDetection) {
 TEST(GzipTest, DecompressZlibFormat) {
   // Test that RFC 1950 zlib-wrapped deflate streams are also decompressed.
   const std::string original = "Decompress me from RFC 1950 zlib format!";
-  z_stream strm{};
-  int ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+  z_stream stream{};
+  int ret = deflateInit(&stream, Z_DEFAULT_COMPRESSION);
   ASSERT_EQ(ret, Z_OK);
 
-  strm.avail_in = original.size();
-  strm.next_in = const_cast<Bytef*>(
-      reinterpret_cast<const Bytef*>(original.data()));
+  stream.avail_in = original.size();
+  stream.next_in =
+      const_cast<Bytef*>(reinterpret_cast<const Bytef*>(original.data()));
 
   std::string compressed;
   char chunk[1024];
   do {
-    strm.avail_out = sizeof(chunk);
-    strm.next_out = reinterpret_cast<Bytef*>(chunk);
-    ret = deflate(&strm, Z_FINISH);
+    stream.avail_out = sizeof(chunk);
+    stream.next_out = reinterpret_cast<Bytef*>(chunk);
+    ret = deflate(&stream, Z_FINISH);
     ASSERT_TRUE(ret == Z_OK || ret == Z_STREAM_END);
-    compressed.append(chunk, sizeof(chunk) - strm.avail_out);
+    compressed.append(chunk, sizeof(chunk) - stream.avail_out);
   } while (ret != Z_STREAM_END);
-  deflateEnd(&strm);
+  deflateEnd(&stream);
 
   // Verify it is not a gzip stream (it has zlib 0x78 header instead of
   // 0x1f 0x8b).

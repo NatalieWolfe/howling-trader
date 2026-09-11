@@ -45,7 +45,6 @@ cc_library(
     hdrs = ["gzip.h"],
     visibility = ["//visibility:public"],
     deps = [
-        "@abseil-cpp//absl/strings",
         "@zlib",
     ],
 )

@@ -1,14 +1,15 @@
 #include "net/gzip.h"
 
+#include <algorithm>
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
+#include <format>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 
-#include "absl/strings/str_cat.h"
-#include <zlib.h>
+#include "zlib.h"
 
 namespace howling::net {
 namespace {
@@ -29,54 +30,57 @@ constexpr uint8_t GZIP_MAGIC_BYTE_FIRST = 0x1f;
 constexpr uint8_t GZIP_MAGIC_BYTE_SECOND = 0x8b;
 
 struct inflate_guard {
-  z_stream& strm;
-  ~inflate_guard() {
-    inflateEnd(&strm);
-  }
+  z_stream& stream;
+  ~inflate_guard() { inflateEnd(&stream); }
 };
 
 struct deflate_guard {
-  z_stream& strm;
-  ~deflate_guard() {
-    deflateEnd(&strm);
-  }
+  z_stream& stream;
+  ~deflate_guard() { deflateEnd(&stream); }
 };
+
+bool contains_case_insensitive(
+    std::string_view text, std::string_view pattern) {
+  auto to_lower = [](char c) {
+    return static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+  };
+  return !std::ranges::search(text, pattern, {}, to_lower, to_lower).empty();
+}
 
 } // namespace
 
 std::string gzip_decompress(std::string_view compressed_data) {
-  if (compressed_data.empty()) {
-    return "";
-  }
+  if (compressed_data.empty()) return "";
 
-  z_stream strm{};
-  int ret = inflateInit2(&strm, AUTO_DETECT_WINDOW_BITS);
+  z_stream stream{};
+  int ret = inflateInit2(&stream, AUTO_DETECT_WINDOW_BITS);
   if (ret != Z_OK) {
     throw std::runtime_error(
-        absl::StrCat("Failed to initialize zlib inflate: ", ret));
+        std::format(
+            "Failed to initialize zlib inflate: [{}] {}", ret, zError(ret)));
   }
-  inflate_guard guard{strm};
+  inflate_guard guard{stream};
 
-  strm.avail_in = compressed_data.size();
-  strm.next_in = const_cast<Bytef*>(
+  stream.avail_in = compressed_data.size();
+  stream.next_in = const_cast<Bytef*>(
       reinterpret_cast<const Bytef*>(compressed_data.data()));
 
   std::string decompressed;
   char chunk[DECOMPRESSION_CHUNK_SIZE];
 
   do {
-    strm.avail_out = sizeof(chunk);
-    strm.next_out = reinterpret_cast<Bytef*>(chunk);
+    stream.avail_out = sizeof(chunk);
+    stream.next_out = reinterpret_cast<Bytef*>(chunk);
 
-    ret = inflate(&strm, Z_NO_FLUSH);
+    ret = inflate(&stream, Z_NO_FLUSH);
     if (ret != Z_OK && ret != Z_STREAM_END) {
-      const char* msg = strm.msg != nullptr ? strm.msg : "unknown error";
+      const char* message = stream.msg != nullptr ? stream.msg : zError(ret);
       throw std::runtime_error(
-          absl::StrCat("zlib inflate error (", ret, "): ", msg));
+          std::format("zlib inflate error [{}]: {}", ret, message));
     }
 
-    decompressed.append(chunk, sizeof(chunk) - strm.avail_out);
-  } while (ret != Z_STREAM_END && strm.avail_in > 0);
+    decompressed.append(chunk, sizeof(chunk) - stream.avail_out);
+  } while (ret != Z_STREAM_END && stream.avail_in > 0);
 
   if (ret != Z_STREAM_END) {
     throw std::runtime_error(
@@ -87,9 +91,9 @@ std::string gzip_decompress(std::string_view compressed_data) {
 }
 
 std::string gzip_compress(std::string_view uncompressed_data) {
-  z_stream strm{};
+  z_stream stream{};
   int ret = deflateInit2(
-      &strm,
+      &stream,
       Z_DEFAULT_COMPRESSION,
       Z_DEFLATED,
       GZIP_ENCODING_WINDOW_BITS,
@@ -97,29 +101,30 @@ std::string gzip_compress(std::string_view uncompressed_data) {
       Z_DEFAULT_STRATEGY);
   if (ret != Z_OK) {
     throw std::runtime_error(
-        absl::StrCat("Failed to initialize zlib deflate: ", ret));
+        std::format(
+            "Failed to initialize zlib deflate: [{}] {}", ret, zError(ret)));
   }
-  deflate_guard guard{strm};
+  deflate_guard guard{stream};
 
-  strm.avail_in = uncompressed_data.size();
-  strm.next_in = const_cast<Bytef*>(
+  stream.avail_in = uncompressed_data.size();
+  stream.next_in = const_cast<Bytef*>(
       reinterpret_cast<const Bytef*>(uncompressed_data.data()));
 
   std::string compressed;
   char chunk[DECOMPRESSION_CHUNK_SIZE];
 
   do {
-    strm.avail_out = sizeof(chunk);
-    strm.next_out = reinterpret_cast<Bytef*>(chunk);
+    stream.avail_out = sizeof(chunk);
+    stream.next_out = reinterpret_cast<Bytef*>(chunk);
 
-    ret = deflate(&strm, Z_FINISH);
+    ret = deflate(&stream, Z_FINISH);
     if (ret != Z_OK && ret != Z_STREAM_END) {
-      const char* msg = strm.msg != nullptr ? strm.msg : "unknown error";
+      const char* message = stream.msg != nullptr ? stream.msg : zError(ret);
       throw std::runtime_error(
-          absl::StrCat("zlib deflate error (", ret, "): ", msg));
+          std::format("zlib deflate error [{}]: {}", ret, message));
     }
 
-    compressed.append(chunk, sizeof(chunk) - strm.avail_out);
+    compressed.append(chunk, sizeof(chunk) - stream.avail_out);
   } while (ret != Z_STREAM_END);
 
   return compressed;
@@ -127,22 +132,14 @@ std::string gzip_compress(std::string_view uncompressed_data) {
 
 bool is_gzip_content(std::string_view data) {
   return data.size() >= 2 &&
-         static_cast<uint8_t>(data[0]) == GZIP_MAGIC_BYTE_FIRST &&
-         static_cast<uint8_t>(data[1]) == GZIP_MAGIC_BYTE_SECOND;
+      static_cast<uint8_t>(data[0]) == GZIP_MAGIC_BYTE_FIRST &&
+      static_cast<uint8_t>(data[1]) == GZIP_MAGIC_BYTE_SECOND;
 }
 
 bool is_compressed_encoding(std::string_view encoding) {
-  if (encoding.empty()) {
-    return false;
-  }
-  std::string lower;
-  lower.reserve(encoding.size());
-  for (char c : encoding) {
-    lower.push_back(
-        static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
-  }
-  return lower.find("gzip") != std::string::npos ||
-         lower.find("deflate") != std::string::npos;
+  if (encoding.empty()) return false;
+  return contains_case_insensitive(encoding, "gzip") ||
+      contains_case_insensitive(encoding, "deflate");
 }
 
 } // namespace howling::net

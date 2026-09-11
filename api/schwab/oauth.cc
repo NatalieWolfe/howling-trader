@@ -32,10 +32,8 @@ namespace urls = ::boost::urls;
 
 std::string get_response_body(const http::response<http::dynamic_body>& res) {
   std::string body = beast::buffers_to_string(res.body().data());
-  auto content_encoding = res[http::field::content_encoding];
-  auto transfer_encoding = res[http::field::transfer_encoding];
-  if (net::is_compressed_encoding(content_encoding) ||
-      net::is_compressed_encoding(transfer_encoding)) {
+  if (net::is_compressed_encoding(res[http::field::content_encoding]) ||
+      net::is_compressed_encoding(res[http::field::transfer_encoding])) {
     return net::gzip_decompress(body);
   }
   return body;

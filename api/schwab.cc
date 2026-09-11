@@ -106,10 +106,8 @@ http_request make_request(
 
 std::string get_response_body(const http_response& res) {
   std::string body = beast::buffers_to_string(res.body().data());
-  auto content_encoding = res[http_headers::content_encoding];
-  auto transfer_encoding = res[http_headers::transfer_encoding];
-  if (net::is_compressed_encoding(content_encoding) ||
-      net::is_compressed_encoding(transfer_encoding)) {
+  if (net::is_compressed_encoding(res[http_headers::content_encoding]) ||
+      net::is_compressed_encoding(res[http_headers::transfer_encoding])) {
     return net::gzip_decompress(body);
   }
   return body;
