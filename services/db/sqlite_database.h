@@ -37,6 +37,11 @@ public:
   std::generator<trading::TradeRecord>
   read_trades(stock::Symbol symbol) override;
 
+  std::generator<std::variant<Candle, Market>> replay(
+      stock::Symbol symbol,
+      std::chrono::system_clock::time_point start_at,
+      std::chrono::system_clock::time_point end_at) override;
+
   std::future<std::optional<storage::auth_token>>
   get_auth_token(std::string_view service_name) override;
   std::future<void> save_notice_token(

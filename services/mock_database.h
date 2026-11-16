@@ -1,10 +1,12 @@
 #pragma once
 
+#include <chrono>
 #include <future>
 #include <generator>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <variant>
 
 #include "services/database.h"
 #include "services/db/schema/auth_token.h"
@@ -52,6 +54,13 @@ public:
       std::generator<trading::TradeRecord>,
       read_trades,
       (stock::Symbol symbol),
+      (override));
+  MOCK_METHOD(
+      (std::generator<std::variant<Candle, Market>>),
+      replay,
+      (stock::Symbol symbol,
+       std::chrono::system_clock::time_point start_at,
+       std::chrono::system_clock::time_point end_at),
       (override));
 
   MOCK_METHOD(
