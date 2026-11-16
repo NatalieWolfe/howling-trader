@@ -688,6 +688,28 @@ std::future<void> postgres_database::_prepare_queries() {
                 notice_token = EXCLUDED.notice_token,
                 last_notified_at = EXCLUDED.last_notified_at,
                 updated_at = EXCLUDED.updated_at)sql"));
+
+    _implementation->prepared_queries.emplace(
+        "candle_and_market_replay",
+        query::prepare<int, system_clock::time_point, system_clock::time_point>(
+            *_implementation->conn,
+            R"sql(
+              SELECT
+                'candle' AS type, opened_at AS order_by,
+                open, close, high, low, volume, opened_at, duration_us,
+                NULL AS bid, NULL AS bid_lots, NULL AS ask, NULL AS ask_lots,
+                NULL AS last, NULL AS last_lots, NULL AS emitted_at
+              FROM candles
+              WHERE symbol = $1 AND opened_at >= $2 AND opened_at < $3
+              UNION ALL
+              SELECT
+                'market' AS type, emitted_at AS order_by,
+                NULL AS open, NULL AS close, NULL AS high, NULL AS low,
+                NULL AS volume, NULL AS opened_at, NULL AS duration_us,
+                bid, bid_lots, ask, ask_lots, last, last_lots, emitted_at
+              FROM market
+              WHERE symbol = $1 AND emitted_at >= $2 AND emitted_at < $3
+              ORDER BY order_by ASC)sql"));
     p.set_value();
   } catch (...) { p.set_exception(std::current_exception()); }
   return p.get_future();
@@ -830,6 +852,71 @@ postgres_database::read_trades(stock::Symbol symbol) {
     trade.set_confidence(confidence);
     trade.set_dry_run(dry_run);
     co_yield std::move(trade);
+  }
+}
+
+std::generator<std::variant<Candle, Market>> postgres_database::replay(
+    stock::Symbol symbol,
+    std::chrono::system_clock::time_point start_at,
+    std::chrono::system_clock::time_point end_at) {
+  query& q = *_implementation->prepared_queries.at("candle_and_market_replay");
+  q.bind_all(symbol, start_at, end_at);
+  while (q.step()) {
+    std::string_view type;
+    system_clock::time_point order_by;
+    std::optional<system_clock::time_point> opened_at, emitted_at;
+    std::optional<double> open, close, high, low, bid, ask, last;
+    std::optional<int64_t> volume, duration_us, bid_lots, ask_lots, last_lots;
+    q.read_all(
+        type,
+        order_by,
+        open,
+        close,
+        high,
+        low,
+        volume,
+        opened_at,
+        duration_us,
+        bid,
+        bid_lots,
+        ask,
+        ask_lots,
+        last,
+        last_lots,
+        emitted_at);
+    if (type == "candle") {
+      if (!open || !close || !high || !low || !volume || !opened_at ||
+          !duration_us) {
+        throw std::runtime_error("Replay candle row missing required values.");
+      }
+      Candle candle;
+      candle.set_open(*open);
+      candle.set_close(*close);
+      candle.set_high(*high);
+      candle.set_low(*low);
+      candle.set_volume(*volume);
+      *candle.mutable_opened_at() = to_proto(*opened_at);
+      *candle.mutable_duration() = to_proto(microseconds(*duration_us));
+      co_yield std::move(candle);
+    } else if (type == "market") {
+      if (!bid || !bid_lots || !ask || !ask_lots || !last || !last_lots ||
+          !emitted_at) {
+        throw std::runtime_error("Replay market row missing required values.");
+      }
+      Market market;
+      market.set_symbol(symbol);
+      market.set_bid(*bid);
+      market.set_bid_lots(*bid_lots);
+      market.set_ask(*ask);
+      market.set_ask_lots(*ask_lots);
+      market.set_last(*last);
+      market.set_last_lots(*last_lots);
+      *market.mutable_emitted_at() = to_proto(*emitted_at);
+      co_yield std::move(market);
+    } else {
+      throw std::runtime_error(
+          std::format("Unexpected type in replay query: {}", type));
+    }
   }
 }
 

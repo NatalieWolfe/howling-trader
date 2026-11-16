@@ -3,6 +3,8 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <variant>
+#include <vector>
 
 #include "absl/flags/flag.h"
 #include "data/candle.pb.h"
@@ -229,6 +231,56 @@ protected:
                         testing::Gt(                                           \
                             std::chrono::system_clock::now() -                 \
                             std::chrono::seconds(10)))))));                    \
+  }                                                                            \
+  TEST_F(FIXTURE_CLASS, ReplayReturnsCandlesAndMarketsInTimeOrder) {           \
+    upgrade_schema();                                                          \
+    std::chrono::time_point start = std::chrono::system_clock::now();          \
+    std::chrono::time_point first_candle_at = start + std::chrono::minutes(1); \
+    std::chrono::time_point market_at = start + std::chrono::minutes(2);       \
+    std::chrono::time_point second_candle_at =                                 \
+        start + std::chrono::minutes(3);                                       \
+    Candle first_candle;                                                       \
+    first_candle.set_open(100.0);                                              \
+    first_candle.set_close(110.0);                                             \
+    first_candle.set_high(115.0);                                              \
+    first_candle.set_low(95.0);                                                \
+    first_candle.set_volume(123);                                              \
+    *first_candle.mutable_opened_at() = to_proto(first_candle_at);             \
+    *first_candle.mutable_duration() = to_proto(std::chrono::minutes(1));      \
+    save_candle(stock::NVDA, first_candle);                                    \
+    Market market;                                                             \
+    market.set_symbol(stock::NVDA);                                            \
+    market.set_bid(101.0);                                                     \
+    market.set_bid_lots(2);                                                    \
+    market.set_ask(103.0);                                                     \
+    market.set_ask_lots(4);                                                    \
+    market.set_last(102.0);                                                    \
+    market.set_last_lots(6);                                                   \
+    *market.mutable_emitted_at() = to_proto(market_at);                        \
+    save_market(market);                                                       \
+    Candle second_candle;                                                      \
+    second_candle.set_open(120.0);                                             \
+    second_candle.set_close(130.0);                                            \
+    second_candle.set_high(135.0);                                             \
+    second_candle.set_low(118.0);                                              \
+    second_candle.set_volume(456);                                             \
+    *second_candle.mutable_opened_at() = to_proto(second_candle_at);           \
+    *second_candle.mutable_duration() = to_proto(std::chrono::minutes(1));     \
+    save_candle(stock::NVDA, second_candle);                                   \
+    std::vector<std::variant<Candle, Market>> replayed;                        \
+    for (const auto& record :                                                  \
+         db().replay(stock::NVDA, start, start + std::chrono::minutes(10))) {  \
+      replayed.push_back(record);                                              \
+    }                                                                          \
+    EXPECT_THAT(                                                               \
+        replayed,                                                              \
+        testing::ElementsAre(                                                  \
+            testing::VariantWith<Candle>(testing::Property(                    \
+                &Candle::open, testing::DoubleEq(first_candle.open()))),       \
+            testing::VariantWith<Market>(testing::Property(                    \
+                &Market::bid, testing::DoubleEq(market.bid()))),               \
+            testing::VariantWith<Candle>(testing::Property(                    \
+                &Candle::open, testing::DoubleEq(second_candle.open())))));    \
   }
 
 } // namespace howling

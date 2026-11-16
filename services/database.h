@@ -50,6 +50,11 @@ public:
   virtual std::generator<trading::TradeRecord>
   read_trades(stock::Symbol symbol) = 0;
 
+  virtual std::generator<std::variant<Candle, Market>> replay(
+      stock::Symbol symbol,
+      std::chrono::system_clock::time_point start_at,
+      std::chrono::system_clock::time_point end_at) = 0;
+
   /**
    * @brief Retrieves the authorization information saved for the given service.
    */
