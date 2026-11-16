@@ -4,6 +4,7 @@
 #include <string_view>
 
 #include "data/analyzer.h"
+#include "data/analyzer.pb.h"
 #include "data/stock.pb.h"
 
 namespace howling {
@@ -12,5 +13,6 @@ std::unique_ptr<analyzer>
 load_analyzer(std::string_view name, const stock::History& history);
 
 std::unique_ptr<analyzer> load_analyzer(std::string_view name);
+std::unique_ptr<analyzer> load_analyzer(const Analyzer& opts);
 
 } // namespace howling

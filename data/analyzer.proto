@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package howling;
+
+message Analyzer {
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    NOOP = 1;
+    BOLLINGER = 2;
+    HOWLING = 3;
+    MACD = 4;
+    MARKET_HOURS = 5;
+    PROFIT = 6;
+    ZIG_ZAG = 7;
+  }
+
+  message Noop {}
+  message Bollinger {}
+  message Howling {}
+  message Macd {
+    enum Period {
+      PERIOD_UNSPECIFIED = 0;
+      ONE = 1;
+      FIVE = 2;
+      TWENTY = 3;
+    }
+    Period period = 1;
+    double crossover_scaler = 2;
+  }
+  message MarketHours {
+    // Optional. Opening hour in 24-hour format (e.g. 9.5 for 9:30 AM).
+    // Default 10.
+    float open_hour = 1;
+    // Optional. Closing hour in 24-hour format (e.g. 16.0 for 4:00 PM).
+    // Default 15.5.
+    float close_hour = 2;
+  }
+  message Profit {}
+  message ZigZag { double threshold = 1; }
+
+  oneof type {
+    Noop noop = 1;
+    Bollinger bollinger = 2;
+    Howling howling = 3;
+    Macd macd = 4;
+    MarketHours market_hours = 5;
+    Profit profit = 6;
+    ZigZag zig_zag = 7;
+  }
+}
