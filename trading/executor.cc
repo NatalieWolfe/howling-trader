@@ -5,10 +5,12 @@
 #include <string>
 
 #include "absl/flags/flag.h"
+#include "absl/log/log.h"
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "environment/configuration.h"
 #include "trading/metrics.h"
+
 ABSL_FLAG(
     double,
     max_fund_use,
@@ -58,8 +60,14 @@ int get_buy_quantity(const trading_state& state, double price) {
 
 } // namespace
 
-executor::executor(trading_state& state) : _state{state} {
+executor::executor(trading_state& state, enable_real_money_t)
+    : _state{state}, _enable_real_money{true} {
   check_real_money_flag();
+  if (!absl::GetFlag(FLAGS_use_real_money)) {
+    LOG(WARNING)
+        << "Real money trading enabled, but --use_real_money is false. "
+           "No trades will be executed.";
+  }
 }
 
 std::optional<trading_state::position>
@@ -71,7 +79,7 @@ executor::buy(stock::Symbol symbol, metrics& m) {
   int buy_quantity = get_buy_quantity(_state, share_price);
   if (buy_quantity == 0) return std::nullopt;
 
-  if (!absl::GetFlag(FLAGS_use_real_money)) {
+  if (!_enable_real_money || !absl::GetFlag(FLAGS_use_real_money)) {
     _state.positions[symbol].push_back(
         {.symbol = symbol, .price = share_price, .quantity = buy_quantity});
     _state.available_funds -= share_price * buy_quantity;
