@@ -1,10 +1,12 @@
 #include "data/load_analyzer.h"
 
+#include <format>
 #include <memory>
 #include <string_view>
 
 #include "data/aggregate.h"
 #include "data/analyzer.h"
+#include "data/analyzer.pb.h"
 #include "data/analyzers/bollinger.h"
 #include "data/analyzers/howling.h"
 #include "data/analyzers/macd.h"
@@ -51,6 +53,67 @@ load_analyzer(std::string_view name, const stock::History& history) {
 
 std::unique_ptr<analyzer> load_analyzer(std::string_view name) {
   return load_analyzer(name, stock::History::default_instance());
+}
+
+std::unique_ptr<analyzer> load_analyzer(const Analyzer& opts) {
+  switch (opts.type_case()) {
+    case Analyzer::NOOP: {
+      return std::make_unique<noop_analyzer>();
+    }
+    case Analyzer::BOLLINGER: {
+      return std::make_unique<bollinger_analyzer>();
+    }
+    case Analyzer::HOWLING: {
+      return std::make_unique<howling_analyzer>();
+    }
+    case Analyzer::MACD: {
+      // TODO: Support crossover_scaler from analyzer options.
+      switch (opts.macd().period()) {
+        case Analyzer::Macd::ONE:
+          return std::make_unique<macd_crossover_analyzer>(
+              &aggregations::one_minute);
+        case Analyzer::Macd::FIVE:
+          return std::make_unique<macd_crossover_analyzer>(
+              &aggregations::five_minute);
+        case Analyzer::Macd::TWENTY:
+          return std::make_unique<macd_crossover_analyzer>(
+              &aggregations::twenty_minute);
+        case Analyzer::Macd::PERIOD_UNSPECIFIED:
+          throw std::runtime_error("macd.period not specified");
+        default:
+          throw std::runtime_error(
+              std::format(
+                  "Unknown MACD period: {} ({}).",
+                  Analyzer::Macd::Period_Name(opts.macd().period()),
+                  static_cast<int>(opts.macd().period())));
+      }
+    }
+    case Analyzer::MARKET_HOURS: {
+      // TODO: Support open and closing hours from proto.
+      return std::make_unique<market_hours_analyzer>();
+    }
+    case Analyzer::PROFIT: {
+      return std::make_unique<profit_analyzer>();
+    }
+    case Analyzer::ZIG_ZAG: {
+      return std::make_unique<zig_zag_analyzer>(
+          stock::History::default_instance(),
+          zig_zag_analyzer::options{.threshold = opts.zig_zag().threshold()});
+    }
+    // case Analyzer::TYPE_UNSPECIFIED: // Same value as TYPE_NOT_SET.
+    case Analyzer::TYPE_NOT_SET: {
+      throw std::runtime_error("type not specified");
+    }
+    default: {
+      throw std::runtime_error(
+          std::format(
+              "Unknown analyzer: {} ({}).",
+              Analyzer::Type_Name(
+                  static_cast<Analyzer::Type>(opts.type_case())),
+              static_cast<int>(opts.type_case())));
+    }
+  }
+  throw std::runtime_error("Unreachable code reached in load_analyzer.");
 }
 
 } // namespace howling

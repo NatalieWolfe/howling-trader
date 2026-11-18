@@ -43,6 +43,22 @@ cc_library(
 )
 
 proto_library(
+    name = "analyzer_proto",
+    srcs = ["analyzer.proto"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@protobuf//:duration_proto",
+        "@protobuf//:timestamp_proto",
+    ],
+)
+
+cc_proto_library(
+    name = "analyzer_cc_proto",
+    visibility = ["//visibility:public"],
+    deps = [":analyzer_proto"],
+)
+
+proto_library(
     name = "candle_proto",
     srcs = ["candle.proto"],
     visibility = ["//visibility:public"],
@@ -66,6 +82,7 @@ cc_library(
     deps = [
         ":aggregate",
         ":analyzer",
+        ":analyzer_cc_proto",
         ":stock_cc_proto",
         "//data/analyzers:bollinger",
         "//data/analyzers:howling",
