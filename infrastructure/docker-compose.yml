@@ -58,6 +58,7 @@ services:
         bao secrets enable transit || true
         bao write transit/restore/default backup="${BAO_BACKUP_KEY:-}" force=true || bao write -f transit/keys/default
         bao secrets enable pki || true
+        bao secrets tune -max-lease-ttl=87600h pki || true
         bao write pki/root/generate/internal common_name="howling.local" ttl=87600h || true
         bao write pki/roles/howling-node-role allow_any_name=true max_ttl="720h" || true
 
