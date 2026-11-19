@@ -173,7 +173,9 @@ services:
 
   executor:
     image: howling-execute:latest
-    restart: on-failure
+    profiles:
+      - executor
+    restart: no
     depends_on:
       postgres:
         condition: service_healthy
