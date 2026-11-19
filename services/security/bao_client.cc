@@ -13,6 +13,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/escaping.h"
 #include "absl/strings/str_cat.h"
+#include "absl/time/time.h"
 #include "boost/beast/http.hpp"
 #include "boost/url/parse.hpp"
 #include "boost/url/url.hpp"
@@ -21,6 +22,7 @@
 #include "net/url.h"
 #include "services/security/certificate_bundle.h"
 #include "strings/json.h"
+#include "time/conversion.h"
 #include "json/value.h"
 
 ABSL_FLAG(
@@ -41,6 +43,12 @@ ABSL_FLAG(
     bao_shutdown_on_destroy,
     false,
     "Instruct the Bao API proxy to shutdown when the client is destroyed.");
+
+ABSL_FLAG(
+    absl::Duration,
+    bao_secret_retry_timeout,
+    absl::Seconds(30),
+    "Maximum time to retry fetching a secret when OpenBao returns 404.");
 
 namespace howling::security {
 namespace {
@@ -181,10 +189,24 @@ void bao_client::wait_for_ready(milliseconds timeout) {
 }
 
 Json::Value bao_client::get_secret(std::string_view path) {
-  auto res = get_bao(absl::StrCat("/v1/secret/data/", path));
-  check_response(res, "retrieve secret");
-  Json::Value response = to_json(res.body());
-  return response["data"]["data"];
+  const steady_clock::time_point start_time = steady_clock::now();
+  const milliseconds timeout = duration_cast<milliseconds>(
+      to_std_chrono(absl::GetFlag(FLAGS_bao_secret_retry_timeout)));
+  steady_clock::duration delay = milliseconds{1};
+  const std::string target = absl::StrCat("/v1/secret/data/", path);
+
+  while (true) {
+    http::response<http::string_body> response = get_bao(target);
+    if (response.result() != http::status::not_found ||
+        steady_clock::now() - start_time >= timeout) {
+      check_response(response, "retrieve secret");
+      Json::Value parsed = to_json(response.body());
+      return parsed["data"]["data"];
+    }
+    std::this_thread::sleep_for(delay);
+    delay = std::min(
+        duration_cast<steady_clock::duration>(delay * BACKOFF_EXP), MAX_DELAY);
+  }
 }
 
 std::string

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <thread>
@@ -18,6 +19,9 @@ public:
   ~mock_bao_server();
 
   void start();
+  void set_secret_not_found_count(int count) {
+    _secret_not_found_count = count;
+  }
 
   unsigned short port() const { return _port; }
   const std::string& last_request_body() const { return _last_request_body; }
@@ -28,6 +32,8 @@ private:
   boost::asio::ssl::context _ssl_ctx;
   bool _use_ssl;
   unsigned short _port;
+  int _secret_not_found_count = 0;
+  std::atomic<bool> _stopped = false;
   std::string _last_request_body;
   std::thread _server_thread;
 };

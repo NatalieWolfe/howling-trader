@@ -4,9 +4,13 @@
 #include <string>
 #include <string_view>
 
+#include "absl/flags/declare.h"
+#include "absl/time/time.h"
 #include "services/security.h"
 #include "services/security/certificate_bundle.h"
 #include "json/value.h"
+
+ABSL_DECLARE_FLAG(absl::Duration, bao_secret_retry_timeout);
 
 namespace howling::security {
 
