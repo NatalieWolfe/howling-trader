@@ -10,4 +10,4 @@ else
 fi
 
 # Execute docker compose up, forwarding any additional command-line arguments.
-exec docker compose -f docker-compose.yml up "$@"
+exec docker compose -f docker-compose.yml up --force-recreate "$@"
