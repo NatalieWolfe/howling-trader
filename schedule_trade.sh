@@ -121,20 +121,77 @@ while [ $(date +%s) -lt $TARGET_EPOCH ]; do
 done
 printf "\n"
 
-# Execute
-echo "Building authentication service..."
-bazel run //services/oauth:load
-docker-compose up -d oauth-server
+# Execute and capture output for post-execution analysis.
+RUN_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+RAW_LOG="/tmp/howling_trade_${RUN_TIMESTAMP}.raw.log"
+EXEC_LOG="/tmp/howling_trade_${RUN_TIMESTAMP}.log"
 
-EXEC_BINARY="./bazel-bin/howling_tools/execute"
-if [ ! -f "$EXEC_BINARY" ]; then
-  echo "Building trading bot..."
-  bazel build //howling_tools:execute
+set +e
+(
+  set -e
+  echo "Building authentication service..."
+  bazel run //services/oauth:load
+  docker-compose up -d oauth-server
+
+  EXEC_BINARY="./bazel-bin/howling_tools/execute"
+  if [ ! -f "$EXEC_BINARY" ]; then
+    echo "Building trading bot..."
+    bazel build //howling_tools:execute
+  fi
+
+  echo "Starting trading bot..."
+  $EXEC_BINARY \
+    --stocks="$STOCKS" \
+    --analyzer="$ANALYZER" \
+    --account="$ACCOUNT" \
+    --flagfile=secrets.txt
+) 2>&1 | tee "$RAW_LOG"
+EXEC_EXIT_CODE=${PIPESTATUS[0]}
+set -e
+
+# Strip intermediate carriage-return redraws from the captured terminal output.
+sed -E $'s/\r+$//; s/.*\r//' "$RAW_LOG" > "$EXEC_LOG"
+rm -f "$RAW_LOG"
+
+echo "=================================================="
+echo "Trading session finished (exit code: $EXEC_EXIT_CODE)."
+echo "Log saved to: $EXEC_LOG"
+echo "Launching post-execution analysis..."
+echo "=================================================="
+
+AGY_PROMPT="The scheduled trading session just finished with exit code \
+${EXEC_EXIT_CODE} (stocks=${STOCKS}, analyzer=${ANALYZER}, \
+account=${ACCOUNT}).
+1. Inspect the captured execution output at ${EXEC_LOG} and check the logs of \
+any relevant Docker services (e.g. oauth-server / docker compose services).
+2. Produce a clear summary report of the day's trading activities, metrics, \
+and service behavior.
+3. If any errors, warnings, or anomalies occurred, investigate the codebase \
+and logs to identify the root cause and propose a fix.
+4. IMPORTANT: Do not take any actions, modify any files, or restart any \
+services. Only perform read-only inspection and produce the report for me to \
+read."
+
+AGY_BIN="$HOME/.gemini/bin/agy"
+if [ ! -x "$AGY_BIN" ]; then
+  AGY_BIN="agy"
 fi
+PROJECT_ID="37064d7b-9449-451c-859a-208b6ecc1e80"
 
-echo "Starting trading bot..."
-$EXEC_BINARY \
-  --stocks="$STOCKS" \
-  --analyzer="$ANALYZER" \
-  --account="$ACCOUNT" \
-  --flagfile=secrets.txt
+# Create a fresh conversation in the howling-trader project first (using a
+# no-tool prompt) so that resuming it with -c -i avoids the TUI startup race
+# where two new conversations are created simultaneously.
+"$AGY_BIN" \
+  --app_data_dir=antigravity \
+  --project="$PROJECT_ID" \
+  --disable-slash-commands \
+  -p "Reply with only the word READY." > /dev/null
+
+"$AGY_BIN" \
+  --app_data_dir=antigravity \
+  --project="$PROJECT_ID" \
+  --remote-control \
+  --mode plan \
+  --add-dir /tmp \
+  -c \
+  -i "$AGY_PROMPT"
