@@ -4,11 +4,15 @@
 #include <stdexcept>
 #include <string>
 
+#include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/time/time.h"
+#include "functional/retry.h"
 #include "services/security/bao_client.h"
 #include "services/security/certificate_bundle.h"
 #include "services/security/mock_bao_server.h"
+
+ABSL_DECLARE_FLAG(absl::Duration, bao_secret_retry_timeout);
 
 namespace howling::security {
 
@@ -65,7 +69,7 @@ TEST(BaoClientGetSecretTest, ThrowsWhenNotFoundExceedsTimeout) {
         [[maybe_unused]] Json::Value secret =
             client.get_secret("howling/prod/schwab");
       },
-      ThrowsMessage<std::runtime_error>(
+      ThrowsMessage<backoff_exceeded_error>(
           HasSubstr("Failed to retrieve secret via OpenBao: 404")));
   absl::SetFlag(&FLAGS_bao_secret_retry_timeout, absl::Seconds(30));
 }

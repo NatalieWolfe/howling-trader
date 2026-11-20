@@ -8,6 +8,7 @@ cc_library(
     deps = [
         ":certificate_bundle",
         "//files",
+        "//functional:retry",
         "//net:connect",
         "//net:request",
         "//net:url",
@@ -37,6 +38,7 @@ cc_test(
         ":certificate_bundle",
         ":mock_bao_server",
         "//environment:runfiles",
+        "//functional:retry",
         "//strings:json",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/time",
