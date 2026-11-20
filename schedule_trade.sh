@@ -129,22 +129,21 @@ EXEC_LOG="/tmp/howling_trade_${RUN_TIMESTAMP}.log"
 set +e
 (
   set -e
-  echo "Building authentication service..."
-  bazel run //services/oauth:load
-  docker-compose up -d oauth-server
+  echo "Starting infrastructure services..."
+  bazel run //infrastructure:services-up
 
-  EXEC_BINARY="./bazel-bin/howling_tools/execute"
-  if [ ! -f "$EXEC_BINARY" ]; then
-    echo "Building trading bot..."
-    bazel build //howling_tools:execute
-  fi
+  echo "Building trading bot..."
+  bazel build //howling_tools:execute
 
   echo "Starting trading bot..."
-  $EXEC_BINARY \
+  ./bazel-bin/howling_tools/execute \
     --stocks="$STOCKS" \
     --analyzer="$ANALYZER" \
     --account="$ACCOUNT" \
-    --flagfile=secrets.txt
+    --headless \
+    --database=postgres \
+    --bao_token=root \
+    --logging_always_flush
 ) 2>&1 | tee "$RAW_LOG"
 EXEC_EXIT_CODE=${PIPESTATUS[0]}
 set -e
@@ -159,11 +158,17 @@ echo "Log saved to: $EXEC_LOG"
 echo "Launching post-execution analysis..."
 echo "=================================================="
 
-AGY_PROMPT="The scheduled trading session just finished with exit code \
+AGY_INIT_PROMPT="The scheduled trading session just finished with exit code \
 ${EXEC_EXIT_CODE} (stocks=${STOCKS}, analyzer=${ANALYZER}, \
 account=${ACCOUNT}).
-1. Inspect the captured execution output at ${EXEC_LOG} and check the logs of \
-any relevant Docker services (e.g. oauth-server / docker compose services).
+Read the captured execution output at ${EXEC_LOG} and briefly acknowledge that \
+you have read it. Do not run any commands, modify any files, create any plans, \
+or produce the full report yet — wait for my next message."
+
+AGY_FOLLOWUP_PROMPT="Now complete the post-execution analysis based on the log \
+you just read:
+1. Check the logs of any relevant Docker services (e.g. auth_service / docker \
+compose services).
 2. Produce a clear summary report of the day's trading activities, metrics, \
 and service behavior.
 3. If any errors, warnings, or anomalies occurred, investigate the codebase \
@@ -178,20 +183,21 @@ if [ ! -x "$AGY_BIN" ]; then
 fi
 PROJECT_ID="37064d7b-9449-451c-859a-208b6ecc1e80"
 
-# Create a fresh conversation in the howling-trader project first (using a
-# no-tool prompt) so that resuming it with -c -i avoids the TUI startup race
-# where two new conversations are created simultaneously.
+# Preload the execution log in a fresh conversation first (read-only, no shell
+# permissions needed), then resume it interactively with --remote-control so
+# permission prompts (e.g. Docker logs) can be approved remotely and the
+# -i + --remote-control startup race is avoided.
 "$AGY_BIN" \
   --app_data_dir=antigravity \
   --project="$PROJECT_ID" \
+  --add-dir /tmp \
   --disable-slash-commands \
-  -p "Reply with only the word READY." > /dev/null
+  -p "$AGY_INIT_PROMPT" > /dev/null
 
 "$AGY_BIN" \
   --app_data_dir=antigravity \
   --project="$PROJECT_ID" \
-  --remote-control \
-  --mode plan \
   --add-dir /tmp \
+  --remote-control \
   -c \
-  -i "$AGY_PROMPT"
+  -i "$AGY_FOLLOWUP_PROMPT"
