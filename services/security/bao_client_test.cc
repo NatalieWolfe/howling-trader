@@ -6,6 +6,7 @@
 
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "absl/time/time.h"
 #include "functional/retry.h"
 #include "services/security/bao_client.h"
@@ -58,6 +59,7 @@ TEST(BaoClientGetSecretTest, RetriesOnNotFoundUntilAvailable) {
 }
 
 TEST(BaoClientGetSecretTest, ThrowsWhenNotFoundExceedsTimeout) {
+  absl::FlagSaver flag_saver;
   absl::SetFlag(&FLAGS_bao_secret_retry_timeout, absl::Milliseconds(50));
   mock_bao_server server(/*configure_flags=*/true, /*use_ssl=*/false);
   server.set_secret_not_found_count(1000);
@@ -71,7 +73,6 @@ TEST(BaoClientGetSecretTest, ThrowsWhenNotFoundExceedsTimeout) {
       },
       ThrowsMessage<backoff_exceeded_error>(
           HasSubstr("Failed to retrieve secret via OpenBao: 404")));
-  absl::SetFlag(&FLAGS_bao_secret_retry_timeout, absl::Seconds(30));
 }
 
 TEST(BaoClientEncryptTest, Success) {

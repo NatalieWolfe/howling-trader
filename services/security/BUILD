@@ -41,6 +41,7 @@ cc_test(
         "//functional:retry",
         "//strings:json",
         "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/flags:reflection",
         "@abseil-cpp//absl/time",
         "@googletest//:gtest_main",
     ],
