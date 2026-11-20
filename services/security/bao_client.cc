@@ -1,13 +1,10 @@
 #include "services/security/bao_client.h"
 
-#include <algorithm>
 #include <chrono>
 #include <format>
 #include <memory>
-#include <ratio>
 #include <stdexcept>
 #include <string_view>
-#include <thread>
 
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
@@ -59,10 +56,8 @@ namespace urls = ::boost::urls;
 
 using ::std::chrono::duration_cast;
 using ::std::chrono::milliseconds;
+using ::std::chrono::seconds;
 using ::std::chrono::steady_clock;
-
-constexpr double BACKOFF_EXP = 1.2;
-constexpr steady_clock::duration MAX_DELAY = milliseconds{10000};
 
 net::url make_bao_url() {
   urls::url url = urls::parse_uri(absl::GetFlag(FLAGS_bao_address)).value();
@@ -137,15 +132,26 @@ bao_client::~bao_client() {
 }
 
 void bao_client::wait_for_ready(milliseconds timeout) {
-  const steady_clock::time_point start_time = steady_clock::now();
-  steady_clock::duration delay = milliseconds{1};
-
   int connection_failure_count = 0;
   int status_failure_count = 0;
-  steady_clock::time_point start = steady_clock::now();
-  while (true) {
-    try {
-      auto res = get_bao("/v1/sys/health");
+  const steady_clock::time_point start = steady_clock::now();
+
+  backoff_options options{.maximum_delay = seconds{10}, .deadline = timeout};
+  try {
+    backoff(options, [&]() {
+      http::response<http::string_body> response;
+      try {
+        response = get_bao("/v1/sys/health");
+      } catch (const std::exception& e) {
+        // Ignore connection errors and retry.
+        ++connection_failure_count;
+        throw retriable_error(e.what());
+      } catch (...) {
+        LOG(INFO) << "Unknown connection error waiting for bao to start.";
+        ++connection_failure_count;
+        throw retriable_error("Unknown connection error.");
+      }
+
       if (status_failure_count == 0) {
         LOG(INFO)
             << "Established connection in "
@@ -153,7 +159,7 @@ void bao_client::wait_for_ready(milliseconds timeout) {
             << " milliseconds after " << connection_failure_count
             << " connection failures.";
       }
-      if (res.result() == http::status::ok) {
+      if (response.result() == http::status::ok) {
         LOG(INFO)
             << "Successful Bao health check in "
             << duration_cast<milliseconds>(steady_clock::now() - start).count()
@@ -163,29 +169,19 @@ void bao_client::wait_for_ready(milliseconds timeout) {
         return;
       }
       ++status_failure_count;
-      LOG(INFO) << "Failed to get bao status: " << res.result_int();
-    } catch (const std::exception& e) {
-      // Ignore connection errors and retry.
-      ++connection_failure_count;
-    } catch (...) {
-      LOG(INFO) << "Unknown connection error waiting for bao to start.";
-      ++connection_failure_count;
-    }
-
-    if (steady_clock::now() - start_time >= timeout) {
-      LOG(ERROR)
-          << "Failed to connect to Bao after "
-          << duration_cast<milliseconds>(steady_clock::now() - start).count()
-          << " milliseconds with " << connection_failure_count
-          << " connection failures and " << status_failure_count
-          << " status check failures.";
-      throw std::runtime_error(
-          "Timed out waiting for OpenBao proxy to be ready.");
-    }
-
-    std::this_thread::sleep_for(delay);
-    delay = std::min(
-        duration_cast<steady_clock::duration>(delay * BACKOFF_EXP), MAX_DELAY);
+      LOG(INFO) << "Failed to get bao status: " << response.result_int();
+      throw retriable_error(
+          std::format("Failed to get bao status: {}", response.result_int()));
+    });
+  } catch (const backoff_exceeded_error&) {
+    LOG(ERROR)
+        << "Failed to connect to Bao after "
+        << duration_cast<milliseconds>(steady_clock::now() - start).count()
+        << " milliseconds with " << connection_failure_count
+        << " connection failures and " << status_failure_count
+        << " status check failures.";
+    throw std::runtime_error(
+        "Timed out waiting for OpenBao proxy to be ready.");
   }
 }
 
