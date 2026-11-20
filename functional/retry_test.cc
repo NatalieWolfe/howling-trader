@@ -1,9 +1,10 @@
 #include "functional/retry.h"
 
 #include <chrono>
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
 #include <stdexcept>
+
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
 namespace howling {
 namespace {
@@ -23,7 +24,7 @@ TEST(BackoffTest, RetriesUntilSuccess) {
   int result = backoff(
       backoff_options{.initial_delay = 1ms, .maximum_delay = 100ms}, [&]() {
         ++attempt_count;
-        if (attempt_count < 3) throw retry("not ready yet");
+        if (attempt_count < 3) throw retriable_error("not ready yet");
         return 42;
       });
   EXPECT_EQ(attempt_count, 3);
@@ -34,12 +35,10 @@ TEST(BackoffTest, ThrowsBackoffExceededErrorOnTimeout) {
   int attempt_count = 0;
   EXPECT_THAT(
       [&]() {
-        backoff(
-            backoff_options{.initial_delay = 5ms, .maximum_delay = 20ms},
-            [&]() {
-              ++attempt_count;
-              throw retry("resource unavailable");
-            });
+        backoff(backoff_options{.initial_delay = 5ms, .deadline = 20ms}, [&]() {
+          ++attempt_count;
+          throw retriable_error("resource unavailable");
+        });
       },
       ThrowsMessage<backoff_exceeded_error>(HasSubstr(
           "Backoff exceeded, aborting. Last retry message: resource "

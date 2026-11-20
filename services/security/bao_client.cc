@@ -192,12 +192,11 @@ void bao_client::wait_for_ready(milliseconds timeout) {
 Json::Value bao_client::get_secret(std::string_view path) {
   const std::string target = absl::StrCat("/v1/secret/data/", path);
   backoff_options options{
-      .maximum_delay =
-          to_std_chrono(absl::GetFlag(FLAGS_bao_secret_retry_timeout))};
+      .deadline = to_std_chrono(absl::GetFlag(FLAGS_bao_secret_retry_timeout))};
   return backoff(options, [&]() {
     http::response<http::string_body> res = get_bao(target);
     if (res.result() == http::status::not_found) {
-      throw retry(
+      throw retriable_error(
           std::format(
               "Failed to retrieve secret via OpenBao: {} {}",
               static_cast<int>(res.result()),
