@@ -4,9 +4,16 @@
 #include <stdexcept>
 #include <string>
 
+#include "absl/flags/declare.h"
+#include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
+#include "absl/time/time.h"
+#include "functional/retry.h"
 #include "services/security/bao_client.h"
 #include "services/security/certificate_bundle.h"
 #include "services/security/mock_bao_server.h"
+
+ABSL_DECLARE_FLAG(absl::Duration, bao_secret_retry_timeout);
 
 namespace howling::security {
 
@@ -39,6 +46,33 @@ TEST(BaoClientGetSecretTest, Success) {
   bao_client client;
   Json::Value secret = client.get_secret("howling/prod/telegram");
   EXPECT_EQ(secret["key"].asString(), "value");
+}
+
+TEST(BaoClientGetSecretTest, RetriesOnNotFoundUntilAvailable) {
+  mock_bao_server server(/*configure_flags=*/true, /*use_ssl=*/false);
+  server.set_secret_not_found_count(2);
+  server.start();
+
+  bao_client client;
+  Json::Value secret = client.get_secret("howling/prod/telegram");
+  EXPECT_EQ(secret["key"].asString(), "value");
+}
+
+TEST(BaoClientGetSecretTest, ThrowsWhenNotFoundExceedsTimeout) {
+  absl::FlagSaver flag_saver;
+  absl::SetFlag(&FLAGS_bao_secret_retry_timeout, absl::Milliseconds(50));
+  mock_bao_server server(/*configure_flags=*/true, /*use_ssl=*/false);
+  server.set_secret_not_found_count(1000);
+  server.start();
+
+  bao_client client;
+  EXPECT_THAT(
+      [&] {
+        [[maybe_unused]] Json::Value secret =
+            client.get_secret("howling/prod/schwab");
+      },
+      ThrowsMessage<backoff_exceeded_error>(
+          HasSubstr("Failed to retrieve secret via OpenBao: 404")));
 }
 
 TEST(BaoClientEncryptTest, Success) {

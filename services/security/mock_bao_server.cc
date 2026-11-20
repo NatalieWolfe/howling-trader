@@ -25,7 +25,10 @@ namespace http = ::boost::beast::http;
 namespace ssl = ::boost::asio::ssl;
 
 template <typename Stream>
-void handle_request(Stream& stream, std::string* last_request_body) {
+void handle_request(
+    Stream& stream,
+    std::string* last_request_body,
+    int* secret_not_found_count) {
   beast::flat_buffer buffer;
   http::request<http::string_body> req;
   beast::error_code ec;
@@ -40,7 +43,13 @@ void handle_request(Stream& stream, std::string* last_request_body) {
   if (req.target() == "/v1/sys/health") {
     res.body() = "{\"initialized\": true, \"sealed\": false}";
   } else if (req.target().starts_with("/v1/secret/data/")) {
-    res.body() = R"json({"data":{"data":{"key":"value"}}})json";
+    if (*secret_not_found_count > 0) {
+      --(*secret_not_found_count);
+      res.result(http::status::not_found);
+      res.body() = R"json({"errors":[]})json";
+    } else {
+      res.body() = R"json({"data":{"data":{"key":"value"}}})json";
+    }
   } else if (req.target().starts_with("/v1/pki/issue/")) {
     res.body() = R"json({
       "data": {
@@ -96,28 +105,33 @@ mock_bao_server::mock_bao_server(bool configure_flags, bool use_ssl)
 }
 
 mock_bao_server::~mock_bao_server() {
+  _stopped.store(true);
   beast::error_code ec;
   _acceptor.cancel(ec);
   _acceptor.close(ec);
+  asio::ip::tcp::socket wake_socket(_ioc);
+  wake_socket.connect({asio::ip::make_address("127.0.0.1"), _port}, ec);
   if (_server_thread.joinable()) _server_thread.join();
 }
 
 void mock_bao_server::start() {
   _server_thread = std::thread([this]() {
     try {
-      beast::error_code ec;
-      asio::ip::tcp::socket socket(_ioc);
-      _acceptor.accept(socket, ec);
-      if (ec) return;
+      while (!_stopped.load()) {
+        beast::error_code ec;
+        asio::ip::tcp::socket socket(_ioc);
+        _acceptor.accept(socket, ec);
+        if (ec || _stopped.load()) return;
 
-      if (_use_ssl) {
-        ssl::stream<beast::tcp_stream> stream(std::move(socket), _ssl_ctx);
-        stream.handshake(ssl::stream_base::server, ec);
-        if (ec) return;
-        handle_request(stream, &_last_request_body);
-      } else {
-        beast::tcp_stream stream(std::move(socket));
-        handle_request(stream, &_last_request_body);
+        if (_use_ssl) {
+          ssl::stream<beast::tcp_stream> stream(std::move(socket), _ssl_ctx);
+          stream.handshake(ssl::stream_base::server, ec);
+          if (ec) continue;
+          handle_request(stream, &_last_request_body, &_secret_not_found_count);
+        } else {
+          beast::tcp_stream stream(std::move(socket));
+          handle_request(stream, &_last_request_body, &_secret_not_found_count);
+        }
       }
     } catch (...) {}
   });
