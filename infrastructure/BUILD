@@ -50,6 +50,7 @@ multirun(
         "//services/oauth:auth_refresh_image_load",
         "//services/oauth:server_image_load",
         "//howling_tools:execute_image_load",
+        "//services/simulation:server_image_load",
     ],
 )
 
