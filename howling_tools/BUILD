@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//infrastructure:containers.bzl", "package_binary")
 
 cc_binary(
@@ -27,10 +27,27 @@ cc_binary(
     ],
 )
 
+cc_library(
+    name = "session_shutdown",
+    srcs = ["session_shutdown.cc"],
+    hdrs = ["session_shutdown.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "session_shutdown_test",
+    srcs = ["session_shutdown_test.cc"],
+    deps = [
+        ":session_shutdown",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_binary(
     name = "execute",
     srcs = ["execute.cc"],
     deps = [
+        ":session_shutdown",
         "//api:schwab",
         "//cli:printing",
         "//containers:vector",
