@@ -26,6 +26,7 @@
 #include "environment/configuration.h"
 #include "environment/init.h"
 #include "files/files.h"
+#include "howling_tools/session_shutdown.h"
 #include "services/database.h"
 #include "services/db/register.h"
 #include "services/market_watch.h"
@@ -182,6 +183,22 @@ void run() {
   if (symbols.empty()) {
     throw std::runtime_error("Must specify at least one stock in --stocks.");
   }
+
+  scoped_signal_handler signal_handler;
+  const system_clock::time_point session_start = system_clock::now();
+  const system_clock::time_point shutdown_deadline =
+      market_shutdown_deadline(session_start);
+  if (shutdown_signal_received()) {
+    LOG(INFO) << "Received signal " << received_shutdown_signal()
+              << " before session start; exiting.";
+    return;
+  }
+  if (session_start >= shutdown_deadline) {
+    LOG(INFO) << "Current time is already past the 15:45 ET session shutdown "
+                 "deadline; exiting.";
+    return;
+  }
+
   std::unordered_set<stock::Symbol> trading_stocks{
       symbols.begin(), symbols.end()};
   stock::Symbol followed_stock = symbols.front();
@@ -197,6 +214,12 @@ void run() {
   metrics m{.name = "Summary", .initial_funds = state.initial_funds};
   executor e{state};
 
+  if (shutdown_signal_received() || system_clock::now() >= shutdown_deadline) {
+    LOG(INFO) << "Shutdown triggered before starting market watch; exiting.";
+    std::cout << "\n" << print_metrics(m) << std::endl;
+    return;
+  }
+
   auto watcher = std::make_unique<market_watch>();
   database_pool& db_pool = registry::get_service<database_pool>();
 
@@ -209,7 +232,7 @@ void run() {
       if (candle_duration != 60s) {
         throw std::runtime_error("Unexpected candle duration received!");
       }
-      state.time_now = to_std_chrono(candle.opened_at()) + candle_duration;
+      state.time_now.store(to_std_chrono(candle.opened_at()) + candle_duration);
       add_next_minute(state.market[symbol], candle);
       decision d = anal->analyze(symbol, state);
 
@@ -278,18 +301,22 @@ void run() {
     watcher->start(all_stocks);
   });
 
-  // Wait for the trading state to catch up with now.
-  while (system_clock::now() - state.time_now > 2min) {
-    std::this_thread::sleep_for(1s);
+  // Wait for the trading state to catch up with wall-clock time while honoring
+  // the session shutdown deadline and stop signals.
+  shutdown_reason reason = wait_for_catch_up(
+      [&state]() { return state.time_now.load(); }, shutdown_deadline);
+  if (reason == shutdown_reason::CAUGHT_UP) {
+    // Wait until the wall-clock session shutdown deadline or a stop signal.
+    reason = wait_for_shutdown(shutdown_deadline);
   }
 
-  // Wait until after market close to shutdown.
-  if (state.market_hour() < 15) {
-    std::this_thread::sleep_for(std::chrono::hours(15 - state.market_hour()));
+  if (reason == shutdown_reason::STOP_REQUESTED) {
+    LOG(INFO) << "Shutting down due to signal " << received_shutdown_signal()
+              << ".";
+  } else {
+    LOG(INFO) << "Reached session shutdown deadline; shutting down.";
   }
-  while (state.market_hour() == 15 && state.market_minute() < 45) {
-    std::this_thread::sleep_for(1min);
-  }
+
   watcher = nullptr;
 
   std::cout << "\n" << print_metrics(m) << std::endl;
