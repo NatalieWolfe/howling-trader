@@ -1,15 +1,13 @@
 #pragma once
 
-#include <atomic>
-#include <chrono>
 #include <cstdint>
 #include <string>
-#include <type_traits>
 #include <unordered_map>
 
 #include "containers/vector.h"
 #include "data/aggregate.h"
 #include "data/stock.pb.h"
+#include "time/thread_safe.h"
 
 namespace howling {
 
@@ -18,76 +16,12 @@ namespace howling {
  *
  * Thread-compatible overall: external synchronization is required when
  * concurrently mutating containers (`positions`, `market`, `available_stocks`)
- * or account balances. The `time_now` field and the market-clock accessors
- * (`market_hour()`, `market_minute()`, `market_second()`, `market_is_open()`)
- * are internally synchronized via `std::atomic` and are thread-safe for
- * concurrent reads and writes across threads.
+ * or account balances. The `time_now` field (`howling::atomic_time_point`) and
+ * the market-clock accessors (`market_hour()`, `market_minute()`,
+ * `market_second()`, `market_is_open()`) are internally synchronized and
+ * thread-safe for concurrent reads and writes across threads.
  */
 struct trading_state {
-  /**
-   * @brief Thread-safe wrapper around `std::chrono::system_clock::time_point`.
-   *
-   * Internally synchronized via `std::atomic` so concurrent updates from the
-   * candle stream thread and reads from other threads are race-free. Supports
-   * copy and move operations so `trading_state` remains an aggregate and
-   * movable.
-   */
-  class atomic_time_point {
-  public:
-    static_assert(
-        std::is_trivially_copyable_v<std::chrono::system_clock::time_point>,
-        "system_clock::time_point must be trivially copyable for std::atomic.");
-
-    atomic_time_point() noexcept = default;
-    atomic_time_point(std::chrono::system_clock::time_point value) noexcept
-        : _value{value} {}
-    atomic_time_point(const atomic_time_point& other) noexcept
-        : _value{other.load()} {}
-    atomic_time_point(atomic_time_point&& other) noexcept
-        : _value{other.load()} {}
-
-    atomic_time_point& operator=(const atomic_time_point& other) noexcept {
-      store(other.load());
-      return *this;
-    }
-
-    atomic_time_point& operator=(atomic_time_point&& other) noexcept {
-      store(other.load());
-      return *this;
-    }
-
-    atomic_time_point&
-    operator=(std::chrono::system_clock::time_point value) noexcept {
-      store(value);
-      return *this;
-    }
-
-    /**
-     * @brief Atomically loads the stored timestamp.
-     */
-    [[nodiscard]] std::chrono::system_clock::time_point
-    load(std::memory_order order = std::memory_order_acquire) const noexcept {
-      return _value.load(order);
-    }
-
-    /**
-     * @brief Atomically stores a new timestamp.
-     */
-    void store(
-        std::chrono::system_clock::time_point value,
-        std::memory_order order = std::memory_order_release) noexcept {
-      _value.store(value, order);
-    }
-
-    operator std::chrono::system_clock::time_point() const noexcept {
-      return load();
-    }
-
-  private:
-    std::atomic<std::chrono::system_clock::time_point> _value{
-        std::chrono::system_clock::time_point{}};
-  };
-
   struct position {
     stock::Symbol symbol;
     double price;

@@ -3,8 +3,10 @@
 #include <atomic>
 #include <chrono>
 #include <thread>
+#include <type_traits>
 #include <utility>
 
+#include "time/thread_safe.h"
 #include "gtest/gtest.h"
 
 namespace howling {
@@ -74,6 +76,10 @@ TEST(TradingStateTest, MarketTimeAccessorsRespectEdt) {
 }
 
 TEST(TradingStateTest, AggregateInitializationAndMovePreserveTimeNow) {
+  static_assert(std::is_aggregate_v<trading_state>);
+  static_assert(
+      std::is_same_v<decltype(trading_state::time_now), atomic_time_point>);
+
   const system_clock::time_point expected_time =
       make_utc(2026, 11, 20, 15, 0, 0);
   trading_state original{

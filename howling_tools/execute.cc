@@ -32,6 +32,7 @@
 #include "services/market_watch.h"
 #include "services/registry/registry.h"
 #include "services/security/register.h"
+#include "signaling/cancellation.h"
 #include "strings/format.h"
 #include "time/conversion.h"
 #include "trading/executor.h"
@@ -184,13 +185,17 @@ void run() {
     throw std::runtime_error("Must specify at least one stock in --stocks.");
   }
 
-  scoped_signal_handler signal_handler;
+  const cancellation cancel;
   const system_clock::time_point session_start = system_clock::now();
   const system_clock::time_point shutdown_deadline =
       market_shutdown_deadline(session_start);
-  if (shutdown_signal_received()) {
-    LOG(INFO) << "Received signal " << received_shutdown_signal()
-              << " before session start; exiting.";
+  if (cancel.is_cancelled()) {
+    if (cancel.received_signal() != 0) {
+      LOG(INFO) << "Received signal " << cancel.received_signal()
+                << " before session start; exiting.";
+    } else {
+      LOG(INFO) << "Cancellation requested before session start; exiting.";
+    }
     return;
   }
   if (session_start >= shutdown_deadline) {
@@ -214,8 +219,13 @@ void run() {
   metrics m{.name = "Summary", .initial_funds = state.initial_funds};
   executor e{state};
 
-  if (shutdown_signal_received() || system_clock::now() >= shutdown_deadline) {
-    LOG(INFO) << "Shutdown triggered before starting market watch; exiting.";
+  if (cancel.is_cancelled() || system_clock::now() >= shutdown_deadline) {
+    if (cancel.received_signal() != 0) {
+      LOG(INFO) << "Received signal " << cancel.received_signal()
+                << " before starting market watch; exiting.";
+    } else {
+      LOG(INFO) << "Shutdown triggered before starting market watch; exiting.";
+    }
     std::cout << "\n" << print_metrics(m) << std::endl;
     return;
   }
@@ -302,17 +312,21 @@ void run() {
   });
 
   // Wait for the trading state to catch up with wall-clock time while honoring
-  // the session shutdown deadline and stop signals.
+  // the session shutdown deadline and cancellation signals.
   shutdown_reason reason = wait_for_catch_up(
-      [&state]() { return state.time_now.load(); }, shutdown_deadline);
+      [&state]() { return state.time_now.load(); }, shutdown_deadline, cancel);
   if (reason == shutdown_reason::CAUGHT_UP) {
-    // Wait until the wall-clock session shutdown deadline or a stop signal.
-    reason = wait_for_shutdown(shutdown_deadline);
+    // Wait until the wall-clock session shutdown deadline or cancellation.
+    reason = wait_for_shutdown(shutdown_deadline, cancel);
   }
 
   if (reason == shutdown_reason::STOP_REQUESTED) {
-    LOG(INFO) << "Shutting down due to signal " << received_shutdown_signal()
-              << ".";
+    if (cancel.received_signal() != 0) {
+      LOG(INFO) << "Shutting down due to signal " << cancel.received_signal()
+                << ".";
+    } else {
+      LOG(INFO) << "Shutting down due to cancellation request.";
+    }
   } else {
     LOG(INFO) << "Reached session shutdown deadline; shutting down.";
   }

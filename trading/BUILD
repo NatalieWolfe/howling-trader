@@ -45,6 +45,7 @@ cc_library(
         "//containers:vector",
         "//data:aggregate",
         "//data:stock_cc_proto",
+        "//time:thread_safe",
     ],
 )
 
@@ -53,6 +54,7 @@ cc_test(
     srcs = ["trading_state_test.cc"],
     deps = [
         ":trading_state",
+        "//time:thread_safe",
         "@googletest//:gtest_main",
     ],
 )

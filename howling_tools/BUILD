@@ -31,7 +31,7 @@ cc_library(
     name = "session_shutdown",
     srcs = ["session_shutdown.cc"],
     hdrs = ["session_shutdown.h"],
-    visibility = ["//visibility:public"],
+    deps = ["//signaling:cancellation"],
 )
 
 cc_test(
@@ -39,6 +39,7 @@ cc_test(
     srcs = ["session_shutdown_test.cc"],
     deps = [
         ":session_shutdown",
+        "//signaling:cancellation",
         "@googletest//:gtest_main",
     ],
 )
@@ -66,6 +67,7 @@ cc_binary(
         "//services/db:register",
         "//services/registry",
         "//services/security:register",
+        "//signaling:cancellation",
         "//strings:format",
         "//time:conversion",
         "//trading:executor",

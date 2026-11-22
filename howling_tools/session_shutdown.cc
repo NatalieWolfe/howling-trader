@@ -1,11 +1,13 @@
 #include "howling_tools/session_shutdown.h"
 
 #include <algorithm>
-#include <atomic>
 #include <chrono>
-#include <csignal>
 #include <functional>
-#include <signal.h>
+#include <optional>
+#include <stdexcept>
+#include <string_view>
+
+#include "signaling/cancellation.h"
 
 namespace howling {
 namespace {
@@ -17,70 +19,60 @@ using ::std::chrono::hours;
 using ::std::chrono::local_days;
 using ::std::chrono::locate_zone;
 using ::std::chrono::minutes;
+using ::std::chrono::seconds;
 using ::std::chrono::system_clock;
 using ::std::chrono::time_zone;
 using ::std::chrono::zoned_time;
 
-std::atomic<int> received_signal{0};
-static_assert(
-    std::atomic<int>::is_always_lock_free,
-    "Shutdown signal flag must be lock-free for async-signal-safety.");
+constexpr std::string_view MARKET_TIME_ZONE_NAME = "America/New_York";
+constexpr hours DEFAULT_SHUTDOWN_HOUR{15};
+constexpr minutes DEFAULT_SHUTDOWN_MINUTE{45};
+constexpr seconds DEFAULT_SHUTDOWN_POLL_INTERVAL{1};
+constexpr minutes DEFAULT_CATCH_UP_LAG_THRESHOLD{2};
+
+system_clock::duration resolve_poll_interval(const wait_options& options) {
+  if (!options.now) {
+    throw std::invalid_argument("wait_options.now must not be null.");
+  }
+  if (!options.sleep) {
+    throw std::invalid_argument("wait_options.sleep must not be null.");
+  }
+  if (!options.poll_interval.has_value()) {
+    return DEFAULT_SHUTDOWN_POLL_INTERVAL;
+  }
+  if (*options.poll_interval <= system_clock::duration::zero()) {
+    throw std::invalid_argument("wait_options.poll_interval must be positive.");
+  }
+  return *options.poll_interval;
+}
 
 system_clock::duration
-effective_poll_interval(system_clock::duration configured_interval) {
-  if (configured_interval > system_clock::duration::zero()) {
-    return configured_interval;
+resolve_max_lag(std::optional<system_clock::duration> max_lag) {
+  if (!max_lag.has_value()) { return DEFAULT_CATCH_UP_LAG_THRESHOLD; }
+  if (*max_lag < system_clock::duration::zero()) {
+    throw std::invalid_argument("max_lag must not be negative.");
   }
-  return DEFAULT_SHUTDOWN_POLL_INTERVAL;
+  return *max_lag;
 }
 
 } // namespace
 
-extern "C" {
-
-static void handle_shutdown_signal(int signal_number) noexcept {
-  received_signal.store(signal_number, std::memory_order_relaxed);
-}
-
-} // extern "C"
-
-int received_shutdown_signal() noexcept {
-  return received_signal.load(std::memory_order_relaxed);
-}
-
-bool shutdown_signal_received() noexcept {
-  return received_shutdown_signal() != 0;
-}
-
-void reset_shutdown_signal() noexcept {
-  received_signal.store(0, std::memory_order_relaxed);
-}
-
-scoped_signal_handler::scoped_signal_handler() {
-  reset_shutdown_signal();
-
-  struct sigaction action{};
-  action.sa_handler = handle_shutdown_signal;
-  sigemptyset(&action.sa_mask);
-  action.sa_flags = 0;
-
-  if (::sigaction(SIGINT, &action, &_previous_sigint) == 0) {
-    _installed_sigint = true;
-  }
-  if (::sigaction(SIGTERM, &action, &_previous_sigterm) == 0) {
-    _installed_sigterm = true;
-  }
-}
-
-scoped_signal_handler::~scoped_signal_handler() {
-  if (_installed_sigint) ::sigaction(SIGINT, &_previous_sigint, nullptr);
-  if (_installed_sigterm) ::sigaction(SIGTERM, &_previous_sigterm, nullptr);
+system_clock::time_point
+market_shutdown_deadline(system_clock::time_point session_start) {
+  return market_shutdown_deadline(
+      session_start, DEFAULT_SHUTDOWN_HOUR, DEFAULT_SHUTDOWN_MINUTE);
 }
 
 system_clock::time_point market_shutdown_deadline(
     system_clock::time_point session_start,
     hours shutdown_hour,
     minutes shutdown_minute) {
+  if (shutdown_hour < hours{0} || shutdown_hour >= hours{24}) {
+    throw std::invalid_argument("shutdown_hour must be in [0, 23].");
+  }
+  if (shutdown_minute < minutes{0} || shutdown_minute >= minutes{60}) {
+    throw std::invalid_argument("shutdown_minute must be in [0, 59].");
+  }
   static const time_zone* const MARKET_TIME_ZONE =
       locate_zone(MARKET_TIME_ZONE_NAME);
   const zoned_time local_start{MARKET_TIME_ZONE, session_start};
@@ -93,17 +85,21 @@ system_clock::time_point market_shutdown_deadline(
 shutdown_reason wait_for_catch_up(
     const std::function<system_clock::time_point()>& read_state_time,
     system_clock::time_point shutdown_deadline,
-    system_clock::duration max_lag,
+    const cancellation& cancel,
+    std::optional<system_clock::duration> max_lag,
     const wait_options& options) {
-  const system_clock::duration poll_interval =
-      effective_poll_interval(options.poll_interval);
+  if (!read_state_time) {
+    throw std::invalid_argument("read_state_time must not be null.");
+  }
+  const system_clock::duration effective_max_lag = resolve_max_lag(max_lag);
+  const system_clock::duration poll_interval = resolve_poll_interval(options);
   while (true) {
-    if (options.stop_requested()) return shutdown_reason::STOP_REQUESTED;
+    if (cancel.is_cancelled()) return shutdown_reason::STOP_REQUESTED;
     const system_clock::time_point current_time = options.now();
     if (current_time >= shutdown_deadline) {
       return shutdown_reason::DEADLINE_REACHED;
     }
-    if (current_time - read_state_time() <= max_lag) {
+    if (current_time - read_state_time() <= effective_max_lag) {
       return shutdown_reason::CAUGHT_UP;
     }
     const system_clock::duration remaining = shutdown_deadline - current_time;
@@ -112,11 +108,12 @@ shutdown_reason wait_for_catch_up(
 }
 
 shutdown_reason wait_for_shutdown(
-    system_clock::time_point shutdown_deadline, const wait_options& options) {
-  const system_clock::duration poll_interval =
-      effective_poll_interval(options.poll_interval);
+    system_clock::time_point shutdown_deadline,
+    const cancellation& cancel,
+    const wait_options& options) {
+  const system_clock::duration poll_interval = resolve_poll_interval(options);
   while (true) {
-    if (options.stop_requested()) return shutdown_reason::STOP_REQUESTED;
+    if (cancel.is_cancelled()) return shutdown_reason::STOP_REQUESTED;
     const system_clock::time_point current_time = options.now();
     if (current_time >= shutdown_deadline) {
       return shutdown_reason::DEADLINE_REACHED;
