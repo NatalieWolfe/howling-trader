@@ -24,3 +24,18 @@ cc_test(
         "@protobuf//:timestamp_cc_proto",
     ],
 )
+
+cc_library(
+    name = "thread_safe",
+    hdrs = ["thread_safe.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "thread_safe_test",
+    srcs = ["thread_safe_test.cc"],
+    deps = [
+        ":thread_safe",
+        "@googletest//:gtest_main",
+    ],
+)
