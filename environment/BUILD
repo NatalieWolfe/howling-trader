@@ -19,6 +19,7 @@ cc_library(
         ":runfiles_init",
         "//logs:json_sink",
         "//logs:stdout_sink",
+        "//signaling:signal_handler",
         "@abseil-cpp//absl/base:log_severity",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/flags:parse",
