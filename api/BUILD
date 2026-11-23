@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
     name = "alpaca",
@@ -32,23 +32,49 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         "//api/schwab:connect",
+        "//api/schwab:utils",
         "//containers:vector",
         "//data:account_cc_proto",
         "//data:candle_cc_proto",
         "//data:market_cc_proto",
         "//data:stock_cc_proto",
-        "//api/schwab:utils",
+        "//functional:retry",
         "//net:connect",
         "//net:url",
         "//services:authenticate",
+        "//signaling:cancellation",
         "//strings:json",
         "//strings:parse",
         "//time:conversion",
+        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
+        "@abseil-cpp//absl/time",
+        "@boost.asio",
         "@boost.beast",
         "@boost.url",
         "@jsoncpp",
         "@protobuf//:time_util",
+    ],
+)
+
+cc_test(
+    name = "schwab_test",
+    size = "small",
+    srcs = ["schwab_test.cc"],
+    deps = [
+        ":schwab",
+        "//api/schwab:connect",
+        "//data:candle_cc_proto",
+        "//data:market_cc_proto",
+        "//data:stock_cc_proto",
+        "//functional:retry",
+        "//net:connect",
+        "//net:test_tls_cert",
+        "//strings:json",
+        "@boost.asio",
+        "@boost.beast",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
     ],
 )
