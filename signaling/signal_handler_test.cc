@@ -32,7 +32,7 @@ TEST(SignalHandlerTest, UninitializedStateAndSingleInitialization) {
 
   EXPECT_TRUE(signal_handler::is_initialized());
   signal_handler& handler = signal_handler::instance();
-  EXPECT_FALSE(handler.is_signal_received());
+  EXPECT_FALSE(handler.has_received_signal());
   EXPECT_EQ(handler.received_signal(), 0);
 
   // Initializing a second time must fail rather than overwrite state.
@@ -44,15 +44,15 @@ TEST(SignalHandlerTest, CapturesSigtermAndResets) {
   signal_reset_guard guard;
   signal_handler& handler = signal_handler::instance();
 
-  ASSERT_FALSE(handler.is_signal_received());
+  ASSERT_FALSE(handler.has_received_signal());
   ASSERT_EQ(handler.received_signal(), 0);
 
   ASSERT_EQ(std::raise(SIGTERM), 0);
-  EXPECT_TRUE(handler.is_signal_received());
+  EXPECT_TRUE(handler.has_received_signal());
   EXPECT_EQ(handler.received_signal(), SIGTERM);
 
   handler.reset_signal();
-  EXPECT_FALSE(handler.is_signal_received());
+  EXPECT_FALSE(handler.has_received_signal());
   EXPECT_EQ(handler.received_signal(), 0);
 }
 
@@ -62,11 +62,11 @@ TEST(SignalHandlerTest, CapturesSigintAndResets) {
   signal_handler& handler = signal_handler::instance();
 
   ASSERT_EQ(std::raise(SIGINT), 0);
-  EXPECT_TRUE(handler.is_signal_received());
+  EXPECT_TRUE(handler.has_received_signal());
   EXPECT_EQ(handler.received_signal(), SIGINT);
 
   handler.reset_signal();
-  EXPECT_FALSE(handler.is_signal_received());
+  EXPECT_FALSE(handler.has_received_signal());
   EXPECT_EQ(handler.received_signal(), 0);
 }
 
@@ -77,7 +77,7 @@ TEST(SignalHandlerTest, PreservesFirstReceivedSignal) {
 
   ASSERT_EQ(std::raise(SIGTERM), 0);
   ASSERT_EQ(std::raise(SIGINT), 0);
-  EXPECT_TRUE(handler.is_signal_received());
+  EXPECT_TRUE(handler.has_received_signal());
   EXPECT_EQ(handler.received_signal(), SIGTERM);
 }
 
@@ -102,7 +102,7 @@ TEST(SignalHandlerTest, ConcurrentAccessAndRepeatedInitAreThreadSafe) {
       }
 
       ready_threads.fetch_add(1, std::memory_order_release);
-      while (!handler.is_signal_received()) std::this_thread::yield();
+      while (!handler.has_received_signal()) std::this_thread::yield();
       if (handler.received_signal() == SIGTERM) {
         observed_sigterm_count.fetch_add(1, std::memory_order_relaxed);
       }

@@ -53,6 +53,15 @@ TEST(AtomicTimePointTest, ConstructsFromTimePoint) {
 }
 
 TEST(AtomicTimePointTest, CopyAndMoveConstructorsAndAssignments) {
+  static_assert(std::is_copy_constructible_v<atomic_time_point>);
+  static_assert(std::is_move_constructible_v<atomic_time_point>);
+  static_assert(std::is_copy_assignable_v<atomic_time_point>);
+  static_assert(std::is_move_assignable_v<atomic_time_point>);
+  static_assert(std::is_nothrow_copy_constructible_v<atomic_time_point>);
+  static_assert(std::is_nothrow_move_constructible_v<atomic_time_point>);
+  static_assert(std::is_nothrow_copy_assignable_v<atomic_time_point>);
+  static_assert(std::is_nothrow_move_assignable_v<atomic_time_point>);
+
   const system_clock::time_point first_time =
       system_clock::time_point{} + seconds{100};
   const system_clock::time_point second_time =
@@ -244,7 +253,7 @@ TEST(AtomicTimePointTest, ConcurrentReaderWriterStressTest) {
   });
 
   writer.join();
-  for (std::thread& reader : readers) { reader.join(); }
+  for (std::thread& reader : readers) reader.join();
 
   EXPECT_FALSE(invariant_violated.load(std::memory_order_acquire));
   EXPECT_EQ(shared_time.load(), final_time);

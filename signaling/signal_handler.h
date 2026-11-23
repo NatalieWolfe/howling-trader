@@ -45,7 +45,7 @@ public:
   /**
    * @brief Returns whether a shutdown signal has been received.
    */
-  [[nodiscard]] bool is_signal_received() const noexcept;
+  [[nodiscard]] bool has_received_signal() const noexcept;
 
   /**
    * @brief Returns the first received shutdown signal number, or 0 if none.

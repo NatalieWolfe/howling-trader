@@ -12,8 +12,9 @@ namespace howling {
  * A cancellation handle observes both local cancel() calls and, when
  * signal_handler::initialize() has already been called prior to construction,
  * process-wide shutdown signals (SIGINT and SIGTERM). It may optionally link to
- * a parent cancellation handle so cancelling a parent propagates to its
- * children while cancelling a child remains scoped to that child.
+ * a parent cancellation handle via with_parent() so cancelling a parent
+ * propagates to its children while cancelling a child remains scoped to that
+ * child.
  *
  * Pass handles by const reference (const cancellation&) to consumers that
  * should only observe cancellation state.
@@ -25,17 +26,26 @@ namespace howling {
 class cancellation {
 public:
   /**
-   * @brief Constructs a cancellation handle, optionally linked to a parent.
+   * @brief Constructs a root cancellation handle.
    *
-   * Attaches to signal_handler::instance() if it has already been initialized
-   * (or inherits the parent's attachment). Otherwise logs a warning that
-   * process signals are not registered and continues supporting local and
-   * parent cancellation.
-   *
-   * @param parent Optional parent cancellation handle that, when non-null, must
-   * outlive this instance.
+   * Attaches to signal_handler::instance() if it has already been initialized.
+   * Otherwise logs a warning that process signals are not registered and
+   * continues supporting local cancellation.
    */
-  explicit cancellation(const cancellation* parent = nullptr);
+  cancellation();
+
+  /**
+   * @brief Constructs a cancellation handle linked to a parent.
+   *
+   * Inherits the parent's signal handler attachment, or attaches to
+   * signal_handler::instance() if it has already been initialized (otherwise
+   * logs a warning that process signals are not registered).
+   *
+   * @param parent
+   *  Parent cancellation handle that must outlive the returned child instance.
+   */
+  [[nodiscard]] static cancellation with_parent(const cancellation& parent);
+  static cancellation with_parent(const cancellation&&) = delete;
 
   cancellation(const cancellation&) = delete;
   cancellation& operator=(const cancellation&) = delete;
@@ -58,6 +68,8 @@ public:
   [[nodiscard]] int received_signal() const noexcept;
 
 private:
+  explicit cancellation(const cancellation* parent);
+
   const signal_handler* _signal_handler = nullptr;
   const cancellation* _parent = nullptr;
   std::atomic<bool> _cancelled{false};

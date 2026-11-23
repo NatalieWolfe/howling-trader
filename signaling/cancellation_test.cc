@@ -2,45 +2,19 @@
 
 #include <atomic>
 #include <csignal>
-#include <mutex>
-#include <string>
 #include <thread>
-#include <vector>
 
-#include "absl/base/log_severity.h"
-#include "absl/log/log_entry.h"
-#include "absl/log/log_sink.h"
-#include "absl/log/log_sink_registry.h"
+#include "logs/testing/log_capture.h"
 #include "signaling/signal_handler.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace howling {
 namespace {
 
-class warning_log_capture : public absl::LogSink {
-public:
-  warning_log_capture() { absl::AddLogSink(this); }
-  ~warning_log_capture() override { absl::RemoveLogSink(this); }
-
-  warning_log_capture(const warning_log_capture&) = delete;
-  warning_log_capture& operator=(const warning_log_capture&) = delete;
-
-  void Send(const absl::LogEntry& entry) override {
-    if (entry.log_severity() == absl::LogSeverity::kWarning) {
-      std::lock_guard<std::mutex> lock(_mutex);
-      _warnings.emplace_back(entry.text_message());
-    }
-  }
-
-  [[nodiscard]] std::vector<std::string> warnings() const {
-    std::lock_guard<std::mutex> lock(_mutex);
-    return _warnings;
-  }
-
-private:
-  mutable std::mutex _mutex;
-  std::vector<std::string> _warnings;
-};
+using ::testing::ElementsAre;
+using ::testing::HasSubstr;
+using ::testing::IsEmpty;
 
 void ensure_initialized() {
   if (!signal_handler::is_initialized()) signal_handler::initialize();
@@ -55,26 +29,24 @@ public:
   signal_reset_guard& operator=(const signal_reset_guard&) = delete;
 };
 
-bool is_cancelled_via_const_ref(const cancellation& handle) {
-  return handle.is_cancelled();
+const cancellation& const_ref(const cancellation& handle) {
+  return handle;
 }
 
 TEST(CancellationTest, WorksAndLogsWarningWhenSignalHandlerUninitialized) {
   ASSERT_FALSE(signal_handler::is_initialized());
-  warning_log_capture capture;
+  testing::log_capture capture;
 
   cancellation token;
-  std::vector<std::string> logged_warnings = capture.warnings();
-  ASSERT_EQ(logged_warnings.size(), 1u);
-  EXPECT_NE(
-      logged_warnings.front().find("signal_handler::initialize()"),
-      std::string::npos);
+  EXPECT_THAT(
+      capture.warnings(),
+      ElementsAre(HasSubstr("signal_handler::initialize()")));
 
-  EXPECT_FALSE(is_cancelled_via_const_ref(token));
+  EXPECT_FALSE(const_ref(token).is_cancelled());
   EXPECT_EQ(token.received_signal(), 0);
 
   token.cancel();
-  EXPECT_TRUE(is_cancelled_via_const_ref(token));
+  EXPECT_TRUE(const_ref(token).is_cancelled());
   EXPECT_EQ(token.received_signal(), 0);
 }
 
@@ -82,13 +54,13 @@ TEST(CancellationTest, ParentCancellationPropagatesBeforeInitialization) {
   ASSERT_FALSE(signal_handler::is_initialized());
 
   cancellation parent;
-  cancellation first_child{&parent};
+  cancellation first_child = cancellation::with_parent(parent);
 
   first_child.cancel();
   EXPECT_TRUE(first_child.is_cancelled());
   EXPECT_FALSE(parent.is_cancelled());
 
-  cancellation second_child{&parent};
+  cancellation second_child = cancellation::with_parent(parent);
   EXPECT_FALSE(second_child.is_cancelled());
 
   parent.cancel();
@@ -99,19 +71,19 @@ TEST(CancellationTest, ParentCancellationPropagatesBeforeInitialization) {
 TEST(CancellationTest, ObservesProcessSignalsAfterSignalHandlerInitialized) {
   ensure_initialized();
   signal_reset_guard guard;
-  warning_log_capture capture;
+  testing::log_capture capture;
 
   cancellation token;
-  EXPECT_TRUE(capture.warnings().empty());
-  EXPECT_FALSE(is_cancelled_via_const_ref(token));
+  EXPECT_THAT(capture.warnings(), IsEmpty());
+  EXPECT_FALSE(const_ref(token).is_cancelled());
   EXPECT_EQ(token.received_signal(), 0);
 
   ASSERT_EQ(std::raise(SIGTERM), 0);
-  EXPECT_TRUE(is_cancelled_via_const_ref(token));
+  EXPECT_TRUE(const_ref(token).is_cancelled());
   EXPECT_EQ(token.received_signal(), SIGTERM);
 
   signal_handler::instance().reset_signal();
-  EXPECT_FALSE(is_cancelled_via_const_ref(token));
+  EXPECT_FALSE(const_ref(token).is_cancelled());
   EXPECT_EQ(token.received_signal(), 0);
 }
 
@@ -134,18 +106,18 @@ TEST(CancellationTest, ChildObservesParentAndProcessSignals) {
   signal_reset_guard guard;
 
   cancellation parent;
-  cancellation scoped_child{&parent};
+  cancellation scoped_child = cancellation::with_parent(parent);
 
   scoped_child.cancel();
   EXPECT_TRUE(scoped_child.is_cancelled());
   EXPECT_FALSE(parent.is_cancelled());
 
-  cancellation propagated_child{&parent};
+  cancellation propagated_child = cancellation::with_parent(parent);
   parent.cancel();
   EXPECT_TRUE(propagated_child.is_cancelled());
 
   cancellation signal_parent;
-  cancellation signal_child{&signal_parent};
+  cancellation signal_child = cancellation::with_parent(signal_parent);
   ASSERT_EQ(std::raise(SIGINT), 0);
   EXPECT_TRUE(signal_parent.is_cancelled());
   EXPECT_TRUE(signal_child.is_cancelled());

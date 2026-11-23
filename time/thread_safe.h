@@ -16,9 +16,10 @@ namespace howling {
  *
  * Unlike std::atomic directly, atomic_time_point is copyable and movable so
  * that enclosing structs remain aggregate-initializable (including with
- * designated initializers), copyable, and movable. Copy and move operations
- * atomically load from the source and initialize or store into the destination
- * as separate atomic operations.
+ * designated initializers), copyable, and movable. Copy operations atomically
+ * load from the source and initialize or store into the destination as separate
+ * atomic operations; move operations are intentionally omitted so rvalues fall
+ * back to copy.
  */
 class atomic_time_point {
 public:
@@ -41,26 +42,11 @@ public:
       : _ticks(other._ticks.load(std::memory_order_seq_cst)) {}
 
   /**
-   * @brief Move-constructs by atomically loading the value from other.
-   */
-  atomic_time_point(atomic_time_point&& other) noexcept
-      : _ticks(other._ticks.load(std::memory_order_seq_cst)) {}
-
-  /**
    * @brief Copy-assigns by atomically loading from other and storing into this
    * instance.
    */
   atomic_time_point& operator=(const atomic_time_point& other) noexcept {
-    if (this != &other) { store(other.load()); }
-    return *this;
-  }
-
-  /**
-   * @brief Move-assigns by atomically loading from other and storing into this
-   * instance.
-   */
-  atomic_time_point& operator=(atomic_time_point&& other) noexcept {
-    if (this != &other) { store(other.load()); }
+    if (this != &other) store(other.load());
     return *this;
   }
 

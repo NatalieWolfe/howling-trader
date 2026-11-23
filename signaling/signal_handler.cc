@@ -82,7 +82,7 @@ signal_handler& signal_handler::instance() {
   return *handler;
 }
 
-bool signal_handler::is_signal_received() const noexcept {
+bool signal_handler::has_received_signal() const noexcept {
   return received_signal() != 0;
 }
 
