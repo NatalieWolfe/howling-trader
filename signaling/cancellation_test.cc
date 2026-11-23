@@ -2,7 +2,10 @@
 
 #include <atomic>
 #include <csignal>
+#include <functional>
+#include <stdexcept>
 #include <thread>
+#include <utility>
 
 #include "logs/testing/log_capture.h"
 #include "signaling/signal_handler.h"
@@ -147,6 +150,99 @@ TEST(CancellationTest, ConcurrentCancelAndPollIsThreadSafe) {
   worker.join();
 
   EXPECT_TRUE(worker_observed_cancel.load(std::memory_order_acquire));
+}
+
+TEST(CancellationTest, OnCancelThrowsInvalidArgumentWhenCallbackIsEmpty) {
+  ensure_initialized();
+  signal_reset_guard guard;
+
+  cancellation token;
+  EXPECT_THROW(
+      (void)const_ref(token).on_cancel(std::function<void()>{}),
+      std::invalid_argument);
+}
+
+TEST(CancellationTest, OnCancelFiresImmediatelyWhenAlreadyCancelled) {
+  ensure_initialized();
+  signal_reset_guard guard;
+
+  cancellation token;
+  token.cancel();
+
+  int call_count = 0;
+  cancellation::callback_registration registration =
+      const_ref(token).on_cancel([&]() { ++call_count; });
+  EXPECT_EQ(call_count, 1);
+  registration.unregister();
+  EXPECT_EQ(call_count, 1);
+}
+
+TEST(CancellationTest, OnCancelFiresOnCancelAndParentCancelFromAnotherThread) {
+  ensure_initialized();
+  signal_reset_guard guard;
+
+  cancellation parent;
+  cancellation child = cancellation::with_parent(parent);
+  std::atomic<int> parent_cb_count{0};
+  std::atomic<int> child_cb_count{0};
+
+  cancellation::callback_registration parent_reg = parent.on_cancel(
+      [&]() { parent_cb_count.fetch_add(1, std::memory_order_relaxed); });
+  cancellation::callback_registration child_reg = const_ref(child).on_cancel(
+      [&]() { child_cb_count.fetch_add(1, std::memory_order_relaxed); });
+
+  std::thread canceller([&]() { parent.cancel(); });
+  canceller.join();
+
+  EXPECT_EQ(parent_cb_count.load(std::memory_order_relaxed), 1);
+  EXPECT_EQ(child_cb_count.load(std::memory_order_relaxed), 1);
+}
+
+TEST(CancellationTest, OnCancelDoesNotFireAfterUnregisterOrDestruction) {
+  ensure_initialized();
+  signal_reset_guard guard;
+
+  cancellation token;
+  int unregistered_count = 0;
+  int scoped_count = 0;
+  int active_count = 0;
+
+  cancellation::callback_registration reg1 =
+      token.on_cancel([&]() { ++unregistered_count; });
+  reg1.unregister();
+
+  {
+    cancellation::callback_registration reg2 =
+        token.on_cancel([&]() { ++scoped_count; });
+  }
+
+  cancellation::callback_registration reg3 =
+      token.on_cancel([&]() { ++active_count; });
+  cancellation::callback_registration moved_reg = std::move(reg3);
+
+  token.cancel();
+  EXPECT_EQ(unregistered_count, 0);
+  EXPECT_EQ(scoped_count, 0);
+  EXPECT_EQ(active_count, 1);
+}
+
+TEST(CancellationTest, OnCancelLogsErrorsWhenCallbackThrows) {
+  ensure_initialized();
+  signal_reset_guard guard;
+  testing::log_capture capture;
+
+  cancellation token;
+  cancellation::callback_registration std_err_reg =
+      token.on_cancel([]() { throw std::runtime_error("callback failed"); });
+  cancellation::callback_registration unknown_err_reg =
+      token.on_cancel([]() { throw 42; });
+
+  token.cancel();
+  EXPECT_THAT(
+      capture.errors(),
+      ElementsAre(
+          HasSubstr("Cancellation callback threw exception: callback failed"),
+          HasSubstr("Cancellation callback threw an unknown exception.")));
 }
 
 } // namespace
