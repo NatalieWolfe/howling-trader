@@ -173,7 +173,7 @@ void bao_client::wait_for_ready(milliseconds timeout) {
       throw retriable_error(
           std::format("Failed to get bao status: {}", response.result_int()));
     });
-  } catch (const backoff_exceeded_error&) {
+  } catch (const retry_exceeded_error&) {
     LOG(ERROR)
         << "Failed to connect to Bao after "
         << duration_cast<milliseconds>(steady_clock::now() - start).count()
