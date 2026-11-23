@@ -145,7 +145,9 @@ void function() {
 
 ## Curly Braces
 Always use curly braces for blocks (if, for, while, functions) unless the entire
-statement fits on a single line. Braces should open on the same line.
+statement fits on a single line. Single-line bodies that fit on the same line as
+their condition do not need curly braces around them. When braces are used, they
+should open on the same line.
 
 **Good:**
 ```cpp
@@ -211,7 +213,8 @@ spaces:
 
 ## Single-line Blocks
 Simple if/for/while statements may be written on a single line without braces if
-they are short and clear.
+they are short and clear. Single-line bodies that fit on the same line as their
+condition do not need braces around them.
 
 **Good:**
 ```cpp
@@ -227,6 +230,8 @@ if (condition) {
 ```
 **Bad:**
 ```cpp
+if (!exists) { return; } // Single-line body on same line does not need braces.
+
 if (condition)
   do_something(); // Body on new line requires braces.
 

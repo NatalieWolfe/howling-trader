@@ -190,12 +190,8 @@ void run() {
   const system_clock::time_point shutdown_deadline =
       market_shutdown_deadline(session_start);
   if (cancel.is_cancelled()) {
-    if (cancel.received_signal() != 0) {
-      LOG(INFO) << "Received signal " << cancel.received_signal()
-                << " before session start; exiting.";
-    } else {
-      LOG(INFO) << "Cancellation requested before session start; exiting.";
-    }
+    LOG(INFO) << "Cancellation requested before session start (signal "
+              << cancel.received_signal() << "); exiting.";
     return;
   }
   if (session_start >= shutdown_deadline) {
@@ -220,12 +216,8 @@ void run() {
   executor e{state};
 
   if (cancel.is_cancelled() || system_clock::now() >= shutdown_deadline) {
-    if (cancel.received_signal() != 0) {
-      LOG(INFO) << "Received signal " << cancel.received_signal()
-                << " before starting market watch; exiting.";
-    } else {
-      LOG(INFO) << "Shutdown triggered before starting market watch; exiting.";
-    }
+    LOG(INFO) << "Shutdown triggered before starting market watch (signal "
+              << cancel.received_signal() << "); exiting.";
     std::cout << "\n" << print_metrics(m) << std::endl;
     return;
   }
@@ -313,20 +305,16 @@ void run() {
 
   // Wait for the trading state to catch up with wall-clock time while honoring
   // the session shutdown deadline and cancellation signals.
-  shutdown_reason reason = wait_for_catch_up(
+  std::optional<shutdown_reason> reason = wait_for_catch_up(
       [&state]() { return state.time_now.load(); }, shutdown_deadline, cancel);
-  if (reason == shutdown_reason::CAUGHT_UP) {
+  if (!reason.has_value()) {
     // Wait until the wall-clock session shutdown deadline or cancellation.
     reason = wait_for_shutdown(shutdown_deadline, cancel);
   }
 
-  if (reason == shutdown_reason::STOP_REQUESTED) {
-    if (cancel.received_signal() != 0) {
-      LOG(INFO) << "Shutting down due to signal " << cancel.received_signal()
-                << ".";
-    } else {
-      LOG(INFO) << "Shutting down due to cancellation request.";
-    }
+  if (*reason == shutdown_reason::STOP_REQUESTED) {
+    LOG(INFO) << "Shutting down due to cancellation request (signal "
+              << cancel.received_signal() << ").";
   } else {
     LOG(INFO) << "Reached session shutdown deadline; shutting down.";
   }

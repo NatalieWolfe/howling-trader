@@ -1,12 +1,12 @@
 #include "howling_tools/session_shutdown.h"
 
-#include <algorithm>
 #include <chrono>
 #include <functional>
 #include <optional>
 #include <stdexcept>
 #include <string_view>
 
+#include "functional/retry.h"
 #include "signaling/cancellation.h"
 
 namespace howling {
@@ -48,7 +48,7 @@ system_clock::duration resolve_poll_interval(const wait_options& options) {
 
 system_clock::duration
 resolve_max_lag(std::optional<system_clock::duration> max_lag) {
-  if (!max_lag.has_value()) { return DEFAULT_CATCH_UP_LAG_THRESHOLD; }
+  if (!max_lag.has_value()) return DEFAULT_CATCH_UP_LAG_THRESHOLD;
   if (*max_lag < system_clock::duration::zero()) {
     throw std::invalid_argument("max_lag must not be negative.");
   }
@@ -82,7 +82,7 @@ system_clock::time_point market_shutdown_deadline(
   return deadline.get_sys_time();
 }
 
-shutdown_reason wait_for_catch_up(
+std::optional<shutdown_reason> wait_for_catch_up(
     const std::function<system_clock::time_point()>& read_state_time,
     system_clock::time_point shutdown_deadline,
     const cancellation& cancel,
@@ -93,17 +93,23 @@ shutdown_reason wait_for_catch_up(
   }
   const system_clock::duration effective_max_lag = resolve_max_lag(max_lag);
   const system_clock::duration poll_interval = resolve_poll_interval(options);
-  while (true) {
-    if (cancel.is_cancelled()) return shutdown_reason::STOP_REQUESTED;
-    const system_clock::time_point current_time = options.now();
-    if (current_time >= shutdown_deadline) {
-      return shutdown_reason::DEADLINE_REACHED;
-    }
-    if (current_time - read_state_time() <= effective_max_lag) {
-      return shutdown_reason::CAUGHT_UP;
-    }
-    const system_clock::duration remaining = shutdown_deadline - current_time;
-    options.sleep(std::min(poll_interval, remaining));
+  try {
+    poll(
+        {.interval = poll_interval,
+         .cancel = cancel,
+         .deadline = shutdown_deadline,
+         .now = options.now,
+         .sleep = options.sleep},
+        [&]() {
+          if (options.now() - read_state_time() > effective_max_lag) {
+            throw retriable_error{};
+          }
+        });
+    return std::nullopt;
+  } catch (const retry_cancelled_error&) {
+    return shutdown_reason::STOP_REQUESTED;
+  } catch (const retry_exceeded_error&) {
+    return shutdown_reason::DEADLINE_REACHED;
   }
 }
 
@@ -112,14 +118,19 @@ shutdown_reason wait_for_shutdown(
     const cancellation& cancel,
     const wait_options& options) {
   const system_clock::duration poll_interval = resolve_poll_interval(options);
-  while (true) {
-    if (cancel.is_cancelled()) return shutdown_reason::STOP_REQUESTED;
-    const system_clock::time_point current_time = options.now();
-    if (current_time >= shutdown_deadline) {
-      return shutdown_reason::DEADLINE_REACHED;
-    }
-    const system_clock::duration remaining = shutdown_deadline - current_time;
-    options.sleep(std::min(poll_interval, remaining));
+  try {
+    poll({
+        .interval = poll_interval,
+        .cancel = cancel,
+        .deadline = shutdown_deadline,
+        .now = options.now,
+        .sleep = options.sleep,
+    });
+    return shutdown_reason::DEADLINE_REACHED;
+  } catch (const retry_cancelled_error&) {
+    return shutdown_reason::STOP_REQUESTED;
+  } catch (const retry_exceeded_error&) {
+    return shutdown_reason::DEADLINE_REACHED;
   }
 }
 

@@ -331,7 +331,7 @@ TEST(SessionShutdownTest, CatchUpReturnsWhenStateTimeCatchesUp) {
           cancel,
           std::nullopt,
           options),
-      shutdown_reason::CAUGHT_UP);
+      std::nullopt);
   EXPECT_EQ(sleep_count, 2);
 }
 
@@ -356,7 +356,7 @@ TEST(SessionShutdownTest, CatchUpAllowsZeroMaxLag) {
           cancel,
           seconds{0},
           options),
-      shutdown_reason::CAUGHT_UP);
+      std::nullopt);
   EXPECT_EQ(sleep_count, 0);
 }
 

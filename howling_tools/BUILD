@@ -27,23 +27,6 @@ cc_binary(
     ],
 )
 
-cc_library(
-    name = "session_shutdown",
-    srcs = ["session_shutdown.cc"],
-    hdrs = ["session_shutdown.h"],
-    deps = ["//signaling:cancellation"],
-)
-
-cc_test(
-    name = "session_shutdown_test",
-    srcs = ["session_shutdown_test.cc"],
-    deps = [
-        ":session_shutdown",
-        "//signaling:cancellation",
-        "@googletest//:gtest_main",
-    ],
-)
-
 cc_binary(
     name = "execute",
     srcs = ["execute.cc"],
@@ -78,6 +61,13 @@ cc_binary(
     ],
 )
 
+package_binary(
+    name = "execute_image",
+    image_name = "howling-execute",
+    binary = ":execute",
+    visibility = ["//infrastructure:visibility"],
+)
+
 cc_binary(
     name = "fetch",
     srcs = ["fetch.cc"],
@@ -94,6 +84,26 @@ cc_binary(
         "@abseil-cpp//absl/strings",
         "@abseil-cpp//absl/time",
         "@protobuf",
+    ],
+)
+
+cc_library(
+    name = "session_shutdown",
+    srcs = ["session_shutdown.cc"],
+    hdrs = ["session_shutdown.h"],
+    deps = [
+        "//functional:retry",
+        "//signaling:cancellation",
+    ],
+)
+
+cc_test(
+    name = "session_shutdown_test",
+    srcs = ["session_shutdown_test.cc"],
+    deps = [
+        ":session_shutdown",
+        "//signaling:cancellation",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -115,11 +125,4 @@ cc_binary(
         "//trading:trading_state",
         "@abseil-cpp//absl/flags:flag",
     ],
-)
-
-package_binary(
-    name = "execute_image",
-    image_name = "howling-execute",
-    binary = ":execute",
-    visibility = ["//infrastructure:visibility"],
 )

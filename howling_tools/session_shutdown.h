@@ -10,11 +10,9 @@
 namespace howling {
 
 /**
- * @brief Reason why a session wait loop terminated.
+ * @brief Reason why a session wait loop terminated for shutdown.
  */
 enum class shutdown_reason {
-  // The trading state caught up with the current wall-clock time.
-  CAUGHT_UP,
   // The wall-clock session shutdown deadline was reached.
   DEADLINE_REACHED,
   // A cancellation request or shutdown signal interrupted the wait.
@@ -57,6 +55,7 @@ struct wait_options {
  * after `15:45 ET` exits promptly instead of sleeping until the next day.
  *
  * @param session_start Wall-clock time when the trading session started.
+ *
  * @return Absolute UTC deadline for shutting down the session.
  */
 [[nodiscard]] std::chrono::system_clock::time_point
@@ -73,9 +72,11 @@ market_shutdown_deadline(std::chrono::system_clock::time_point session_start);
  * @param session_start Wall-clock time when the trading session started.
  * @param shutdown_hour Market-local hour for shutdown, in `[0, 23]`.
  * @param shutdown_minute Market-local minute for shutdown, in `[0, 59]`.
+ *
+ * @throws std::invalid_argument if `shutdown_hour` is outside `[0, 23]` or
+ * `shutdown_minute` is outside `[0, 59]`.
+ *
  * @return Absolute UTC deadline for shutting down the session.
- * @throws std::invalid_argument If `shutdown_hour` is outside `[0, 23]` or
- *     `shutdown_minute` is outside `[0, 59]`.
  */
 [[nodiscard]] std::chrono::system_clock::time_point market_shutdown_deadline(
     std::chrono::system_clock::time_point session_start,
@@ -86,20 +87,26 @@ market_shutdown_deadline(std::chrono::system_clock::time_point session_start);
  * @brief Waits until the trading state catches up to wall-clock time, the
  * session shutdown deadline is reached, or cancellation is requested.
  *
- * @param read_state_time Callback returning the latest processed data time.
- *     Must not be null.
- * @param shutdown_deadline Absolute wall-clock deadline for session exit.
- * @param cancel Cancellation handle polled for shutdown signals or local
- *     cancellation.
- * @param max_lag Maximum acceptable lag behind wall-clock time. When unset,
- *     defaults to 2 minutes. Must not be negative when set.
- * @param options Injectable clock, sleep hook, and optional poll interval.
- * @return The reason the catch-up wait loop terminated.
- * @throws std::invalid_argument If `read_state_time` is null, `max_lag` is
- *     negative, `options.now` or `options.sleep` is null, or
- *     `options.poll_interval` is non-positive.
+ * @param read_state_time
+ *  Callback returning the latest processed data time. Must not be null.
+ * @param shutdown_deadline
+ *  Absolute wall-clock deadline for session exit.
+ * @param cancel
+ *  Cancellation handle polled for shutdown signals or local cancellation.
+ * @param max_lag
+ *  Maximum acceptable lag behind wall-clock time. When unset, defaults to 2
+ *  minutes. Must not be negative when set.
+ * @param options
+ *  Injectable clock, sleep hook, and optional poll interval.
+ *
+ * @throws std::invalid_argument if `read_state_time` is null, `max_lag` is
+ * negative, `options.now` or `options.sleep` is null, or
+ * `options.poll_interval` is non-positive.
+ *
+ * @return `std::nullopt` when caught up, or the `shutdown_reason` that
+ * terminated the wait early.
  */
-[[nodiscard]] shutdown_reason wait_for_catch_up(
+[[nodiscard]] std::optional<shutdown_reason> wait_for_catch_up(
     const std::function<std::chrono::system_clock::time_point()>&
         read_state_time,
     std::chrono::system_clock::time_point shutdown_deadline,
@@ -111,14 +118,18 @@ market_shutdown_deadline(std::chrono::system_clock::time_point session_start);
  * @brief Polls wall-clock time in short intervals until `shutdown_deadline` is
  * reached or cancellation is requested.
  *
- * @param shutdown_deadline Absolute wall-clock deadline for session exit.
- * @param cancel Cancellation handle polled for shutdown signals or local
- *     cancellation.
- * @param options Injectable clock, sleep hook, and optional poll interval.
+ * @param shutdown_deadline
+ *  Absolute wall-clock deadline for session exit.
+ * @param cancel
+ *  Cancellation handle polled for shutdown signals or local cancellation.
+ * @param options
+ *  Injectable clock, sleep hook, and optional poll interval.
+ *
+ * @throws std::invalid_argument if `options.now` or `options.sleep` is null, or
+ * `options.poll_interval` is non-positive.
+ *
  * @return `shutdown_reason::DEADLINE_REACHED` or
- *     `shutdown_reason::STOP_REQUESTED`.
- * @throws std::invalid_argument If `options.now` or `options.sleep` is null, or
- *     `options.poll_interval` is non-positive.
+ * `shutdown_reason::STOP_REQUESTED`.
  */
 [[nodiscard]] shutdown_reason wait_for_shutdown(
     std::chrono::system_clock::time_point shutdown_deadline,
