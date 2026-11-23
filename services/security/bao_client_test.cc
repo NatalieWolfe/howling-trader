@@ -71,7 +71,7 @@ TEST(BaoClientGetSecretTest, ThrowsWhenNotFoundExceedsTimeout) {
         [[maybe_unused]] Json::Value secret =
             client.get_secret("howling/prod/schwab");
       },
-      ThrowsMessage<backoff_exceeded_error>(
+      ThrowsMessage<retry_exceeded_error>(
           HasSubstr("Failed to retrieve secret via OpenBao: 404")));
 }
 
