@@ -4,6 +4,9 @@ cc_library(
     name = "retry",
     hdrs = ["retry.h"],
     visibility = ["//visibility:public"],
+    deps = [
+        "//signaling:cancellation",
+    ],
 )
 
 cc_test(
@@ -12,6 +15,7 @@ cc_test(
     srcs = ["retry_test.cc"],
     deps = [
         ":retry",
+        "//signaling:cancellation",
         "@googletest//:gtest_main",
     ],
 )
