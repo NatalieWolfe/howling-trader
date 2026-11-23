@@ -11,6 +11,7 @@
 #include "environment/runfiles_init.h"
 #include "logs/json_sink.h"
 #include "logs/stdout_sink.h"
+#include "signaling/signal_handler.h"
 
 ABSL_FLAG(
     std::string, logging_mode, "standard", "Logging mode (standard, json)");
@@ -29,6 +30,7 @@ void init(int argc, char** argv) {
     absl::AddLogSink(stdout_sink);
   }
   initialize_runfiles(argv[0]);
+  signal_handler::initialize();
 }
 
 } // namespace howling

@@ -193,6 +193,22 @@ void save_candle(const Candle& candle);
 void save_candle(const Candle& candle);
 ```
 
+When a `@param` description wraps lines, all `@param` descriptions in that
+block should be formatted with their description on the next line indented by 2
+spaces:
+
+```cpp
+/**
+ * @brief Some description.
+ *
+ * @param foo
+ *  Some extra long comment that would not have fit within the 80 character
+ *  limit on the same line as the param tag.
+ * @param bar
+ *  Short description that would have fit.
+ */
+```
+
 ## Single-line Blocks
 Simple if/for/while statements may be written on a single line without braces if
 they are short and clear.
