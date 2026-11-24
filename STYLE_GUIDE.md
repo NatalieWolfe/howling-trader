@@ -236,3 +236,39 @@ if (first_condition) do_something();
 else if (second_condition) do_other_thing();
 else do_something_else();
 ```
+
+## Auto
+Avoid using `auto` when the type is not difficult to determine or specify.
+`auto` is acceptable when the type is explicit (or nearly explicit) on the
+right-hand side (such as `std::make_shared<x>()` or `get_service<x>()`), when
+the exact type cannot be named (such as lambdas), or when it is overly verbose
+and redundant (such as complex iterator types).
+
+**Good:**
+```cpp
+auto entry = std::make_shared<callback_entry>();
+auto& db = registry.get_service<database>();
+auto itr = buffer.begin();
+const std::chrono::steady_clock::time_point now =
+    std::chrono::steady_clock::now();
+```
+**Bad:**
+```cpp
+const auto now = std::chrono::steady_clock::now();
+auto count = buffer.size();
+```
+
+## Parameter Validation
+Validate function parameters and throw exceptions rather than silently accepting
+or ignoring invalid inputs.
+
+**Good:**
+```cpp
+if (!callback) {
+  throw std::invalid_argument("Callback must not be empty.");
+}
+```
+**Bad:**
+```cpp
+if (!callback) return {};
+```

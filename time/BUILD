@@ -39,3 +39,24 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
+
+cc_library(
+    name = "wait",
+    srcs = ["wait.cc"],
+    hdrs = ["wait.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//signaling:cancellation",
+    ],
+)
+
+cc_test(
+    name = "wait_test",
+    srcs = ["wait_test.cc"],
+    deps = [
+        ":wait",
+        "//signaling:cancellation",
+        "//signaling:signal_handler",
+        "@googletest//:gtest_main",
+    ],
+)
