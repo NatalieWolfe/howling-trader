@@ -496,10 +496,10 @@ bool stream::_connect_with_backoff(
           callback, initial_callback_invoked, reconnect_attempt);
     });
     return !_is_stopping();
-  } catch (const backoff_cancelled_error&) {
+  } catch (const retry_cancelled_error&) {
     LOG(INFO) << "Schwab stream stopped cleanly.";
     return false;
-  } catch (const backoff_exceeded_error& err) {
+  } catch (const retry_exceeded_error& err) {
     LOG(ERROR) << "Schwab stream reconnect backoff exceeded: " << err.what();
     return false;
   }
