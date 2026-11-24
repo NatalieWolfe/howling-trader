@@ -1,8 +1,11 @@
 #include "functional/retry.h"
 
 #include <chrono>
+#include <optional>
+#include <string_view>
 
-namespace howling::retry_internal {
+namespace howling {
+namespace retry_internal {
 
 std::chrono::steady_clock::time_point
 compute_deadline(std::chrono::steady_clock::duration duration) {
@@ -14,4 +17,17 @@ compute_deadline(std::chrono::steady_clock::duration duration) {
   return now + duration;
 }
 
-} // namespace howling::retry_internal
+std::string_view
+format_last_retry_message(const std::optional<retriable_error>& last_retry) {
+  if (!last_retry) return "<none>";
+  const std::string_view message{last_retry->what()};
+  return message.empty() ? "<none>" : message;
+}
+
+} // namespace retry_internal
+
+void poll(const poll_options& options) {
+  poll(options, []() { throw retriable_error{}; });
+}
+
+} // namespace howling
