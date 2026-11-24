@@ -7,8 +7,36 @@ cc_library(
     visibility = ["//visibility:public"],
     deps = [
         ":url",
+        "//signaling:cancellation",
+        "@abseil-cpp//absl/log",
         "@boost.asio",
         "@boost.beast",
+    ],
+)
+
+cc_test(
+    name = "connect_test",
+    size = "small",
+    srcs = ["connect_test.cc"],
+    deps = [
+        ":connect",
+        ":test_tls_cert",
+        ":url",
+        "//signaling:cancellation",
+        "@boost.asio",
+        "@boost.beast",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "test_tls_cert",
+    testonly = True,
+    srcs = ["test_tls_cert.cc"],
+    hdrs = ["test_tls_cert.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@openssl//:crypto",
     ],
 )
 
