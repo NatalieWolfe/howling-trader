@@ -1,8 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <chrono>
-#include <condition_variable>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -13,8 +11,7 @@
 namespace howling {
 
 /**
- * @brief Scoped handle for cooperative cancellation polling, waiting, and
- * callbacks.
+ * @brief Scoped handle for cooperative cancellation polling and callbacks.
  *
  * A cancellation handle observes both local cancel() calls and, when
  * signal_handler::initialize() has already been called prior to construction,
@@ -23,18 +20,16 @@ namespace howling {
  * its children while cancelling a child remains scoped to that child.
  *
  * Pass handles by const reference (const cancellation&) to consumers that
- * should only observe cancellation state, wait for cancellation, or register
- * cancellation callbacks.
+ * should only observe cancellation state or register cancellation callbacks.
  *
  * Thread safety: All member functions are thread-safe after construction
  * completes, provided any referenced parent cancellation outlives this
  * instance.
  */
 class cancellation {
-private:
+public:
   struct callback_entry;
 
-public:
   /**
    * @brief Scoped RAII handle for a registered cancellation callback.
    *
@@ -74,15 +69,6 @@ public:
   cancellation();
 
   /**
-   * @brief Constructs a child cancellation handle linked to a parent.
-   *
-   * @param parent
-   *  Parent cancellation handle that must outlive this child instance.
-   */
-  explicit cancellation(const cancellation& parent);
-  explicit cancellation(const cancellation&&) = delete;
-
-  /**
    * @brief Constructs a cancellation handle linked to a parent.
    *
    * Inherits the parent's signal handler attachment, or attaches to
@@ -95,6 +81,7 @@ public:
   [[nodiscard]] static cancellation with_parent(const cancellation& parent);
   static cancellation with_parent(const cancellation&&) = delete;
 
+  cancellation(const cancellation&) = delete;
   cancellation& operator=(const cancellation&) = delete;
   cancellation(cancellation&&) = delete;
   cancellation& operator=(cancellation&&) = delete;
@@ -102,7 +89,7 @@ public:
   ~cancellation();
 
   /**
-   * @brief Marks this cancellation handle as cancelled and notifies waiters and
+   * @brief Marks this cancellation handle as cancelled and notifies registered
    * callbacks.
    */
   void cancel() noexcept;
@@ -118,28 +105,12 @@ public:
   [[nodiscard]] int received_signal() const noexcept;
 
   /**
-   * @brief Blocks until duration elapses or cancellation occurs.
-   *
-   * @param duration Maximum duration to wait.
-   * @return true if cancelled, or false if the timeout elapsed without
-   * cancellation.
-   */
-  [[nodiscard]] bool
-  wait_for(std::chrono::steady_clock::duration duration) const;
-
-  template <typename Rep, typename Period>
-  [[nodiscard]] bool
-  wait_for(std::chrono::duration<Rep, Period> duration) const {
-    return wait_for(
-        std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-            duration));
-  }
-
-  /**
    * @brief Registers a callback to be invoked immediately upon cancellation.
    *
    * If is_cancelled() is already true, invokes callback synchronously and
    * returns an empty registration.
+   *
+   * @throws std::invalid_argument if callback is empty.
    */
   [[nodiscard]] callback_registration
   on_cancel(std::function<void()> callback) const;
@@ -155,7 +126,6 @@ private:
   const cancellation* _parent = nullptr;
   std::atomic<bool> _cancelled{false};
   mutable std::mutex _mutex;
-  mutable std::condition_variable _cv;
   mutable std::vector<std::weak_ptr<callback_entry>> _callbacks;
   callback_registration _parent_registration;
 };

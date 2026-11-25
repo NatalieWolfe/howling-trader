@@ -1,11 +1,12 @@
 #include "signaling/cancellation.h"
 
 #include <atomic>
-#include <chrono>
 #include <condition_variable>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
 #include <thread>
 #include <utility>
 #include <vector>
@@ -18,7 +19,7 @@ namespace howling {
 struct cancellation::callback_entry {
   std::mutex mutex;
   std::condition_variable cv;
-  std::function<void()> fn;
+  std::function<void()> callback;
   bool active = true;
   bool executing = false;
   std::thread::id executing_thread{};
@@ -35,22 +36,26 @@ const signal_handler* resolve_signal_handler(const signal_handler* inherited) {
   return nullptr;
 }
 
-template <typename EntryPtr>
-void invoke_callback_entry(EntryPtr entry) noexcept {
+void invoke_callback_entry(
+    const std::shared_ptr<cancellation::callback_entry>& entry) noexcept {
   if (!entry) return;
-  std::function<void()> fn;
+  std::function<void()> callback;
   {
     std::lock_guard lock(entry->mutex);
-    if (!entry->active || !entry->fn) return;
+    if (!entry->active || !entry->callback) return;
     entry->active = false;
     entry->executing = true;
     entry->executing_thread = std::this_thread::get_id();
-    fn = std::move(entry->fn);
+    callback = std::move(entry->callback);
   }
   try {
-    fn();
-  } catch (...) {}
-  fn = nullptr;
+    callback();
+  } catch (const std::exception& err) {
+    LOG(ERROR) << "Cancellation callback threw exception: " << err.what();
+  } catch (...) {
+    LOG(ERROR) << "Cancellation callback threw an unknown exception.";
+  }
+  callback = nullptr;
   {
     std::lock_guard lock(entry->mutex);
     entry->executing = false;
@@ -83,11 +88,11 @@ cancellation::callback_registration::~callback_registration() {
 }
 
 void cancellation::callback_registration::unregister() noexcept {
-  auto entry = std::exchange(_entry, nullptr);
+  std::shared_ptr<callback_entry> entry = std::exchange(_entry, nullptr);
   if (!entry) return;
   std::unique_lock lock(entry->mutex);
   entry->active = false;
-  entry->fn = nullptr;
+  entry->callback = nullptr;
   if (entry->executing &&
       entry->executing_thread != std::this_thread::get_id()) {
     entry->cv.wait(lock, [&]() { return !entry->executing; });
@@ -95,9 +100,6 @@ void cancellation::callback_registration::unregister() noexcept {
 }
 
 cancellation::cancellation() : cancellation(nullptr) {}
-
-cancellation::cancellation(const cancellation& parent)
-    : cancellation(&parent) {}
 
 cancellation::~cancellation() {
   _parent_registration.unregister();
@@ -137,49 +139,21 @@ int cancellation::received_signal() const noexcept {
   return 0;
 }
 
-bool cancellation::wait_for(
-    std::chrono::steady_clock::duration duration) const {
-  if (is_cancelled()) return true;
-  if (duration <= std::chrono::steady_clock::duration::zero()) {
-    return is_cancelled();
-  }
-
-  constexpr auto SIGNAL_POLL_INTERVAL = std::chrono::milliseconds{10};
-  const auto now = std::chrono::steady_clock::now();
-  const auto max_remaining = std::chrono::steady_clock::time_point::max() - now;
-  const auto deadline = duration >= max_remaining
-      ? std::chrono::steady_clock::time_point::max()
-      : now + duration;
-
-  std::unique_lock lock(_mutex);
-  while (!is_cancelled()) {
-    const auto current = std::chrono::steady_clock::now();
-    if (current >= deadline) return is_cancelled();
-    auto wake_time = deadline;
-    if (_signal_handler != nullptr &&
-        deadline - current > SIGNAL_POLL_INTERVAL) {
-      wake_time = current + SIGNAL_POLL_INTERVAL;
-    }
-    _cv.wait_until(lock, wake_time);
-  }
-  return true;
-}
-
 cancellation::callback_registration
 cancellation::on_cancel(std::function<void()> callback) const {
-  if (!callback) return {};
-  if (is_cancelled()) {
-    callback();
-    return {};
+  if (!callback) {
+    throw std::invalid_argument("Cancellation callback must not be empty.");
   }
   std::shared_ptr<callback_entry> entry;
   {
     std::lock_guard lock(_mutex);
     if (!is_cancelled()) {
       std::erase_if(
-          _callbacks, [](const auto& weak) { return weak.expired(); });
+          _callbacks, [](const std::weak_ptr<callback_entry>& weak_entry) {
+            return weak_entry.expired();
+          });
       entry = std::make_shared<callback_entry>();
-      entry->fn = std::move(callback);
+      entry->callback = std::move(callback);
       _callbacks.push_back(entry);
     }
   }
@@ -194,9 +168,12 @@ cancellation::callback_registration
 cancellation::_register_child_callback(std::function<void()> callback) const {
   std::lock_guard lock(_mutex);
   if (_cancelled.load(std::memory_order_acquire)) return {};
-  std::erase_if(_callbacks, [](const auto& weak) { return weak.expired(); });
-  auto entry = std::make_shared<callback_entry>();
-  entry->fn = std::move(callback);
+  std::erase_if(
+      _callbacks, [](const std::weak_ptr<callback_entry>& weak_entry) {
+        return weak_entry.expired();
+      });
+  std::shared_ptr<callback_entry> entry = std::make_shared<callback_entry>();
+  entry->callback = std::move(callback);
   _callbacks.push_back(entry);
   return callback_registration(std::move(entry));
 }
@@ -208,8 +185,9 @@ void cancellation::_notify_cancelled() const noexcept {
     callbacks = std::move(_callbacks);
     _callbacks.clear();
   }
-  _cv.notify_all();
-  for (const auto& weak_entry : callbacks) {
+  for (const std::weak_ptr<callback_entry>& weak_entry : callbacks) {
+    // std::weak_ptr::lock returns nullptr if the registration has expired,
+    // which invoke_callback_entry checks for.
     invoke_callback_entry(weak_entry.lock());
   }
 }

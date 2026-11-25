@@ -2,10 +2,12 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
     name = "retry",
+    srcs = ["retry.cc"],
     hdrs = ["retry.h"],
     visibility = ["//visibility:public"],
     deps = [
         "//signaling:cancellation",
+        "//time:wait",
     ],
 )
 

@@ -70,7 +70,9 @@ TEST(BackoffTest, ThrowsImmediatelyWhenAlreadyCancelled) {
 
   int attempt_count = 0;
   EXPECT_THAT(
-      [&]() { backoff(cancel, [&]() { ++attempt_count; }); },
+      [&]() {
+        backoff(backoff_options{.cancel = cancel}, [&]() { ++attempt_count; });
+      },
       ThrowsMessage<retry_cancelled_error>(HasSubstr("Backoff cancelled.")));
   EXPECT_EQ(attempt_count, 0);
 }
@@ -78,14 +80,17 @@ TEST(BackoffTest, ThrowsImmediatelyWhenAlreadyCancelled) {
 TEST(BackoffTest, ThrowsImmediatelyWhenCancelledDuringAttempt) {
   cancellation cancel;
   int attempt_count = 0;
-  const auto start = std::chrono::steady_clock::now();
+  const std::chrono::steady_clock::time_point start =
+      std::chrono::steady_clock::now();
 
   EXPECT_THAT(
       [&]() {
         backoff(
             backoff_options{
-                .initial_delay = 10s, .maximum_delay = 10s, .deadline = 30s},
-            cancel,
+                .initial_delay = 10s,
+                .maximum_delay = 10s,
+                .deadline = 30s,
+                .cancel = cancel},
             [&]() {
               ++attempt_count;
               cancel.cancel();
@@ -101,7 +106,7 @@ TEST(BackoffTest, ThrowsImmediatelyWhenCancelledDuringAttempt) {
 TEST(BackoffTest, WakesImmediatelyFromLongDelayWhenCancelledFromAnotherThread) {
   cancellation cancel;
   std::promise<void> first_attempt_failed;
-  auto ready = first_attempt_failed.get_future();
+  std::future<void> ready = first_attempt_failed.get_future();
 
   std::jthread canceller([&]() {
     ready.wait();
@@ -110,13 +115,16 @@ TEST(BackoffTest, WakesImmediatelyFromLongDelayWhenCancelledFromAnotherThread) {
   });
 
   int attempt_count = 0;
-  const auto start = std::chrono::steady_clock::now();
+  const std::chrono::steady_clock::time_point start =
+      std::chrono::steady_clock::now();
   EXPECT_THAT(
       [&]() {
         backoff(
             backoff_options{
-                .initial_delay = 10s, .maximum_delay = 10s, .deadline = 30s},
-            cancel,
+                .initial_delay = 10s,
+                .maximum_delay = 10s,
+                .deadline = 30s,
+                .cancel = cancel},
             [&]() {
               if (++attempt_count == 1) first_attempt_failed.set_value();
               throw retriable_error("still waiting");
@@ -135,8 +143,8 @@ TEST(BackoffTest, SupportsMaxDurationDeadlineWithoutOverflow) {
       backoff_options{
           .initial_delay = 1ms,
           .maximum_delay = 5ms,
-          .deadline = std::chrono::steady_clock::duration::max()},
-      cancel,
+          .deadline = std::chrono::steady_clock::duration::max(),
+          .cancel = cancel},
       [&]() {
         if (++attempt_count < 3) throw retriable_error("try again");
         return 99;
@@ -250,7 +258,7 @@ TEST(PollTest, ThrowsImmediatelyWhenStartedPastDeadline) {
 TEST(PollTest, ThrowsRetryCancelledErrorWhenCancelled) {
   cancellation cancel;
   std::promise<void> first_attempt_failed;
-  auto ready = first_attempt_failed.get_future();
+  std::future<void> ready = first_attempt_failed.get_future();
 
   std::jthread canceller([&]() {
     ready.wait();
@@ -259,7 +267,8 @@ TEST(PollTest, ThrowsRetryCancelledErrorWhenCancelled) {
   });
 
   int attempt_count = 0;
-  const auto start = std::chrono::steady_clock::now();
+  const std::chrono::steady_clock::time_point start =
+      std::chrono::steady_clock::now();
   EXPECT_THAT(
       [&]() {
         poll(

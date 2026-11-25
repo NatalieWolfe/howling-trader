@@ -1,9 +1,9 @@
 #include "signaling/cancellation.h"
 
 #include <atomic>
-#include <chrono>
 #include <csignal>
-#include <optional>
+#include <functional>
+#include <stdexcept>
 #include <thread>
 #include <utility>
 
@@ -18,7 +18,6 @@ namespace {
 using ::testing::ElementsAre;
 using ::testing::HasSubstr;
 using ::testing::IsEmpty;
-using namespace std::chrono_literals;
 
 void ensure_initialized() {
   if (!signal_handler::is_initialized()) signal_handler::initialize();
@@ -129,19 +128,6 @@ TEST(CancellationTest, ChildObservesParentAndProcessSignals) {
   EXPECT_EQ(signal_child.received_signal(), SIGINT);
 }
 
-TEST(CancellationTest, SupportsInPlaceChildConstruction) {
-  ensure_initialized();
-  signal_reset_guard guard;
-
-  cancellation parent;
-  std::optional<cancellation> child;
-  child.emplace(parent);
-
-  EXPECT_FALSE(child->is_cancelled());
-  parent.cancel();
-  EXPECT_TRUE(child->is_cancelled());
-}
-
 TEST(CancellationTest, ConcurrentCancelAndPollIsThreadSafe) {
   ensure_initialized();
   signal_reset_guard guard;
@@ -166,95 +152,14 @@ TEST(CancellationTest, ConcurrentCancelAndPollIsThreadSafe) {
   EXPECT_TRUE(worker_observed_cancel.load(std::memory_order_acquire));
 }
 
-TEST(CancellationTest, WaitForReturnsFalseOnTimeoutWhenNotCancelled) {
+TEST(CancellationTest, OnCancelThrowsInvalidArgumentWhenCallbackIsEmpty) {
   ensure_initialized();
   signal_reset_guard guard;
 
   cancellation token;
-  EXPECT_FALSE(const_ref(token).wait_for(5ms));
-  EXPECT_FALSE(token.is_cancelled());
-}
-
-TEST(CancellationTest, WaitForWakesImmediatelyOnCancelFromAnotherThread) {
-  ensure_initialized();
-  signal_reset_guard guard;
-
-  cancellation token;
-  std::atomic<bool> waiter_entering{false};
-  std::atomic<bool> wait_result{false};
-
-  auto start = std::chrono::steady_clock::now();
-  std::thread waiter([&]() {
-    waiter_entering.store(true, std::memory_order_release);
-    wait_result.store(
-        const_ref(token).wait_for(10s), std::memory_order_release);
-  });
-
-  while (!waiter_entering.load(std::memory_order_acquire)) {
-    std::this_thread::yield();
-  }
-  std::this_thread::sleep_for(10ms);
-  token.cancel();
-  waiter.join();
-  auto elapsed = std::chrono::steady_clock::now() - start;
-
-  EXPECT_TRUE(wait_result.load(std::memory_order_acquire));
-  EXPECT_LT(elapsed, 2s);
-}
-
-TEST(CancellationTest, ChildWaitForWakesImmediatelyWhenParentCancelled) {
-  ensure_initialized();
-  signal_reset_guard guard;
-
-  cancellation parent;
-  cancellation child(parent);
-  std::atomic<bool> waiter_entering{false};
-  std::atomic<bool> wait_result{false};
-
-  auto start = std::chrono::steady_clock::now();
-  std::thread waiter([&]() {
-    waiter_entering.store(true, std::memory_order_release);
-    wait_result.store(
-        const_ref(child).wait_for(10s), std::memory_order_release);
-  });
-
-  while (!waiter_entering.load(std::memory_order_acquire)) {
-    std::this_thread::yield();
-  }
-  std::this_thread::sleep_for(10ms);
-  parent.cancel();
-  waiter.join();
-  auto elapsed = std::chrono::steady_clock::now() - start;
-
-  EXPECT_TRUE(wait_result.load(std::memory_order_acquire));
-  EXPECT_LT(elapsed, 2s);
-}
-
-TEST(CancellationTest, WaitForWakesPromptlyOnProcessSignal) {
-  ensure_initialized();
-  signal_reset_guard guard;
-
-  cancellation token;
-  std::atomic<bool> waiter_entering{false};
-  std::atomic<bool> wait_result{false};
-
-  auto start = std::chrono::steady_clock::now();
-  std::thread waiter([&]() {
-    waiter_entering.store(true, std::memory_order_release);
-    wait_result.store(
-        const_ref(token).wait_for(10s), std::memory_order_release);
-  });
-
-  while (!waiter_entering.load(std::memory_order_acquire)) {
-    std::this_thread::yield();
-  }
-  std::this_thread::sleep_for(10ms);
-  ASSERT_EQ(std::raise(SIGTERM), 0);
-  waiter.join();
-  auto elapsed = std::chrono::steady_clock::now() - start;
-
-  EXPECT_TRUE(wait_result.load(std::memory_order_acquire));
-  EXPECT_LT(elapsed, 2s);
+  EXPECT_THROW(
+      (void)const_ref(token).on_cancel(std::function<void()>{}),
+      std::invalid_argument);
 }
 
 TEST(CancellationTest, OnCancelFiresImmediatelyWhenAlreadyCancelled) {
@@ -265,9 +170,10 @@ TEST(CancellationTest, OnCancelFiresImmediatelyWhenAlreadyCancelled) {
   token.cancel();
 
   int call_count = 0;
-  auto reg = const_ref(token).on_cancel([&]() { ++call_count; });
+  cancellation::callback_registration registration =
+      const_ref(token).on_cancel([&]() { ++call_count; });
   EXPECT_EQ(call_count, 1);
-  reg.unregister();
+  registration.unregister();
   EXPECT_EQ(call_count, 1);
 }
 
@@ -276,13 +182,13 @@ TEST(CancellationTest, OnCancelFiresOnCancelAndParentCancelFromAnotherThread) {
   signal_reset_guard guard;
 
   cancellation parent;
-  cancellation child(parent);
+  cancellation child = cancellation::with_parent(parent);
   std::atomic<int> parent_cb_count{0};
   std::atomic<int> child_cb_count{0};
 
-  auto parent_reg = parent.on_cancel(
+  cancellation::callback_registration parent_reg = parent.on_cancel(
       [&]() { parent_cb_count.fetch_add(1, std::memory_order_relaxed); });
-  auto child_reg = const_ref(child).on_cancel(
+  cancellation::callback_registration child_reg = const_ref(child).on_cancel(
       [&]() { child_cb_count.fetch_add(1, std::memory_order_relaxed); });
 
   std::thread canceller([&]() { parent.cancel(); });
@@ -301,20 +207,42 @@ TEST(CancellationTest, OnCancelDoesNotFireAfterUnregisterOrDestruction) {
   int scoped_count = 0;
   int active_count = 0;
 
-  auto reg1 = token.on_cancel([&]() { ++unregistered_count; });
+  cancellation::callback_registration reg1 =
+      token.on_cancel([&]() { ++unregistered_count; });
   reg1.unregister();
 
   {
-    auto reg2 = token.on_cancel([&]() { ++scoped_count; });
+    cancellation::callback_registration reg2 =
+        token.on_cancel([&]() { ++scoped_count; });
   }
 
-  auto reg3 = token.on_cancel([&]() { ++active_count; });
+  cancellation::callback_registration reg3 =
+      token.on_cancel([&]() { ++active_count; });
   cancellation::callback_registration moved_reg = std::move(reg3);
 
   token.cancel();
   EXPECT_EQ(unregistered_count, 0);
   EXPECT_EQ(scoped_count, 0);
   EXPECT_EQ(active_count, 1);
+}
+
+TEST(CancellationTest, OnCancelLogsErrorsWhenCallbackThrows) {
+  ensure_initialized();
+  signal_reset_guard guard;
+  testing::log_capture capture;
+
+  cancellation token;
+  cancellation::callback_registration std_err_reg =
+      token.on_cancel([]() { throw std::runtime_error("callback failed"); });
+  cancellation::callback_registration unknown_err_reg =
+      token.on_cancel([]() { throw 42; });
+
+  token.cancel();
+  EXPECT_THAT(
+      capture.errors(),
+      ElementsAre(
+          HasSubstr("Cancellation callback threw exception: callback failed"),
+          HasSubstr("Cancellation callback threw an unknown exception.")));
 }
 
 } // namespace
