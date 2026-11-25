@@ -47,6 +47,36 @@ cc_library(
 )
 
 cc_library(
+    name = "ema_ribbon",
+    srcs = ["ema_ribbon.cc"],
+    hdrs = ["ema_ribbon.h"],
+    deps = [
+        "//containers:vector",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_utils",
+        "//data:stock_cc_proto",
+        "//trading:trading_state",
+    ],
+)
+
+cc_test(
+    name = "ema_ribbon_test",
+    srcs = ["ema_ribbon_test.cc"],
+    deps = [
+        ":ema_ribbon",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_cc_proto",
+        "//data:candle_cc_proto",
+        "//data:load_analyzer",
+        "//data:stock_cc_proto",
+        "//trading:trading_state",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "howling",
     srcs = ["howling.cc"],
     hdrs = ["howling.h"],
