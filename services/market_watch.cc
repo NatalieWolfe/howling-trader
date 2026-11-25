@@ -1,6 +1,7 @@
 #include "services/market_watch.h"
 
 #include <chrono>
+#include <mutex>
 #include <ranges>
 #include <tuple>
 #include <utility>
@@ -53,14 +54,44 @@ prefetch_history(std::span<const stock::Symbol> symbols) {
 } // namespace
 
 market_watch::~market_watch() {
+  {
+    std::lock_guard lock{_state_mutex};
+    _stopping = true;
+  }
   _schwab.stop();
+  std::unique_lock lock{_state_mutex};
+  _stopped_cv.wait(lock, [this]() { return !_in_start; });
 }
 
 void market_watch::start(std::span<const stock::Symbol> symbols) {
+  {
+    std::lock_guard lock{_state_mutex};
+    if (_stopping) return;
+    _in_start = true;
+  }
+
+  struct start_guard {
+    market_watch& owner;
+    ~start_guard() {
+      std::lock_guard lock{owner._state_mutex};
+      owner._in_start = false;
+      owner._stopped_cv.notify_all();
+    }
+  } guard{*this};
+
   if (absl::GetFlag(FLAGS_prefetch_history)) {
     for (auto&& [symbol, candle] : prefetch_history(symbols)) {
+      {
+        std::lock_guard lock{_state_mutex};
+        if (_stopping) return;
+      }
       _candles.push_back(std::make_pair(symbol, std::move(candle)));
     }
+  }
+
+  {
+    std::lock_guard lock{_state_mutex};
+    if (_stopping) return;
   }
 
   _schwab.on_chart([this](stock::Symbol symbol, Candle candle) {

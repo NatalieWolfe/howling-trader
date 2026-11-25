@@ -1,21 +1,28 @@
 #include "api/schwab.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <exception>
 #include <format>
 #include <functional>
 #include <memory>
+#include <mutex>
+#include <ranges>
 #include <source_location>
+#include <span>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <thread>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
-#include "absl/log/log_entry.h"
 #include "absl/strings/str_cat.h"
+#include "absl/time/time.h"
 #include "api/schwab/connect.h"
 #include "api/schwab/utils.h"
 #include "boost/asio.hpp"
@@ -27,6 +34,7 @@
 #include "data/candle.pb.h"
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
+#include "functional/retry.h"
 #include "google/protobuf/util/time_util.h"
 #include "net/connect.h"
 #include "net/url.h"
@@ -43,12 +51,18 @@ ABSL_FLAG(
     "The maximum amount of time to wait for Schwab authentication to "
     "complete.");
 
+ABSL_FLAG(
+    absl::Duration,
+    schwab_stream_read_timeout,
+    absl::Seconds(35),
+    "The maximum amount of time to wait for a message or heartbeat on the "
+    "Schwab WebSocket stream before reconnecting.");
+
 namespace howling::schwab {
 namespace {
 
 namespace asio = ::boost::asio;
 namespace beast = ::boost::beast;
-namespace fs = ::std::filesystem;
 namespace urls = ::boost::urls;
 
 using ::google::protobuf::util::TimeUtil;
@@ -208,6 +222,30 @@ Json::Value get_streamer_info() {
   check_json(streamer_info.isObject());
 
   return streamer_info;
+}
+
+streamer_session_info fetch_default_session_info() {
+  Json::Value streamer_info = get_streamer_info();
+  urls::url stream_url{streamer_info["streamerSocketUrl"].asString()};
+  return streamer_session_info{
+      .socket_url =
+          {.service = "443",
+           .host = stream_url.host(),
+           .target = std::string{stream_url.encoded_target()}},
+      .customer_id = streamer_info["schwabClientCustomerId"].asString(),
+      .correlation_id = streamer_info["schwabClientCorrelId"].asString(),
+      .channel = streamer_info["schwabClientChannel"].asString(),
+      .function_id = streamer_info["schwabClientFunctionId"].asString(),
+      .bearer_token = token_manager::get_instance().get_bearer_token(),
+  };
+}
+
+stream_options make_default_stream_options() {
+  stream_options options;
+  options.websocket_options.read_timeout =
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          to_std_chrono(absl::GetFlag(FLAGS_schwab_stream_read_timeout)));
+  return options;
 }
 
 Json::Value make_order(
@@ -389,7 +427,11 @@ void api_connection::place_sell(const order_parameters& params) {
 
 // MARK: stream
 
-stream::stream() {
+stream::stream() : stream(make_default_stream_options()) {}
+
+stream::stream(stream_options options) : _options{std::move(options)} {
+  _options.websocket_options.parent_cancellation = _cancellation;
+  _options.reconnect_backoff.cancel = _cancellation;
   _data_cb = [](const Json::Value&) {
     LOG(WARNING) << "Dropping data packet. No chart callback registered.";
   };
@@ -399,64 +441,208 @@ stream::stream() {
 }
 
 stream::~stream() {
-  if (_conn && _running) stop();
+  stop();
+}
+
+bool stream::_is_stopping() const {
+  if (_cancellation.is_cancelled()) return true;
+  std::lock_guard lock{_state_mutex};
+  return _stopping;
 }
 
 void stream::start(std::function<void()> callback) {
-  _stopping = false;
-  _login();
-
-  // TODO: Attach to account order change notices here.
-
-  _running = true;
-  if (callback) callback();
-  try {
-    while (!_stopping) _process_message();
-  } catch (const boost::system::system_error& err) {
-    if (err.code() != asio::ssl::error::stream_truncated || !_stopping) {
-      LOG(ERROR) << "Unexpected error while running stream: [" << err.code()
-                 << "] " << err.what();
+  {
+    std::lock_guard lock{_state_mutex};
+    if (_stopping || _cancellation.is_cancelled()) {
+      LOG(ERROR) << "Cannot start Schwab stream while it is stopping.";
+      throw std::runtime_error(
+          "Cannot start Schwab stream while it is stopping.");
     }
-  } catch (const std::exception& err) { LOG(ERROR) << err.what(); }
-  if (!_stopping) {
-    _conn->stream().close(beast::websocket::close_code::normal);
-    _conn = nullptr;
+    _in_start = true;
+    _start_thread_id = std::this_thread::get_id();
   }
+
+  // Always clear active state and notify stop() waiters when start() exits.
+  struct start_guard {
+    stream& owner;
+    ~start_guard() {
+      std::lock_guard lock{owner._state_mutex};
+      owner._conn.reset();
+      owner._running = false;
+      owner._in_start = false;
+      owner._stopped_cv.notify_all();
+    }
+  } guard{*this};
+
+  bool initial_callback_invoked = false;
+  int reconnect_attempt = 0;
+  while (!_is_stopping()) {
+    if (!_connect_with_backoff(
+            callback, initial_callback_invoked, reconnect_attempt)) {
+      break;
+    }
+    _run_message_loop(reconnect_attempt);
+    _cleanup_connection();
+  }
+}
+
+bool stream::_connect_with_backoff(
+    const std::function<void()>& callback,
+    bool& initial_callback_invoked,
+    int& reconnect_attempt) {
+  try {
+    backoff(_options.reconnect_backoff, [&]() {
+      _establish_connection(
+          callback, initial_callback_invoked, reconnect_attempt);
+    });
+    return !_is_stopping();
+  } catch (const retry_cancelled_error&) {
+    LOG(INFO) << "Schwab stream stopped cleanly.";
+    return false;
+  } catch (const retry_exceeded_error& err) {
+    LOG(ERROR) << "Schwab stream reconnect backoff exceeded: " << err.what();
+    return false;
+  }
+}
+
+void stream::_establish_connection(
+    const std::function<void()>& callback,
+    bool& initial_callback_invoked,
+    int& reconnect_attempt) {
+  _received_healthy_traffic = false;
+  _subscribed_on_current_conn.clear();
+  try {
+    if (reconnect_attempt > 0) {
+      LOG(INFO) << "Reconnecting to Schwab stream (attempt "
+                << reconnect_attempt << ")...";
+    }
+    _login();
+    if (_is_stopping()) return;
+
+    // TODO: Attach to account order change notices here.
+
+    std::vector<stock::Symbol> symbols;
+    {
+      std::lock_guard lock{_state_mutex};
+      symbols = _subscribed_symbols;
+    }
+    _subscribe_to_symbols(symbols);
+    _subscribed_on_current_conn.insert(symbols.begin(), symbols.end());
+
+    _running = true;
+    if (!initial_callback_invoked) {
+      if (callback) callback();
+      initial_callback_invoked = true;
+    }
+    if (reconnect_attempt > 0) {
+      LOG(INFO) << "Reconnected to Schwab stream and re-subscribed "
+                << _subscribed_on_current_conn.size() << " symbol(s).";
+    }
+    _received_healthy_traffic = false;
+    if (!_is_stopping()) {
+      _process_message();
+      _received_healthy_traffic = true;
+      reconnect_attempt = 0;
+    }
+  } catch (const std::exception& err) {
+    _handle_stream_error(err);
+    _cleanup_connection();
+    if (_is_stopping()) return;
+    ++reconnect_attempt;
+    throw retriable_error(err.what());
+  }
+}
+
+void stream::_run_message_loop(int& reconnect_attempt) {
+  try {
+    while (!_is_stopping()) {
+      _process_message();
+      _received_healthy_traffic = true;
+      reconnect_attempt = 0;
+    }
+  } catch (const std::exception& err) { _handle_stream_error(err); }
+  if (!_is_stopping()) ++reconnect_attempt;
+}
+
+void stream::_cleanup_connection() {
+  std::shared_ptr<net::websocket> old_conn;
+  {
+    std::lock_guard lock{_state_mutex};
+    old_conn = std::move(_conn);
+  }
+  _command_cbs.clear();
   _running = false;
+  if (old_conn) old_conn->close();
+}
+
+void stream::_handle_stream_error(const std::exception& err) {
+  if (_is_stopping()) {
+    LOG(INFO) << "Schwab stream stopped cleanly.";
+    return;
+  }
+  if (const auto* sys_err =
+          dynamic_cast<const boost::system::system_error*>(&err)) {
+    if (sys_err->code() == beast::error::timeout) {
+      LOG(WARNING) << "Schwab stream read timed out without receiving data "
+                   << "or a heartbeat; scheduling reconnect.";
+      return;
+    }
+    LOG(ERROR) << "Schwab stream connection error: [" << sys_err->code() << "] "
+               << sys_err->what() << "; scheduling reconnect.";
+    return;
+  }
+  LOG(ERROR) << "Schwab stream error: " << err.what()
+             << "; scheduling reconnect.";
 }
 
 void stream::stop() {
-  if (!_conn) {
-    throw std::runtime_error("Schwab API stream never started, cannot stop.");
+  {
+    std::lock_guard lock{_state_mutex};
+    _stopping = true;
   }
-  _stopping = true;
+  // _cancellation is configured as parent_cancellation on the active
+  // WebSocket, so cancelling it propagates immediately to abort any in-flight
+  // socket I/O on the start() thread.
+  _cancellation.cancel();
 
-  _send_command(
-      {.service = "ADMIN",
-       .command = "LOGOUT",
-       .parameters = Json::objectValue},
-      [this](const Json::Value&) {
-        LOG(INFO) << "Closing stream";
-        _conn->stream().close(beast::websocket::close_code::normal);
-        _conn = nullptr;
-      });
-
-  try {
-    while (_conn) _process_message();
-  } catch (const boost::system::system_error& e) {
-    if (e.code() != asio::ssl::error::stream_truncated) {
-      LOG(WARNING) << "Unexpected error while shutting down stream: ["
-                   << e.code() << "] " << e.what();
-    }
+  std::unique_lock lock{_state_mutex};
+  if (_in_start && std::this_thread::get_id() != _start_thread_id) {
+    _stopped_cv.wait(lock, [this]() { return !_in_start; });
   }
 }
 
 // MARK: stream data
 
 void stream::add_symbol(stock::Symbol symbol) {
+  bool should_subscribe_now = false;
+  {
+    std::lock_guard lock{_state_mutex};
+    if (std::ranges::find(_subscribed_symbols, symbol) ==
+        _subscribed_symbols.end()) {
+      _subscribed_symbols.push_back(symbol);
+    }
+    should_subscribe_now = _in_start &&
+        std::this_thread::get_id() == _start_thread_id && _conn != nullptr;
+  }
+
+  if (should_subscribe_now && !_subscribed_on_current_conn.contains(symbol)) {
+    _subscribe_to_symbols(std::span{&symbol, 1});
+    _subscribed_on_current_conn.insert(symbol);
+  }
+}
+
+void stream::_subscribe_to_symbols(std::span<const stock::Symbol> symbols) {
+  if (symbols.empty()) return;
+
+  std::string keys = symbols |
+      std::views::transform([](stock::Symbol symbol) -> const std::string& {
+                       return stock::Symbol_Name(symbol);
+                     }) |
+      std::views::join_with(',') | std::ranges::to<std::string>();
+
   Json::Value parameters{Json::objectValue};
-  parameters["keys"] = stock::Symbol_Name(symbol);
-  auto callback = [symbol](const Json::Value& response) {
+  parameters["keys"] = keys;
+  auto callback = [keys](const Json::Value& response) {
     const Json::Value* content = response.find("content");
     check_json(content && content->isObject());
     const Json::Value* code = content->find("code");
@@ -466,9 +652,8 @@ void stream::add_symbol(stock::Symbol symbol) {
       const Json::Value* msg = content->find("msg");
       throw std::runtime_error(
           std::format(
-              "Failed to add {} ({}) to {} stream: [{}] {}",
-              stock::Symbol_Name(symbol),
-              static_cast<int>(symbol),
+              "Failed to add {} to {} stream: [{}] {}",
+              keys,
               service ? service->asString() : "<unknown service>",
               code->asInt(),
               msg ? msg->asString() : "unknown"));
@@ -507,7 +692,7 @@ void stream::add_symbol(stock::Symbol symbol) {
       {.service = "LEVELONE_EQUITIES",
        .command = "ADD",
        .parameters = std::move(parameters)},
-      callback);
+      std::move(callback));
 }
 
 void stream::on_chart(chart_callback_type cb) {
@@ -516,7 +701,7 @@ void stream::on_chart(chart_callback_type cb) {
     check_json(content && content->isArray());
     for (const Json::Value& json_candle : *content) {
       Candle candle;
-      // See add_symbol for key reference table.
+      // See _subscribe_to_symbols for key reference table.
       candle.set_open(json_candle.find("2")->asDouble());
       candle.set_close(json_candle.find("5")->asDouble());
       candle.set_high(json_candle.find("3")->asDouble());
@@ -560,7 +745,7 @@ void stream::on_market(market_callback_type cb) {
     for (const Json::Value& json_market : *content) {
       Market market;
 
-      // See add_symbol for key reference table.
+      // See _subscribe_to_symbols for key reference table.
       market.set_bid(json_market.get("1", 0).asDouble());
       market.set_bid_lots(json_market.get("4", 0).asInt64());
       market.set_ask(json_market.get("2", 0).asDouble());
@@ -598,38 +783,32 @@ Json::Value stream::_make_command(command_parameters command) {
 
 void stream::_send_command(
     command_parameters command, command_callback_type cb) {
-  if (cb) {
-    _command_cbs[_request_counter] =
-        [this, request_id = _request_counter, cb = std::move(cb)](
-            const Json::Value& response) {
-          cb(response);
-          _command_cbs.erase(request_id);
-        };
-  }
+  if (cb) { _command_cbs[_request_counter] = std::move(cb); }
   std::string command_string = to_string(_make_command(std::move(command)));
-  // LOG(INFO) << "[S] " << command_string;
-  _conn->stream().write(asio::buffer(std::move(command_string)));
+  _conn->write(command_string);
 }
 
 // MARK: stream messages
 
 Json::Value stream::_read_message() {
   Json::Value message;
-  auto is_heartbeat = [](const Json::Value& message) {
-    return message.find("notify") != nullptr;
+  auto is_heartbeat = [](const Json::Value& parsed_message) {
+    return parsed_message.find("notify") != nullptr;
   };
   do {
-    beast::flat_buffer buffer;
-    _conn->stream().read(buffer);
-    message = to_json(beast::buffers_to_string(buffer.cdata()));
-  } while (is_heartbeat(message));
+    std::string payload = _conn->read();
+    message = to_json(payload);
+    if (is_heartbeat(message)) { _received_healthy_traffic = true; }
+  } while (is_heartbeat(message) && !_is_stopping());
   return message;
 }
 
 void stream::_process_message() {
   Json::Value message = _read_message();
-  // LOG(INFO) << "[R] " << to_string(message);
-  if (message.find("notify") != nullptr) return; // Heartbeat.
+  if (message.find("notify") != nullptr) {
+    // Ignore trailing heartbeat frames received while stopping.
+    return;
+  }
   const Json::Value* key = message.find("data");
   if (key != nullptr) {
     check_json(key->isArray());
@@ -652,31 +831,38 @@ void stream::_process_message() {
     const Json::Value* request_id = response.find("requestid");
     check_json(request_id && request_id->isString());
     auto callback_itr = _command_cbs.find(parse_int(request_id->asString()));
-    if (callback_itr != _command_cbs.end()) callback_itr->second(response);
+    if (callback_itr != _command_cbs.end()) {
+      command_callback_type command_callback = std::move(callback_itr->second);
+      _command_cbs.erase(callback_itr);
+      command_callback(response);
+    }
   }
 }
 
 // MARK: stream login
 
 void stream::_login() {
-  Json::Value streamer_info = get_streamer_info();
-  urls::url stream_url{streamer_info["streamerSocketUrl"].asString()};
-  _customer_id = streamer_info["schwabClientCustomerId"].asString();
-  _correlation_id = streamer_info["schwabClientCorrelId"].asString();
+  streamer_session_info session =
+      fetch_streamer_session_info(fetch_default_session_info);
+  _customer_id = std::move(session.customer_id);
+  _correlation_id = std::move(session.correlation_id);
 
-  _conn = net::make_websocket(
-      {.service = "443",
-       .host = stream_url.host(),
-       .target = std::string{stream_url.encoded_target()}});
-  _conn->stream().text(true);
+  auto connection =
+      std::make_shared<net::websocket>(_options.websocket_options);
+  {
+    std::lock_guard lock{_state_mutex};
+    if (_stopping) return;
+    _conn = connection;
+  }
+  _command_cbs.clear();
+
+  connection->connect(session.socket_url);
+  connection->stream().text(true);
 
   Json::Value parameters{Json::objectValue};
-  parameters["Authorization"] =
-      token_manager::get_instance().get_bearer_token();
-  parameters["SchwabClientChannel"] =
-      streamer_info["schwabClientChannel"].asString();
-  parameters["SchwabClientFunctionId"] =
-      streamer_info["schwabClientFunctionId"].asString();
+  parameters["Authorization"] = std::move(session.bearer_token);
+  parameters["SchwabClientChannel"] = std::move(session.channel);
+  parameters["SchwabClientFunctionId"] = std::move(session.function_id);
   Json::Value login_response = Json::nullValue;
   _send_command(
       {.service = "ADMIN",
@@ -684,7 +870,8 @@ void stream::_login() {
        .parameters = std::move(parameters)},
       [&login_response](const Json::Value& res) { login_response = res; });
 
-  while (login_response.isNull()) _process_message();
+  while (login_response.isNull() && !_is_stopping()) _process_message();
+  if (_is_stopping()) return;
 
   if (!login_response) {
     throw std::runtime_error("Never received login response!");
