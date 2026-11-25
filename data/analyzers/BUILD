@@ -77,6 +77,40 @@ cc_test(
 )
 
 cc_library(
+    name = "gap_momentum",
+    srcs = ["gap_momentum.cc"],
+    hdrs = ["gap_momentum.h"],
+    deps = [
+        "//containers:circular_buffer",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_utils",
+        "//data:candle_cc_proto",
+        "//data:stock_cc_proto",
+        "//time:conversion",
+        "//time:market_time",
+        "//trading:trading_state",
+    ],
+)
+
+cc_test(
+    name = "gap_momentum_test",
+    srcs = ["gap_momentum_test.cc"],
+    deps = [
+        ":gap_momentum",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_cc_proto",
+        "//data:candle_cc_proto",
+        "//data:load_analyzer",
+        "//data:stock_cc_proto",
+        "//time:conversion",
+        "//trading:trading_state",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "howling",
     srcs = ["howling.cc"],
     hdrs = ["howling.h"],
