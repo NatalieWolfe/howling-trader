@@ -45,20 +45,20 @@ double trading_state::total_positions_value() const {
 }
 
 int trading_state::market_hour() const {
-  return to_market_hms(time_now).hours().count();
+  return to_market_hms(time_now.load()).hours().count();
 }
 
 int trading_state::market_minute() const {
-  return to_market_hms(time_now).minutes().count();
+  return to_market_hms(time_now.load()).minutes().count();
 }
 
 int trading_state::market_second() const {
-  return to_market_hms(time_now).seconds().count();
+  return to_market_hms(time_now.load()).seconds().count();
 }
 
 bool trading_state::market_is_open() const {
   using namespace std::chrono_literals;
-  const auto time_of_day = to_market_hms(time_now).to_duration();
+  const auto time_of_day = to_market_hms(time_now.load()).to_duration();
   return (time_of_day >= 9h + 30min) && (time_of_day < 16h);
 }
 

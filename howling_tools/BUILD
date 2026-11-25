@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//infrastructure:containers.bzl", "package_binary")
 
 cc_binary(
@@ -31,6 +31,7 @@ cc_binary(
     name = "execute",
     srcs = ["execute.cc"],
     deps = [
+        ":session_shutdown",
         "//api:schwab",
         "//cli:printing",
         "//containers:vector",
@@ -49,6 +50,7 @@ cc_binary(
         "//services/db:register",
         "//services/registry",
         "//services/security:register",
+        "//signaling:cancellation",
         "//strings:format",
         "//time:conversion",
         "//trading:executor",
@@ -57,6 +59,13 @@ cc_binary(
         "@abseil-cpp//absl/log",
         "@abseil-cpp//absl/strings",
     ],
+)
+
+package_binary(
+    name = "execute_image",
+    image_name = "howling-execute",
+    binary = ":execute",
+    visibility = ["//infrastructure:visibility"],
 )
 
 cc_binary(
@@ -78,6 +87,26 @@ cc_binary(
     ],
 )
 
+cc_library(
+    name = "session_shutdown",
+    srcs = ["session_shutdown.cc"],
+    hdrs = ["session_shutdown.h"],
+    deps = [
+        "//functional:retry",
+        "//signaling:cancellation",
+    ],
+)
+
+cc_test(
+    name = "session_shutdown_test",
+    srcs = ["session_shutdown_test.cc"],
+    deps = [
+        ":session_shutdown",
+        "//signaling:cancellation",
+        "@googletest//:gtest_main",
+    ],
+)
+
 cc_binary(
     name = "visualize",
     srcs = ["visualize.cc"],
@@ -96,11 +125,4 @@ cc_binary(
         "//trading:trading_state",
         "@abseil-cpp//absl/flags:flag",
     ],
-)
-
-package_binary(
-    name = "execute_image",
-    image_name = "howling-execute",
-    binary = ":execute",
-    visibility = ["//infrastructure:visibility"],
 )

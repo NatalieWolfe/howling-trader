@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 cc_library(
     name = "executor",
@@ -45,5 +45,16 @@ cc_library(
         "//containers:vector",
         "//data:aggregate",
         "//data:stock_cc_proto",
+        "//time:thread_safe",
+    ],
+)
+
+cc_test(
+    name = "trading_state_test",
+    srcs = ["trading_state_test.cc"],
+    deps = [
+        ":trading_state",
+        "//time:thread_safe",
+        "@googletest//:gtest_main",
     ],
 )
