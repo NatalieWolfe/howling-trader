@@ -11,6 +11,7 @@
 #include "data/analyzer_utils.h"
 #include "data/analyzers/atr.h"
 #include "data/analyzers/bollinger.h"
+#include "data/analyzers/cmf.h"
 #include "data/analyzers/ema_ribbon.h"
 #include "data/analyzers/gap_momentum.h"
 #include "data/analyzers/howling.h"
@@ -41,6 +42,15 @@ load_analyzer(std::string_view name, const stock::History& history) {
     return std::make_unique<atr_analyzer>(&aggregations::twenty_minute);
   }
   if (name == "bollinger") return std::make_unique<bollinger_analyzer>();
+  if (name == "cmf" || name == "cmf1") {
+    return std::make_unique<cmf_analyzer>(&aggregations::one_minute);
+  }
+  if (name == "cmf5") {
+    return std::make_unique<cmf_analyzer>(&aggregations::five_minute);
+  }
+  if (name == "cmf20") {
+    return std::make_unique<cmf_analyzer>(&aggregations::twenty_minute);
+  }
   if (name == "ema_ribbon" || name == "ema_ribbon1") {
     return std::make_unique<ema_ribbon_analyzer>(&aggregations::one_minute);
   }
@@ -116,6 +126,22 @@ std::unique_ptr<analyzer> load_analyzer(const Analyzer& opts) {
     }
     case Analyzer::BOLLINGER: {
       return std::make_unique<bollinger_analyzer>();
+    }
+    case Analyzer::CMF: {
+      const Analyzer::Cmf& config = opts.cmf();
+      cmf_analyzer::options cmf_options;
+      if (config.lookback_periods() != 0) {
+        cmf_options.lookback_periods = config.lookback_periods();
+      }
+      if (config.threshold() != 0.0) {
+        cmf_options.threshold = config.threshold();
+      }
+      if (config.confidence_scaler() != 0.0) {
+        cmf_options.confidence_scaler = config.confidence_scaler();
+      }
+      cmf_options.enable_divergence_check = config.enable_divergence_check();
+      return std::make_unique<cmf_analyzer>(
+          period_member(config.period()), cmf_options);
     }
     case Analyzer::EMA_RIBBON: {
       const Analyzer::EmaRibbon& config = opts.ema_ribbon();

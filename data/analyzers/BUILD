@@ -47,6 +47,37 @@ cc_library(
 )
 
 cc_library(
+    name = "cmf",
+    srcs = ["cmf.cc"],
+    hdrs = ["cmf.h"],
+    deps = [
+        "//containers:vector",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_utils",
+        "//data:candle_cc_proto",
+        "//data:stock_cc_proto",
+        "//trading:trading_state",
+    ],
+)
+
+cc_test(
+    name = "cmf_test",
+    srcs = ["cmf_test.cc"],
+    deps = [
+        ":cmf",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_cc_proto",
+        "//data:candle_cc_proto",
+        "//data:load_analyzer",
+        "//data:stock_cc_proto",
+        "//trading:trading_state",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "ema_ribbon",
     srcs = ["ema_ribbon.cc"],
     hdrs = ["ema_ribbon.h"],
