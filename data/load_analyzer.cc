@@ -12,6 +12,7 @@
 #include "data/analyzers/macd.h"
 #include "data/analyzers/market_hours.h"
 #include "data/analyzers/noop.h"
+#include "data/analyzers/pivot_points.h"
 #include "data/analyzers/profit.h"
 #include "data/analyzers/zig_zag.h"
 #include "data/stock.pb.h"
@@ -38,6 +39,9 @@ load_analyzer(std::string_view name, const stock::History& history) {
   }
   if (name == "market_hours") {
     return std::make_unique<market_hours_analyzer>();
+  }
+  if (name == "pivot_points") {
+    return std::make_unique<pivot_points_analyzer>();
   }
   if (name == "profit") return std::make_unique<profit_analyzer>();
   if (name == "zig_zag" || name == "optimal") {
@@ -91,6 +95,24 @@ std::unique_ptr<analyzer> load_analyzer(const Analyzer& opts) {
     case Analyzer::MARKET_HOURS: {
       // TODO: Support open and closing hours from proto.
       return std::make_unique<market_hours_analyzer>();
+    }
+    case Analyzer::PIVOT_POINTS: {
+      pivot_points_analyzer::options pivot_options;
+      if (opts.pivot_points().proximity_threshold() != 0.0) {
+        pivot_options.proximity_threshold =
+            opts.pivot_points().proximity_threshold();
+      }
+      if (opts.pivot_points().confidence_scaler() != 0.0) {
+        pivot_options.confidence_scaler =
+            opts.pivot_points().confidence_scaler();
+      }
+      if (opts.pivot_points().major_confidence() != 0.0) {
+        pivot_options.major_confidence = opts.pivot_points().major_confidence();
+      }
+      if (opts.pivot_points().minor_confidence() != 0.0) {
+        pivot_options.minor_confidence = opts.pivot_points().minor_confidence();
+      }
+      return std::make_unique<pivot_points_analyzer>(pivot_options);
     }
     case Analyzer::PROFIT: {
       return std::make_unique<profit_analyzer>();

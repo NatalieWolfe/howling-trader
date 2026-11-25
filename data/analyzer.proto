@@ -12,16 +12,16 @@ message Analyzer {
 
   enum Type {
     TYPE_UNSPECIFIED = 0;
-    NOOP = 1;
     BOLLINGER = 2;
     HOWLING = 3;
     MACD = 4;
     MARKET_HOURS = 5;
+    NOOP = 1;
+    PIVOT_POINTS = 12;
     PROFIT = 6;
     ZIG_ZAG = 7;
   }
 
-  message Noop {}
   message Bollinger {}
   message Howling {}
   message Macd {
@@ -43,15 +43,31 @@ message Analyzer {
     // Default 15.5.
     float close_hour = 2;
   }
+  message Noop {}
+  message PivotPoints {
+    // Optional. Fractional proximity band around a pivot level (e.g., 0.002
+    // for 0.2%). Must be in (0.0, 1.0). Default 0.002.
+    double proximity_threshold = 1;
+    // Optional. Confidence scaling factor applied to base level confidences.
+    // Must be positive and finite. Default 1.0.
+    double confidence_scaler = 2;
+    // Optional. Base confidence for major levels (R2 and S2), in (0.0, 1.0].
+    // Default 1.0.
+    double major_confidence = 3;
+    // Optional. Base confidence for minor levels (R1 and S1), in (0.0, 1.0].
+    // Default 0.7.
+    double minor_confidence = 4;
+  }
   message Profit {}
   message ZigZag { double threshold = 1; }
 
   oneof type {
-    Noop noop = 1;
     Bollinger bollinger = 2;
     Howling howling = 3;
     Macd macd = 4;
     MarketHours market_hours = 5;
+    Noop noop = 1;
+    PivotPoints pivot_points = 12;
     Profit profit = 6;
     ZigZag zig_zag = 7;
   }
