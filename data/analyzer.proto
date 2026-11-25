@@ -12,6 +12,7 @@ message Analyzer {
 
   enum Type {
     TYPE_UNSPECIFIED = 0;
+    ATR = 8;
     BOLLINGER = 2;
     HOWLING = 3;
     MACD = 4;
@@ -22,6 +23,18 @@ message Analyzer {
     ZIG_ZAG = 7;
   }
 
+  message Atr {
+    // Optional. Wilder RMA smoothing period in bars. Default 14.
+    int32 period = 1;
+    // Optional. Number of recent ATR samples in the historical baseline.
+    // Default 60.
+    int32 baseline_period = 2;
+    // Optional. Ratio of current ATR to baseline ATR that triggers a HOLD
+    // decision. Default 1.5.
+    double high_volatility_ratio = 3;
+    // Required. Aggregation candle timeframe to evaluate ATR on.
+    Period candle_period = 4;
+  }
   message Bollinger {}
   message Howling {}
   message Macd {
@@ -62,6 +75,7 @@ message Analyzer {
   message ZigZag { double threshold = 1; }
 
   oneof type {
+    Atr atr = 8;
     Bollinger bollinger = 2;
     Howling howling = 3;
     Macd macd = 4;

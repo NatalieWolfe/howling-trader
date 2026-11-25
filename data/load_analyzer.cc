@@ -7,6 +7,8 @@
 #include "data/aggregate.h"
 #include "data/analyzer.h"
 #include "data/analyzer.pb.h"
+#include "data/analyzer_utils.h"
+#include "data/analyzers/atr.h"
 #include "data/analyzers/bollinger.h"
 #include "data/analyzers/howling.h"
 #include "data/analyzers/macd.h"
@@ -23,6 +25,15 @@ std::unique_ptr<analyzer>
 load_analyzer(std::string_view name, const stock::History& history) {
   if (name.empty() || name == "noop") {
     return std::make_unique<noop_analyzer>();
+  }
+  if (name == "atr" || name == "atr1") {
+    return std::make_unique<atr_analyzer>(&aggregations::one_minute);
+  }
+  if (name == "atr5") {
+    return std::make_unique<atr_analyzer>(&aggregations::five_minute);
+  }
+  if (name == "atr20") {
+    return std::make_unique<atr_analyzer>(&aggregations::twenty_minute);
   }
   if (name == "bollinger") return std::make_unique<bollinger_analyzer>();
   if (name == "howling") return std::make_unique<howling_analyzer>();
@@ -63,6 +74,20 @@ std::unique_ptr<analyzer> load_analyzer(const Analyzer& opts) {
   switch (opts.type_case()) {
     case Analyzer::NOOP: {
       return std::make_unique<noop_analyzer>();
+    }
+    case Analyzer::ATR: {
+      atr_analyzer::options atr_options;
+      if (opts.atr().period() != 0) {
+        atr_options.period = opts.atr().period();
+      }
+      if (opts.atr().baseline_period() != 0) {
+        atr_options.baseline_period = opts.atr().baseline_period();
+      }
+      if (opts.atr().high_volatility_ratio() != 0.0) {
+        atr_options.high_volatility_ratio = opts.atr().high_volatility_ratio();
+      }
+      return std::make_unique<atr_analyzer>(
+          period_member(opts.atr().candle_period()), atr_options);
     }
     case Analyzer::BOLLINGER: {
       return std::make_unique<bollinger_analyzer>();
