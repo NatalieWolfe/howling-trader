@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package howling;
+
+import "google/protobuf/timestamp.proto";
+import "data/analyzer.proto";
+import "data/stock.proto";
+import "data/trade.proto";
+
+service SimulationService {
+  rpc Simulate(SimulateRequest) returns (SimulateResponse) {};
+}
+
+message SimulateRequest {
+  stock.Symbol symbol = 1;
+  howling.Analyzer analyzer = 2;
+  google.protobuf.Timestamp start_at = 3;
+  google.protobuf.Timestamp end_at = 4;
+  double initial_balance = 5;
+}
+
+message SimulateResponse {
+  repeated howling.trading.TradeRecord trades = 1;
+  double final_balance = 2;
+}
