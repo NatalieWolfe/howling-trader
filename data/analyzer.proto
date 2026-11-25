@@ -21,6 +21,7 @@ message Analyzer {
     NOOP = 1;
     PIVOT_POINTS = 12;
     PROFIT = 6;
+    VWAP = 9;
     ZIG_ZAG = 7;
   }
 
@@ -88,6 +89,26 @@ message Analyzer {
     double minor_confidence = 4;
   }
   message Profit {}
+  message Vwap {
+    enum Mode {
+      MODE_UNSPECIFIED = 0;
+      // Follows intraday trend direction via price crossovers above/below VWAP.
+      TREND_FILTER = 1;
+      // Fades extended price deviations beyond deviation_threshold from VWAP.
+      MEAN_REVERSION = 2;
+    }
+    // Optional. Signal generation mode. Defaults to TREND_FILTER.
+    Mode mode = 1;
+    // Optional. Minimum relative deviation from VWAP for signal generation and
+    // confidence scaling. Defaults to 0.002.
+    double deviation_threshold = 2;
+    // Optional. Minimum number of session candles required before emitting
+    // signals. Defaults to 5.
+    int32 min_candles = 3;
+    // Optional. Whether to include pre-market and after-hours candles in VWAP
+    // calculation. Defaults to false.
+    bool include_extended_hours = 4;
+  }
   message ZigZag { double threshold = 1; }
 
   oneof type {
@@ -100,6 +121,7 @@ message Analyzer {
     Noop noop = 1;
     PivotPoints pivot_points = 12;
     Profit profit = 6;
+    Vwap vwap = 9;
     ZigZag zig_zag = 7;
   }
 }

@@ -18,6 +18,7 @@
 #include "data/analyzers/noop.h"
 #include "data/analyzers/pivot_points.h"
 #include "data/analyzers/profit.h"
+#include "data/analyzers/vwap.h"
 #include "data/analyzers/zig_zag.h"
 #include "data/stock.pb.h"
 
@@ -66,6 +67,7 @@ load_analyzer(std::string_view name, const stock::History& history) {
     return std::make_unique<pivot_points_analyzer>();
   }
   if (name == "profit") return std::make_unique<profit_analyzer>();
+  if (name == "vwap") return std::make_unique<vwap_analyzer>();
   if (name == "zig_zag" || name == "optimal") {
     if (history.candles().empty()) {
       throw std::runtime_error(
@@ -168,6 +170,34 @@ std::unique_ptr<analyzer> load_analyzer(const Analyzer& opts) {
     }
     case Analyzer::PROFIT: {
       return std::make_unique<profit_analyzer>();
+    }
+    case Analyzer::VWAP: {
+      const Analyzer::Vwap& vwap_proto = opts.vwap();
+      vwap_analyzer::options analyzer_options;
+      switch (vwap_proto.mode()) {
+        case Analyzer::Vwap::MODE_UNSPECIFIED:
+        case Analyzer::Vwap::TREND_FILTER:
+          analyzer_options.strategy_mode = vwap_analyzer::mode::TREND_FILTER;
+          break;
+        case Analyzer::Vwap::MEAN_REVERSION:
+          analyzer_options.strategy_mode = vwap_analyzer::mode::MEAN_REVERSION;
+          break;
+        default:
+          throw std::runtime_error(
+              std::format(
+                  "Unknown VWAP mode: {} ({}).",
+                  Analyzer::Vwap::Mode_Name(vwap_proto.mode()),
+                  static_cast<int>(vwap_proto.mode())));
+      }
+      if (vwap_proto.deviation_threshold() != 0.0) {
+        analyzer_options.deviation_threshold = vwap_proto.deviation_threshold();
+      }
+      if (vwap_proto.min_candles() != 0) {
+        analyzer_options.min_candles = vwap_proto.min_candles();
+      }
+      analyzer_options.include_extended_hours =
+          vwap_proto.include_extended_hours();
+      return std::make_unique<vwap_analyzer>(analyzer_options);
     }
     case Analyzer::ZIG_ZAG: {
       return std::make_unique<zig_zag_analyzer>(

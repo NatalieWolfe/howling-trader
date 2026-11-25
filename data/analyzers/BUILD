@@ -174,6 +174,39 @@ cc_library(
 )
 
 cc_library(
+    name = "vwap",
+    srcs = ["vwap.cc"],
+    hdrs = ["vwap.h"],
+    deps = [
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_utils",
+        "//data:candle_cc_proto",
+        "//data:stock_cc_proto",
+        "//time:conversion",
+        "//time:market_time",
+        "//trading:trading_state",
+    ],
+)
+
+cc_test(
+    name = "vwap_test",
+    srcs = ["vwap_test.cc"],
+    deps = [
+        ":vwap",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_cc_proto",
+        "//data:candle_cc_proto",
+        "//data:load_analyzer",
+        "//data:stock_cc_proto",
+        "//time:conversion",
+        "//trading:trading_state",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "zig_zag",
     srcs = ["zig_zag.cc"],
     hdrs = ["zig_zag.h"],
