@@ -137,6 +137,7 @@ cc_library(
         "//data/analyzers:noop",
         "//data/analyzers:pivot_points",
         "//data/analyzers:profit",
+        "//data/analyzers:rsi",
         "//data/analyzers:vwap",
         "//data/analyzers:zig_zag",
     ],

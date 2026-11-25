@@ -19,6 +19,7 @@
 #include "data/analyzers/noop.h"
 #include "data/analyzers/pivot_points.h"
 #include "data/analyzers/profit.h"
+#include "data/analyzers/rsi.h"
 #include "data/analyzers/vwap.h"
 #include "data/analyzers/zig_zag.h"
 #include "data/stock.pb.h"
@@ -69,6 +70,15 @@ load_analyzer(std::string_view name, const stock::History& history) {
     return std::make_unique<pivot_points_analyzer>();
   }
   if (name == "profit") return std::make_unique<profit_analyzer>();
+  if (name == "rsi" || name == "rsi1") {
+    return std::make_unique<rsi_analyzer>(&aggregations::one_minute);
+  }
+  if (name == "rsi5") {
+    return std::make_unique<rsi_analyzer>(&aggregations::five_minute);
+  }
+  if (name == "rsi20") {
+    return std::make_unique<rsi_analyzer>(&aggregations::twenty_minute);
+  }
   if (name == "vwap") return std::make_unique<vwap_analyzer>();
   if (name == "zig_zag" || name == "optimal") {
     if (history.candles().empty()) {
@@ -198,6 +208,19 @@ std::unique_ptr<analyzer> load_analyzer(const Analyzer& opts) {
     }
     case Analyzer::PROFIT: {
       return std::make_unique<profit_analyzer>();
+    }
+    case Analyzer::RSI: {
+      const Analyzer::Rsi& rsi_proto = opts.rsi();
+      rsi_analyzer::options rsi_options;
+      if (rsi_proto.period() != 0) rsi_options.period = rsi_proto.period();
+      if (rsi_proto.oversold_threshold() != 0.0) {
+        rsi_options.oversold_threshold = rsi_proto.oversold_threshold();
+      }
+      if (rsi_proto.overbought_threshold() != 0.0) {
+        rsi_options.overbought_threshold = rsi_proto.overbought_threshold();
+      }
+      return std::make_unique<rsi_analyzer>(
+          period_member(rsi_proto.candle_period()), rsi_options);
     }
     case Analyzer::VWAP: {
       const Analyzer::Vwap& vwap_proto = opts.vwap();

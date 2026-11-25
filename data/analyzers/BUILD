@@ -208,6 +208,37 @@ cc_library(
 )
 
 cc_library(
+    name = "rsi",
+    srcs = ["rsi.cc"],
+    hdrs = ["rsi.h"],
+    deps = [
+        "//containers:vector",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_utils",
+        "//data:stock_cc_proto",
+        "//data:wilder_rma",
+        "//trading:trading_state",
+    ],
+)
+
+cc_test(
+    name = "rsi_test",
+    srcs = ["rsi_test.cc"],
+    deps = [
+        ":rsi",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_cc_proto",
+        "//data:candle_cc_proto",
+        "//data:load_analyzer",
+        "//data:stock_cc_proto",
+        "//trading:trading_state",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "vwap",
     srcs = ["vwap.cc"],
     hdrs = ["vwap.h"],
