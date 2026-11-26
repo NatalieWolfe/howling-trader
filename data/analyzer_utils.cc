@@ -23,6 +23,17 @@ int window_size_for(const vector<window>& period) {
   return period.empty() ? 0 : period(-1).count;
 }
 
+int expected_window_size_for(vector<window> aggregations::* period) {
+  if (period == nullptr) {
+    throw std::invalid_argument("Aggregation period must not be null.");
+  }
+  if (period == &aggregations::one_minute) return 1;
+  if (period == &aggregations::five_minute) return 5;
+  if (period == &aggregations::twenty_minute) return 20;
+  throw std::invalid_argument(
+      "Aggregation period must refer to a known window series member.");
+}
+
 bool is_window_step_boundary(
     const trading_state& data, std::chrono::minutes window_minutes) {
   if (window_minutes <= std::chrono::minutes{0} ||

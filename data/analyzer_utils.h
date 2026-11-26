@@ -29,6 +29,17 @@ find_aggregations(stock::Symbol symbol, const trading_state& data);
 [[nodiscard]] int window_size_for(const vector<window>& period);
 
 /**
+ * @brief Returns the expected candle count for an aggregations window series.
+ *
+ * @param period Pointer to a window series member of aggregations.
+ * @return The expected window size in minutes (1, 5, or 20).
+ * @throws std::invalid_argument if period is null or does not match a known
+ * aggregations window series member.
+ */
+[[nodiscard]] int
+expected_window_size_for(vector<window> aggregations::* period);
+
+/**
  * @brief Returns true if the current market minute is divisible by
  * `window_minutes`.
  *
