@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -63,6 +63,37 @@ cc_library(
         "//data:analyzer",
         "//data:stock_cc_proto",
         "//trading:trading_state",
+    ],
+)
+
+cc_library(
+    name = "pivot_points",
+    srcs = ["pivot_points.cc"],
+    hdrs = ["pivot_points.h"],
+    deps = [
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_utils",
+        "//data:candle_cc_proto",
+        "//data:stock_cc_proto",
+        "//trading:trading_state",
+    ],
+)
+
+cc_test(
+    name = "pivot_points_test",
+    srcs = ["pivot_points_test.cc"],
+    deps = [
+        ":pivot_points",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_cc_proto",
+        "//data:candle_cc_proto",
+        "//data:load_analyzer",
+        "//data:stock_cc_proto",
+        "//time:conversion",
+        "//trading:trading_state",
+        "@googletest//:gtest_main",
     ],
 )
 
