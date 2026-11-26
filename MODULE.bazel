@@ -25,20 +25,6 @@ bazel_dep(name = "rules_shell", version = "0.10.0")
 bazel_dep(name = "sqlite3", version = "3.54.1")
 bazel_dep(name = "zlib", version = "1.4")
 
-# abseil-cpp 20260526.0+ dropped compatibility_level (defaulting to 0),
-# conflicting with protobuf's dependency on abseil-cpp 20260107.1 (level 1).
-single_version_override(
-    module_name = "abseil-cpp",
-    version = "20260817.0",
-)
-
-# Bazel 9's bazel_tools depends on rules_swift 3.1.2 (compatibility_level 3),
-# conflicting with grpc 1.85.4's dependency on rules_swift 2.5.0 (level 2).
-single_version_override(
-    module_name = "rules_swift",
-    version = "3.1.2",
-)
-
 archive_override(
     module_name = "postgres",
     build_file = "//patches:postgres.BUILD",
