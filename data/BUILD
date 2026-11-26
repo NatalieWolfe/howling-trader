@@ -1,6 +1,6 @@
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 filegroup(
     name = "history",
@@ -27,7 +27,20 @@ cc_library(
     deps = [
         ":candle_cc_proto",
         "//containers:vector",
+        "//time:conversion",
+        "//time:market_time",
         "@abseil-cpp//absl/flags:flag",
+    ],
+)
+
+cc_test(
+    name = "aggregate_test",
+    srcs = ["aggregate_test.cc"],
+    deps = [
+        ":aggregate",
+        ":candle_cc_proto",
+        "//time:conversion",
+        "@googletest//:gtest_main",
     ],
 )
 

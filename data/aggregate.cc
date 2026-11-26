@@ -1,12 +1,15 @@
 #include "data/aggregate.h"
 
 #include <algorithm>
+#include <chrono>
 #include <span>
 #include <vector>
 
 #include "absl/flags/flag.h"
 #include "containers/vector.h"
 #include "data/candle.pb.h"
+#include "time/conversion.h"
+#include "time/market_time.h"
 
 ABSL_FLAG(
     int,
@@ -150,6 +153,49 @@ window do_aggregate(
   return w;
 }
 
+void update_session_ohlc(aggregations& aggr, const Candle& candle) {
+  // Skip synthetic candles that do not carry a timestamp.
+  if (candle.opened_at().seconds() == 0 && candle.opened_at().nanos() == 0) {
+    return;
+  }
+
+  const std::chrono::system_clock::time_point opened_at =
+      to_std_chrono(candle.opened_at());
+  if (!is_regular_market_hours(opened_at)) return;
+
+  const std::chrono::local_days trading_day = market_trading_day(opened_at);
+  if (!aggr.current_session.has_value()) {
+    aggr.current_session = session_ohlc{
+        .trading_day = trading_day,
+        .open = candle.open(),
+        .high = candle.high(),
+        .low = candle.low(),
+        .close = candle.close(),
+        .volume = candle.volume(),
+    };
+    return;
+  }
+
+  if (trading_day > aggr.current_session->trading_day) {
+    aggr.previous_session = aggr.current_session;
+    aggr.current_session = session_ohlc{
+        .trading_day = trading_day,
+        .open = candle.open(),
+        .high = candle.high(),
+        .low = candle.low(),
+        .close = candle.close(),
+        .volume = candle.volume(),
+    };
+  } else if (trading_day == aggr.current_session->trading_day) {
+    aggr.current_session->high =
+        std::max(aggr.current_session->high, candle.high());
+    aggr.current_session->low =
+        std::min(aggr.current_session->low, candle.low());
+    aggr.current_session->close = candle.close();
+    aggr.current_session->volume += candle.volume();
+  }
+}
+
 } // namespace
 
 aggregations aggregate(const vector<Candle>& one_minute_candles) {
@@ -174,6 +220,8 @@ void add_next_minute(aggregations& aggr, const Candle& candle) {
       aggr.one_minute.last_n(5), maybe_get_previous(aggr.five_minute, 5)));
   aggr.twenty_minute.push_back(do_aggregate(
       aggr.one_minute.last_n(20), maybe_get_previous(aggr.twenty_minute, 20)));
+
+  update_session_ohlc(aggr, candle);
 }
 
 } // namespace howling
