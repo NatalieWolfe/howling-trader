@@ -32,7 +32,7 @@ message Analyzer {
       FIVE = 2;
       TWENTY = 3;
     }
-    Period period = 1;
+    Analyzer.Period period = 1;
     double crossover_scaler = 2;
   }
   message MarketHours {

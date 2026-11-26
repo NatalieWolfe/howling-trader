@@ -125,6 +125,7 @@ cc_library(
         ":aggregate",
         ":analyzer",
         ":analyzer_cc_proto",
+        ":analyzer_utils",
         ":stock_cc_proto",
         "//data/analyzers:bollinger",
         "//data/analyzers:howling",

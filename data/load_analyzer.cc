@@ -7,6 +7,7 @@
 #include "data/aggregate.h"
 #include "data/analyzer.h"
 #include "data/analyzer.pb.h"
+#include "data/analyzer_utils.h"
 #include "data/analyzers/bollinger.h"
 #include "data/analyzers/howling.h"
 #include "data/analyzers/macd.h"
@@ -72,25 +73,8 @@ std::unique_ptr<analyzer> load_analyzer(const Analyzer& opts) {
     }
     case Analyzer::MACD: {
       // TODO: Support crossover_scaler from analyzer options.
-      switch (opts.macd().period()) {
-        case Analyzer::Macd::ONE:
-          return std::make_unique<macd_crossover_analyzer>(
-              &aggregations::one_minute);
-        case Analyzer::Macd::FIVE:
-          return std::make_unique<macd_crossover_analyzer>(
-              &aggregations::five_minute);
-        case Analyzer::Macd::TWENTY:
-          return std::make_unique<macd_crossover_analyzer>(
-              &aggregations::twenty_minute);
-        case Analyzer::Macd::PERIOD_UNSPECIFIED:
-          throw std::runtime_error("macd.period not specified");
-        default:
-          throw std::runtime_error(
-              std::format(
-                  "Unknown MACD period: {} ({}).",
-                  Analyzer::Macd::Period_Name(opts.macd().period()),
-                  static_cast<int>(opts.macd().period())));
-      }
+      return std::make_unique<macd_crossover_analyzer>(
+          period_member(opts.macd().period()));
     }
     case Analyzer::MARKET_HOURS: {
       // TODO: Support open and closing hours from proto.
