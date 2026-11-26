@@ -1,32 +1,10 @@
 #include "trading/trading_state.h"
 
-#include <chrono>
 #include <ranges>
-#include <string_view>
-#include <utility>
+
+#include "time/market_time.h"
 
 namespace howling {
-namespace {
-
-using std::chrono::days;
-using std::chrono::hh_mm_ss;
-using std::chrono::locate_zone;
-using std::chrono::seconds;
-using std::chrono::system_clock;
-using std::chrono::zoned_time;
-
-constexpr std::string_view MARKET_TIME_ZONE_NAME = "America/New_York";
-
-auto to_market_hms(system_clock::time_point time) {
-  static const std::chrono::time_zone* const TIME_ZONE =
-      locate_zone(MARKET_TIME_ZONE_NAME);
-  zoned_time zoned{TIME_ZONE, time};
-  return hh_mm_ss{std::chrono::floor<seconds>(
-      zoned.get_local_time() -
-      std::chrono::floor<days>(zoned.get_local_time()))};
-}
-
-} // namespace
 
 double trading_state::total_positions_cost() const {
   double total = 0;
@@ -45,21 +23,21 @@ double trading_state::total_positions_value() const {
 }
 
 int trading_state::market_hour() const {
-  return to_market_hms(time_now.load()).hours().count();
+  return static_cast<int>(market_time_of_day(time_now.load()).hours().count());
 }
 
 int trading_state::market_minute() const {
-  return to_market_hms(time_now.load()).minutes().count();
+  return static_cast<int>(
+      market_time_of_day(time_now.load()).minutes().count());
 }
 
 int trading_state::market_second() const {
-  return to_market_hms(time_now.load()).seconds().count();
+  return static_cast<int>(
+      market_time_of_day(time_now.load()).seconds().count());
 }
 
 bool trading_state::market_is_open() const {
-  using namespace std::chrono_literals;
-  const auto time_of_day = to_market_hms(time_now.load()).to_duration();
-  return (time_of_day >= 9h + 30min) && (time_of_day < 16h);
+  return is_regular_market_hours(time_now.load());
 }
 
 } // namespace howling

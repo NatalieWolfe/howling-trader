@@ -26,6 +26,22 @@ cc_test(
 )
 
 cc_library(
+    name = "market_time",
+    srcs = ["market_time.cc"],
+    hdrs = ["market_time.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "market_time_test",
+    srcs = ["market_time_test.cc"],
+    deps = [
+        ":market_time",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "thread_safe",
     hdrs = ["thread_safe.h"],
     visibility = ["//visibility:public"],

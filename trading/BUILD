@@ -45,6 +45,7 @@ cc_library(
         "//containers:vector",
         "//data:aggregate",
         "//data:stock_cc_proto",
+        "//time:market_time",
         "//time:thread_safe",
     ],
 )
