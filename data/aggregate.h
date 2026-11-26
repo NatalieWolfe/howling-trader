@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "containers/vector.h"
 #include "data/candle.pb.h"
 
@@ -40,11 +38,15 @@ struct window {
  * Moving data aggregations over different window sizes.
  *
  * All lists of aggregations step forward by 1 minute for each contained window.
+ * `daily_candles` holds one aggregated regular-hours `Candle` per trading day,
+ * where `daily_candles(-1)` is the current regular-hours trading day and
+ * `daily_candles(-2)` is the previous regular-hours trading day.
  */
 struct aggregations {
   vector<window> one_minute;
   vector<window> five_minute;
   vector<window> twenty_minute;
+  vector<Candle> daily_candles;
 };
 
 aggregations aggregate(const vector<Candle>& one_minute_candles);

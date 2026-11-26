@@ -1,12 +1,15 @@
 #include "data/aggregate.h"
 
 #include <algorithm>
+#include <chrono>
 #include <span>
 #include <vector>
 
 #include "absl/flags/flag.h"
 #include "containers/vector.h"
 #include "data/candle.pb.h"
+#include "time/conversion.h"
+#include "time/market_time.h"
 
 ABSL_FLAG(
     int,
@@ -150,6 +153,52 @@ window do_aggregate(
   return w;
 }
 
+void update_daily_candles(aggregations& aggr, const Candle& candle) {
+  // Skip synthetic candles that do not carry a timestamp.
+  if (candle.opened_at().seconds() == 0 && candle.opened_at().nanos() == 0) {
+    return;
+  }
+
+  const std::chrono::system_clock::time_point candle_opened_at =
+      to_std_chrono(candle.opened_at());
+  if (!is_regular_market_hours(candle_opened_at)) return;
+
+  const std::chrono::local_days trading_day =
+      market_trading_day(candle_opened_at);
+  if (aggr.daily_candles.empty() ||
+      trading_day > market_trading_day(
+                        to_std_chrono(aggr.daily_candles(-1).opened_at()))) {
+    aggr.daily_candles.push_back(candle);
+    return;
+  }
+
+  Candle& daily = aggr.daily_candles(-1);
+  if (trading_day < market_trading_day(to_std_chrono(daily.opened_at()))) {
+    return;
+  }
+
+  const std::chrono::system_clock::time_point candle_closed_at =
+      candle_opened_at + to_std_chrono(candle.duration());
+  std::chrono::system_clock::time_point daily_opened_at =
+      to_std_chrono(daily.opened_at());
+  std::chrono::system_clock::time_point daily_closed_at =
+      daily_opened_at + to_std_chrono(daily.duration());
+
+  if (candle_opened_at < daily_opened_at) {
+    daily.set_open(candle.open());
+    *daily.mutable_opened_at() = candle.opened_at();
+    daily_opened_at = candle_opened_at;
+  }
+  if (candle_closed_at >= daily_closed_at) {
+    daily.set_close(candle.close());
+    daily_closed_at = candle_closed_at;
+  }
+  *daily.mutable_duration() = to_proto(daily_closed_at - daily_opened_at);
+  daily.set_high(std::max(daily.high(), candle.high()));
+  daily.set_low(std::min(daily.low(), candle.low()));
+  daily.set_volume(daily.volume() + candle.volume());
+}
+
 } // namespace
 
 aggregations aggregate(const vector<Candle>& one_minute_candles) {
@@ -174,6 +223,8 @@ void add_next_minute(aggregations& aggr, const Candle& candle) {
       aggr.one_minute.last_n(5), maybe_get_previous(aggr.five_minute, 5)));
   aggr.twenty_minute.push_back(do_aggregate(
       aggr.one_minute.last_n(20), maybe_get_previous(aggr.twenty_minute, 20)));
+
+  update_daily_candles(aggr, candle);
 }
 
 } // namespace howling
