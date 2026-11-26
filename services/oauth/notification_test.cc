@@ -34,13 +34,34 @@ TEST(NotificationTest, SendNotificationSendsCorrectSSLRequest) {
 }
 
 TEST(NotificationTest, ThrowsOnMissingConfig) {
-  // Use mock server without auto-configuration to test missing flags
+  // Use mock server without auto-configuration to test missing flags.
   mock_telegram_server server(/*configure_flags=*/false);
 
   absl::SetFlag(&FLAGS_telegram_bot_token, "");
   absl::SetFlag(&FLAGS_telegram_chat_id, "");
 
   EXPECT_THROW(send_notification("test"), std::runtime_error);
+}
+
+TEST(NotificationTest, CheckTelegramFlagsSucceedsWhenSet) {
+  absl::SetFlag(&FLAGS_telegram_bot_token, "bot_token");
+  absl::SetFlag(&FLAGS_telegram_chat_id, "chat_id");
+
+  EXPECT_NO_THROW(check_telegram_flags());
+}
+
+TEST(NotificationTest, CheckTelegramFlagsThrowsOnMissingBotToken) {
+  absl::SetFlag(&FLAGS_telegram_bot_token, "");
+  absl::SetFlag(&FLAGS_telegram_chat_id, "chat_id");
+
+  EXPECT_THROW(check_telegram_flags(), std::runtime_error);
+}
+
+TEST(NotificationTest, CheckTelegramFlagsThrowsOnMissingChatId) {
+  absl::SetFlag(&FLAGS_telegram_bot_token, "bot_token");
+  absl::SetFlag(&FLAGS_telegram_chat_id, "");
+
+  EXPECT_THROW(check_telegram_flags(), std::runtime_error);
 }
 
 } // namespace

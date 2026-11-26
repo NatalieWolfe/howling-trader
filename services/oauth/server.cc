@@ -13,6 +13,7 @@
 #include "services/database.h"
 #include "services/db/register.h"
 #include "services/oauth/auth_service.h"
+#include "services/oauth/notification.h"
 #include "services/oauth/oauth_exchanger_impl.h"
 #include "services/oauth/oauth_http_service.h"
 #include "services/registry/registry.h"
@@ -58,6 +59,7 @@ void run_server() {
           "howling/prod/telegram");
   absl::SetFlag(&FLAGS_telegram_bot_token, telegram_secret["token"].asString());
   absl::SetFlag(&FLAGS_telegram_chat_id, telegram_secret["chat_id"].asString());
+  oauth::check_telegram_flags();
 
   database& db = registry::get_service<database>();
   boost::asio::io_context ioc{/*concurrency_hint=*/1};

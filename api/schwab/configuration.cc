@@ -26,6 +26,7 @@ void fetch_schwab_secrets() {
   absl::SetFlag(&FLAGS_schwab_api_key_id, schwab_secret["api_key"].asString());
   absl::SetFlag(
       &FLAGS_schwab_api_key_secret, schwab_secret["api_secret"].asString());
+  check_schwab_flags();
 }
 
 void check_schwab_flags() {

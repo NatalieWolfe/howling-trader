@@ -3,7 +3,10 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 cc_library(
     name = "register_service",
     hdrs = ["register_service.h"],
-    visibility = ["//services:__subpackages__"],
+    visibility = [
+        "//api/schwab:__pkg__",
+        "//services:__subpackages__",
+    ],
     deps = [
         ":registry",
         ":registry_internal",

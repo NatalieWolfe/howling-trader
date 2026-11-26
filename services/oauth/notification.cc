@@ -34,15 +34,21 @@ constexpr std::string_view MESSAGE_MODE = "MarkdownV2";
 
 } // namespace
 
+void check_telegram_flags() {
+  if (absl::GetFlag(FLAGS_telegram_bot_token).empty()) {
+    throw std::runtime_error("--telegram_bot_token flag is required.");
+  }
+  if (absl::GetFlag(FLAGS_telegram_chat_id).empty()) {
+    throw std::runtime_error("--telegram_chat_id flag is required.");
+  }
+}
+
 void send_notification(std::string_view message) {
+  check_telegram_flags();
+
   std::string token = absl::GetFlag(FLAGS_telegram_bot_token);
   std::string chat_id = absl::GetFlag(FLAGS_telegram_chat_id);
   std::string host = absl::GetFlag(FLAGS_telegram_host);
-
-  if (token.empty() || chat_id.empty()) {
-    throw std::runtime_error(
-        "Telegram configuration (bot_token/chat_id) missing.");
-  }
 
   try {
     const std::string target = std::format("/bot{}/sendMessage", token);

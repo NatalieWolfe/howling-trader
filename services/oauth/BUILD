@@ -246,8 +246,10 @@ cc_binary(
     srcs = ["server.cc"],
     deps = [
         ":auth_service",
+        ":notification",
         ":oauth_exchanger_impl",
         ":oauth_http_service",
+        "//api/schwab:configuration",
         "//api/schwab:connect",
         "//environment:init",
         "//net:connect",
@@ -257,6 +259,7 @@ cc_binary(
         "//services/registry",
         "//services/security:certificate_bundle",
         "//services/security:register",
+        "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/log",
         "@grpc//:grpc++",
     ],
