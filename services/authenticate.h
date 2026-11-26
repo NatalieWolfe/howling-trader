@@ -1,12 +1,15 @@
 #pragma once
 
 #include <chrono>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "api/schwab/oauth.h"
 #include "services/database.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
+#include "signaling/cancellation.h"
 
 namespace howling {
 
@@ -41,10 +44,13 @@ public:
 
   ~token_manager();
 
-  // Blocks until a valid token is available or a timeout occurs.
+  // Blocks until a valid token is available, cancellation is requested, or a
+  // timeout occurs.
   std::string get_bearer_token(
       bool clear_cache = false,
-      std::chrono::milliseconds timeout = std::chrono::minutes(5));
+      std::chrono::milliseconds timeout = std::chrono::minutes(5),
+      std::optional<std::reference_wrapper<const cancellation>> cancel =
+          std::nullopt);
 
   void start_pump();
 

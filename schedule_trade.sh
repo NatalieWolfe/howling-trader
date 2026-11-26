@@ -144,7 +144,7 @@ set +e
     --database=postgres \
     --bao_token=root \
     --logging_always_flush
-) 2>&1 | tee "$RAW_LOG"
+) 2>&1 | tee -i "$RAW_LOG"
 EXEC_EXIT_CODE=${PIPESTATUS[0]}
 set -e
 
