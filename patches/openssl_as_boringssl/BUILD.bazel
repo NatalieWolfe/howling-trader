@@ -1,0 +1,11 @@
+alias(
+    name = "crypto",
+    actual = "@boringssl//:crypto",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "ssl",
+    actual = "@boringssl//:ssl",
+    visibility = ["//visibility:public"],
+)

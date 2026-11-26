@@ -1,0 +1,7 @@
+module(
+    name = "openssl",
+    version = "0.20261105.0",
+    compatibility_level = 2,
+)
+
+bazel_dep(name = "boringssl", version = "0.20261105.0")
