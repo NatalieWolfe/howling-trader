@@ -2,6 +2,11 @@ load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//infrastructure:containers.bzl", "package_binary")
 
+exports_files(
+    ["run_postgres_database_test.sh"],
+    visibility = ["//services/db:__subpackages__"],
+)
+
 cc_library(
     name = "database_test_interface",
     testonly = True,
@@ -24,6 +29,7 @@ cc_library(
     name = "environment",
     srcs = ["environment.cc"],
     hdrs = ["environment.h"],
+    visibility = ["//visibility:public"],
     deps = ["@abseil-cpp//absl/flags:flag"],
 )
 
@@ -31,6 +37,7 @@ cc_library(
     name = "postgres_database",
     srcs = ["postgres_database.cc"],
     hdrs = ["postgres_database.h"],
+    visibility = ["//services/db:__subpackages__"],
     deps = [
         ":environment",
         "//data:candle_cc_proto",
@@ -39,6 +46,9 @@ cc_library(
         "//data:trade_cc_proto",
         "//services:database",
         "//services:security",
+        "//services/db/pg:connection",
+        "//services/db/pg:query",
+        "//services/db/pg:types",
         "//services/db/schema",
         "//services/db/schema:auth_token",
         "//time:conversion",
@@ -88,6 +98,7 @@ cc_library(
     hdrs = ["register.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":environment",
         ":postgres_database",
         ":sqlite_database",
         "//services:database",

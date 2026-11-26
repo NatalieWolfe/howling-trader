@@ -15,16 +15,11 @@
 #include "google/protobuf/util/time_util.h"
 #include "libpq/libpq-fe.h"
 #include "services/db/database_test_interface.h"
+#include "services/db/environment.h"
 #include "services/mock_security.h"
 #include "time/conversion.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
-ABSL_FLAG(std::string, pg_host, "localhost", "Hostname for Postgres.");
-ABSL_FLAG(std::string, pg_port, "5432", "Port for Postgres.");
-ABSL_FLAG(std::string, pg_user, "postgres", "User for Postgres.");
-ABSL_FLAG(std::string, pg_password, "password", "Password for Postgres.");
-ABSL_FLAG(std::string, pg_database, "howling", "Database for Postgres.");
 
 namespace howling {
 namespace {
@@ -38,12 +33,13 @@ protected:
   void SetUp() override {
     postgres_options options{
         .host = absl::GetFlag(FLAGS_pg_host),
-        .port = absl::GetFlag(FLAGS_pg_port),
+        .port = std::to_string(absl::GetFlag(FLAGS_pg_port)),
         .user = absl::GetFlag(FLAGS_pg_user),
         .password = absl::GetFlag(FLAGS_pg_password),
         .dbname = absl::GetFlag(FLAGS_pg_database),
         .sslmode = "disable"};
-    _db = std::make_unique<postgres_database>(_mock_security, options);
+    _db =
+        std::make_unique<postgres_database>(_mock_security, std::move(options));
     DatabaseTest::SetUp();
   }
 
