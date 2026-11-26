@@ -23,7 +23,8 @@ int SchemaVersion;
 ## Variable Names
 Use full words for variable names. Avoid abbreviations and single-letter
 variable names except for well-established patterns (e.g. `itr`, `i`, `j`, `k`
-for loop iterators). Use a leading underscore `_` for private member variables.
+for loop iterators). Use a leading underscore `_` for all private members,
+including private member variables, functions, structs, and classes.
 
 **Good:**
 ```cpp
@@ -32,6 +33,8 @@ for (int i = 0; i < 10; ++i);
 auto itr = buffer.begin();
 class my_class {
  private:
+  struct _entry {};
+  void _helper();
   int _member_variable;
 };
 ```
@@ -42,6 +45,8 @@ int r;
 auto it = buffer.begin();
 class my_class {
  private:
+  struct entry {};
+  void helper();
   int member_variable;
 };
 ```
@@ -276,4 +281,27 @@ if (!callback) {
 **Bad:**
 ```cpp
 if (!callback) return {};
+```
+
+## Parameter Ordering
+When a function or constructor accepts an `options` parameter, place it as the
+last parameter. Only lambdas (callbacks) may be specified after `options`.
+
+**Good:**
+```cpp
+void start_stream(
+    const std::string& symbol, const stream_options& options = {});
+void fetch_candles(
+    const std::string& symbol,
+    const fetch_options& options,
+    std::function<void(const candle&)> callback);
+```
+**Bad:**
+```cpp
+void start_stream(
+    const stream_options& options, const std::string& symbol);
+void fetch_candles(
+    const fetch_options& options,
+    const std::string& symbol,
+    std::function<void(const candle&)> callback);
 ```
