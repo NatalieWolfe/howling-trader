@@ -1,6 +1,6 @@
 load("@protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
 load("@protobuf//bazel:proto_library.bzl", "proto_library")
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 
 filegroup(
     name = "history",
@@ -27,7 +27,20 @@ cc_library(
     deps = [
         ":candle_cc_proto",
         "//containers:vector",
+        "//time:conversion",
+        "//time:market_time",
         "@abseil-cpp//absl/flags:flag",
+    ],
+)
+
+cc_test(
+    name = "aggregate_test",
+    srcs = ["aggregate_test.cc"],
+    deps = [
+        ":aggregate",
+        ":candle_cc_proto",
+        "//time:conversion",
+        "@googletest//:gtest_main",
     ],
 )
 
@@ -56,6 +69,35 @@ cc_proto_library(
     name = "analyzer_cc_proto",
     visibility = ["//visibility:public"],
     deps = [":analyzer_proto"],
+)
+
+cc_library(
+    name = "analyzer_utils",
+    srcs = ["analyzer_utils.cc"],
+    hdrs = ["analyzer_utils.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":aggregate",
+        ":analyzer_cc_proto",
+        ":stock_cc_proto",
+        "//containers:vector",
+        "//trading:trading_state",
+    ],
+)
+
+cc_test(
+    name = "analyzer_utils_test",
+    srcs = ["analyzer_utils_test.cc"],
+    deps = [
+        ":aggregate",
+        ":analyzer_cc_proto",
+        ":analyzer_utils",
+        ":candle_cc_proto",
+        ":stock_cc_proto",
+        "//containers:vector",
+        "//trading:trading_state",
+        "@googletest//:gtest_main",
+    ],
 )
 
 proto_library(
@@ -154,5 +196,21 @@ cc_library(
         "//strings:format",
         "@abseil-cpp//absl/strings",
         "@protobuf",
+    ],
+)
+
+cc_library(
+    name = "wilder_rma",
+    srcs = ["wilder_rma.cc"],
+    hdrs = ["wilder_rma.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "wilder_rma_test",
+    srcs = ["wilder_rma_test.cc"],
+    deps = [
+        ":wilder_rma",
+        "@googletest//:gtest_main",
     ],
 )
