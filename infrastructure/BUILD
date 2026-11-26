@@ -46,6 +46,7 @@ _SERVICE_IMAGES = [
     "//services/db:schema_upgrade_image_load",
     "//services/oauth:auth_refresh_image_load",
     "//services/oauth:server_image_load",
+    "//services/reader_mcp:server_image_load",
     "//services/simulation:server_image_load",
 ]
 
@@ -69,6 +70,7 @@ multirun(
         "-d",
         "gateway",
         "grafana",
+        "reader_mcp",
         "simulation_service",
     ],
     commands = [

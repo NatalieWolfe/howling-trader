@@ -169,11 +169,19 @@ AGY_FOLLOWUP_PROMPT="Now complete the post-execution analysis based on the log \
 you just read:
 1. Check the logs of any relevant Docker services (e.g. auth_service / docker \
 compose services).
-2. Produce a clear summary report of the day's trading activities, metrics, \
-and service behavior.
-3. If any errors, warnings, or anomalies occurred, investigate the codebase \
-and logs to identify the root cause and propose a fix.
-4. IMPORTANT: Do not take any actions, modify any files, or restart any \
+2. Query the howling-reader-mcp server to gather structured database telemetry \
+for the session (use get_trading_summary, get_trades, get_candles, \
+get_market_data, and howling://symbols). Scope get_candles and get_market_data \
+queries to the session's time window and traded symbols, using bucket_seconds \
+for candles as needed to keep responses focused. If howling-reader-mcp is \
+unavailable or unreachable, note that in the report and continue with \
+log-based analysis.
+3. Produce a clear summary report of the day's trading activities, metrics, \
+and service behavior, incorporating the database telemetry when available.
+4. If any errors, warnings, or anomalies occurred, investigate the codebase, \
+logs, and database records (candles, quotes, trades) to identify the root \
+cause and propose a fix.
+5. IMPORTANT: Do not take any actions, modify any files, or restart any \
 services. Only perform read-only inspection and produce the report for me to \
 read."
 
