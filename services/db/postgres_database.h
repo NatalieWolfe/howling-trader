@@ -9,19 +9,11 @@
 #include "data/market.pb.h"
 #include "data/stock.pb.h"
 #include "services/database.h"
+#include "services/db/pg/connection.h"
 #include "services/db/schema/auth_token.h"
 #include "services/security.h"
 
 namespace howling {
-
-struct postgres_options {
-  std::string_view host;
-  std::string_view port;
-  std::string_view user;
-  std::string_view password;
-  std::string_view dbname;
-  std::string_view sslmode;
-};
 
 class postgres_database : public database {
 public:
