@@ -25,13 +25,6 @@ message Analyzer {
   message Bollinger {}
   message Howling {}
   message Macd {
-    enum Period {
-      option deprecated = true;
-      PERIOD_UNSPECIFIED = 0;
-      ONE = 1;
-      FIVE = 2;
-      TWENTY = 3;
-    }
     Analyzer.Period period = 1;
     double crossover_scaler = 2;
   }
