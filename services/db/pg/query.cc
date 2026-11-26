@@ -79,6 +79,10 @@ query::query(prepared_tag_t, PGconn* conn, std::string name)
 query::query(PGconn& conn, std::string_view query_str)
     : _conn{&conn}, _is_prepared{false}, _name_or_sql{query_str} {}
 
+query::query(PGconn& conn, std::string_view query_str, param_binder params)
+    : _conn{&conn}, _is_prepared{false}, _name_or_sql{query_str},
+      _params{std::move(params)} {}
+
 query::~query() {
   _clear_result();
 }

@@ -2,6 +2,11 @@ load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//infrastructure:containers.bzl", "package_binary")
 
+exports_files(
+    ["run_postgres_database_test.sh"],
+    visibility = ["//services/db:__subpackages__"],
+)
+
 cc_library(
     name = "database_test_interface",
     testonly = True,
@@ -32,6 +37,7 @@ cc_library(
     name = "postgres_database",
     srcs = ["postgres_database.cc"],
     hdrs = ["postgres_database.h"],
+    visibility = ["//services/db:__subpackages__"],
     deps = [
         ":environment",
         "//data:candle_cc_proto",

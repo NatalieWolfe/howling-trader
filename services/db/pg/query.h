@@ -25,6 +25,12 @@ namespace howling::pg {
  */
 class param_binder {
 public:
+  param_binder() = default;
+  param_binder(const param_binder&) = delete;
+  param_binder& operator=(const param_binder&) = delete;
+  param_binder(param_binder&&) noexcept = default;
+  param_binder& operator=(param_binder&&) noexcept = default;
+
   /**
    * @brief Clears all bound parameters and internal value buffers.
    */
@@ -198,6 +204,12 @@ public:
    * @brief Constructs a one-shot parameterized query executed via PQexecParams.
    */
   query(PGconn& conn, std::string_view query_str);
+
+  /**
+   * @brief Constructs a one-shot parameterized query with pre-bound parameters
+   * executed via PQexecParams.
+   */
+  query(PGconn& conn, std::string_view query_str, param_binder params);
 
   ~query();
 
