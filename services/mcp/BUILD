@@ -25,6 +25,20 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "http_server",
+    srcs = ["http_server.cc"],
+    hdrs = ["http_server.h"],
+    deps = [
+        ":dispatcher",
+        "//strings:json",
+        "@abseil-cpp//absl/log",
+        "@boost.asio",
+        "@boost.beast",
+        "@jsoncpp",
+    ],
+)
+
 cc_test(
     name = "dispatcher_test",
     srcs = ["dispatcher_test.cc"],
@@ -33,6 +47,22 @@ cc_test(
         ":resource_handler",
         ":tool_handler",
         "//strings:json",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+    ],
+)
+
+cc_test(
+    name = "http_server_test",
+    srcs = ["http_server_test.cc"],
+    deps = [
+        ":dispatcher",
+        ":http_server",
+        ":resource_handler",
+        ":tool_handler",
+        "//strings:json",
+        "@boost.asio",
+        "@boost.beast",
         "@googletest//:gtest_main",
         "@jsoncpp",
     ],
