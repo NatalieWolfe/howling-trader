@@ -3,6 +3,39 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
 package(default_visibility = ["//visibility:public"])
 
 cc_library(
+    name = "atr",
+    srcs = ["atr.cc"],
+    hdrs = ["atr.h"],
+    deps = [
+        "//containers:circular_buffer",
+        "//containers:vector",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_utils",
+        "//data:candle_cc_proto",
+        "//data:stock_cc_proto",
+        "//data:wilder_rma",
+        "//trading:trading_state",
+    ],
+)
+
+cc_test(
+    name = "atr_test",
+    srcs = ["atr_test.cc"],
+    deps = [
+        ":atr",
+        "//data:aggregate",
+        "//data:analyzer",
+        "//data:analyzer_cc_proto",
+        "//data:candle_cc_proto",
+        "//data:load_analyzer",
+        "//data:stock_cc_proto",
+        "//trading:trading_state",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_library(
     name = "bollinger",
     srcs = ["bollinger.cc"],
     hdrs = ["bollinger.h"],
