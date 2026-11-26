@@ -60,6 +60,13 @@ TEST(AnalyzerUtilsTest, WindowSizeForHandlesEmptyAndPopulatedSeries) {
   EXPECT_EQ(window_size_for(aggr.twenty_minute), 7);
 }
 
+TEST(AnalyzerUtilsTest, ExpectedWindowSizeForMapsKnownPeriodsAndRejectsNull) {
+  EXPECT_EQ(expected_window_size_for(&aggregations::one_minute), 1);
+  EXPECT_EQ(expected_window_size_for(&aggregations::five_minute), 5);
+  EXPECT_EQ(expected_window_size_for(&aggregations::twenty_minute), 20);
+  EXPECT_THROW((void)expected_window_size_for(nullptr), std::invalid_argument);
+}
+
 TEST(AnalyzerUtilsTest, IsWindowStepBoundaryChecksMinuteAlignment) {
   trading_state state{};
   // 14:33 UTC in EST is 09:33 ET (minute = 33).
