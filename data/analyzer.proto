@@ -3,6 +3,13 @@ syntax = "proto3";
 package howling;
 
 message Analyzer {
+  enum Period {
+    PERIOD_UNSPECIFIED = 0;
+    ONE = 1;
+    FIVE = 2;
+    TWENTY = 3;
+  }
+
   enum Type {
     TYPE_UNSPECIFIED = 0;
     NOOP = 1;
@@ -19,6 +26,7 @@ message Analyzer {
   message Howling {}
   message Macd {
     enum Period {
+      option deprecated = true;
       PERIOD_UNSPECIFIED = 0;
       ONE = 1;
       FIVE = 2;

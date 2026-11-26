@@ -71,6 +71,35 @@ cc_proto_library(
     deps = [":analyzer_proto"],
 )
 
+cc_library(
+    name = "analyzer_utils",
+    srcs = ["analyzer_utils.cc"],
+    hdrs = ["analyzer_utils.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":aggregate",
+        ":analyzer_cc_proto",
+        ":stock_cc_proto",
+        "//containers:vector",
+        "//trading:trading_state",
+    ],
+)
+
+cc_test(
+    name = "analyzer_utils_test",
+    srcs = ["analyzer_utils_test.cc"],
+    deps = [
+        ":aggregate",
+        ":analyzer_cc_proto",
+        ":analyzer_utils",
+        ":candle_cc_proto",
+        ":stock_cc_proto",
+        "//containers:vector",
+        "//trading:trading_state",
+        "@googletest//:gtest_main",
+    ],
+)
+
 proto_library(
     name = "candle_proto",
     srcs = ["candle.proto"],
@@ -167,5 +196,21 @@ cc_library(
         "//strings:format",
         "@abseil-cpp//absl/strings",
         "@protobuf",
+    ],
+)
+
+cc_library(
+    name = "wilder_rma",
+    srcs = ["wilder_rma.cc"],
+    hdrs = ["wilder_rma.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+    name = "wilder_rma_test",
+    srcs = ["wilder_rma_test.cc"],
+    deps = [
+        ":wilder_rma",
+        "@googletest//:gtest_main",
     ],
 )
