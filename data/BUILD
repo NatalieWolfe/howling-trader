@@ -129,6 +129,7 @@ cc_library(
         ":stock_cc_proto",
         "//data/analyzers:atr",
         "//data/analyzers:bollinger",
+        "//data/analyzers:ema_ribbon",
         "//data/analyzers:howling",
         "//data/analyzers:macd",
         "//data/analyzers:market_hours",

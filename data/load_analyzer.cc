@@ -3,6 +3,7 @@
 #include <format>
 #include <memory>
 #include <string_view>
+#include <utility>
 
 #include "data/aggregate.h"
 #include "data/analyzer.h"
@@ -10,6 +11,7 @@
 #include "data/analyzer_utils.h"
 #include "data/analyzers/atr.h"
 #include "data/analyzers/bollinger.h"
+#include "data/analyzers/ema_ribbon.h"
 #include "data/analyzers/howling.h"
 #include "data/analyzers/macd.h"
 #include "data/analyzers/market_hours.h"
@@ -36,6 +38,15 @@ load_analyzer(std::string_view name, const stock::History& history) {
     return std::make_unique<atr_analyzer>(&aggregations::twenty_minute);
   }
   if (name == "bollinger") return std::make_unique<bollinger_analyzer>();
+  if (name == "ema_ribbon" || name == "ema_ribbon1") {
+    return std::make_unique<ema_ribbon_analyzer>(&aggregations::one_minute);
+  }
+  if (name == "ema_ribbon5") {
+    return std::make_unique<ema_ribbon_analyzer>(&aggregations::five_minute);
+  }
+  if (name == "ema_ribbon20") {
+    return std::make_unique<ema_ribbon_analyzer>(&aggregations::twenty_minute);
+  }
   if (name == "howling") return std::make_unique<howling_analyzer>();
   if (name == "macd" || name == "macd1") {
     return std::make_unique<macd_crossover_analyzer>(&aggregations::one_minute);
@@ -91,6 +102,22 @@ std::unique_ptr<analyzer> load_analyzer(const Analyzer& opts) {
     }
     case Analyzer::BOLLINGER: {
       return std::make_unique<bollinger_analyzer>();
+    }
+    case Analyzer::EMA_RIBBON: {
+      const Analyzer::EmaRibbon& config = opts.ema_ribbon();
+      ema_ribbon_analyzer::options ribbon_options;
+      if (!config.periods().empty()) {
+        ribbon_options.periods.assign(
+            config.periods().begin(), config.periods().end());
+      }
+      if (config.min_spread_ratio() != 0.0) {
+        ribbon_options.min_spread_ratio = config.min_spread_ratio();
+      }
+      if (config.confidence_scaler() != 0.0) {
+        ribbon_options.confidence_scaler = config.confidence_scaler();
+      }
+      return std::make_unique<ema_ribbon_analyzer>(
+          period_member(config.candle_period()), std::move(ribbon_options));
     }
     case Analyzer::HOWLING: {
       return std::make_unique<howling_analyzer>();
