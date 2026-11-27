@@ -1,9 +1,12 @@
 #include "services/authenticate.h"
 
 #include <chrono>
+#include <csignal>
 #include <future>
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <thread>
 
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
@@ -17,6 +20,8 @@
 #include "services/oauth/mock_auth_service.h"
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 #include "services/oauth/proto/auth_service.pb.h"
+#include "signaling/cancellation.h"
+#include "signaling/signal_handler.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -228,6 +233,58 @@ TEST_F(AuthenticateTest, TransientErrorDoesNotTriggerImmediateRequestLogin) {
 
   _manager->start_pump();
   EXPECT_EQ(_manager->get_bearer_token(), "access_token_1");
+}
+
+TEST_F(AuthenticateTest, AbortsImmediatelyWhenAlreadyCancelled) {
+  cancellation cancel;
+  cancel.cancel();
+
+  const auto start = std::chrono::steady_clock::now();
+  EXPECT_THROW(
+      _manager->get_bearer_token(
+          /*clear_cache=*/false, std::chrono::seconds(10), cancel),
+      std::runtime_error);
+  const auto elapsed = std::chrono::steady_clock::now() - start;
+  EXPECT_LT(elapsed, std::chrono::seconds(1));
+}
+
+TEST_F(AuthenticateTest, AbortsPromptlyWhenCancelledWhileWaiting) {
+  cancellation cancel;
+
+  std::jthread canceller([&cancel]() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    cancel.cancel();
+  });
+
+  const auto start = std::chrono::steady_clock::now();
+  EXPECT_THROW(
+      _manager->get_bearer_token(
+          /*clear_cache=*/false, std::chrono::seconds(10), cancel),
+      std::runtime_error);
+  const auto elapsed = std::chrono::steady_clock::now() - start;
+  EXPECT_LT(elapsed, std::chrono::seconds(1));
+}
+
+TEST_F(AuthenticateTest, AbortsPromptlyOnShutdownSignal) {
+  if (!signal_handler::is_initialized()) { signal_handler::initialize(); }
+  signal_handler::instance().reset_signal();
+
+  struct signal_reset_guard {
+    ~signal_reset_guard() { signal_handler::instance().reset_signal(); }
+  } guard;
+
+  std::jthread signaller([]() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::raise(SIGINT);
+  });
+
+  const auto start = std::chrono::steady_clock::now();
+  EXPECT_THROW(
+      _manager->get_bearer_token(
+          /*clear_cache=*/false, std::chrono::seconds(10)),
+      std::runtime_error);
+  const auto elapsed = std::chrono::steady_clock::now() - start;
+  EXPECT_LT(elapsed, std::chrono::seconds(1));
 }
 
 } // namespace

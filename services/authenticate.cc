@@ -1,10 +1,13 @@
 #include "services/authenticate.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
+#include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -27,6 +30,8 @@
 #include "services/oauth/proto/auth_service.grpc.pb.h"
 #include "services/oauth/proto/auth_service.pb.h"
 #include "services/registry/registry.h"
+#include "signaling/cancellation.h"
+#include "signaling/signal_handler.h"
 #include "time/conversion.h"
 
 ABSL_FLAG(
@@ -48,8 +53,16 @@ using ::std::chrono::system_clock;
 // Schwab tokens usually last 30 minutes. Cache for 25 to be safe.
 constexpr std::string_view SERVICE_NAME = "schwab";
 constexpr double BACKOFF_RATE = 1.1;
+constexpr std::chrono::milliseconds CANCEL_POLL_INTERVAL{100};
 
 static token_manager* alternate_singleton = nullptr;
+
+bool is_cancelled(
+    std::optional<std::reference_wrapper<const cancellation>> cancel) noexcept {
+  if (cancel) return cancel->get().is_cancelled();
+  return signal_handler::is_initialized() &&
+      signal_handler::instance().has_received_signal();
+}
 
 auto auth_token_cache_ttl() {
   return to_std_chrono(absl::GetFlag(FLAGS_auth_token_cache_ttl));
@@ -100,15 +113,55 @@ public:
     if (!_refresher) _refresher = std::make_unique<real_token_refresher>();
   }
 
-  ~implementation() { _continue_pumping = false; }
+  ~implementation() {
+    {
+      std::lock_guard lock{_pump_mutex};
+      _continue_pumping = false;
+    }
+    _pump_cv.notify_all();
+  }
 
   std::string check_cache(bool clear_cache);
 
   template <typename Rep, typename Period>
-  std::string wait_for(std::chrono::duration<Rep, Period> deadline) {
+  std::string wait_for(
+      std::chrono::duration<Rep, Period> timeout,
+      std::optional<std::reference_wrapper<const cancellation>> cancel =
+          std::nullopt) {
+    if (is_cancelled(cancel)) return {};
+
+    cancellation::callback_registration cancel_reg;
+    if (cancel) {
+      cancel_reg = cancel->get().on_cancel([this]() {
+        std::lock_guard lock{_mutex};
+        _token_refreshed.notify_all();
+      });
+    }
+
+    const auto now = std::chrono::steady_clock::now();
+    const auto steady_timeout =
+        std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+            timeout);
+    const auto max_remaining =
+        std::chrono::steady_clock::time_point::max() - now;
+    const auto deadline = steady_timeout >= max_remaining
+        ? std::chrono::steady_clock::time_point::max()
+        : now + steady_timeout;
+
     std::unique_lock lock{_mutex};
-    _token_refreshed.wait_for(
-        lock, deadline, [&]() { return !_cached_token.empty(); });
+    while (_cached_token.empty() && !is_cancelled(cancel)) {
+      const auto current = std::chrono::steady_clock::now();
+      if (current >= deadline) break;
+      const auto remaining = deadline - current;
+      const auto slice = std::min(
+          remaining,
+          std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+              CANCEL_POLL_INTERVAL));
+      _token_refreshed.wait_for(lock, slice, [&]() {
+        return !_cached_token.empty() || is_cancelled(cancel);
+      });
+    }
+    if (is_cancelled(cancel)) return {};
     return _cached_token;
   }
 
@@ -125,13 +178,15 @@ private:
   std::unique_ptr<AuthService::StubInterface> _auth_stub;
   database& _db;
   std::unique_ptr<token_refresher> _refresher;
-  std::atomic_bool _continue_pumping = true;
-  std::jthread _pump_thread;
+  std::mutex _pump_mutex;
+  std::condition_variable _pump_cv;
+  bool _continue_pumping = true;
   std::mutex _mutex;
   std::string _cached_token;
   std::string _cached_refresh_token;
   system_clock::time_point _cache_expiration;
   std::condition_variable _token_refreshed;
+  std::jthread _pump_thread;
 };
 
 std::string token_manager::implementation::check_cache(bool clear_cache) {
@@ -147,11 +202,21 @@ std::string token_manager::implementation::check_cache(bool clear_cache) {
 
 void token_manager::implementation::_start_pump() {
   _pump_thread = std::jthread{[this]() {
-    while (_continue_pumping) {
+    while (true) {
+      {
+        std::lock_guard lock{_pump_mutex};
+        if (!_continue_pumping) break;
+      }
       if (system_clock::now() > _cache_expiration) _pump();
-      std::this_thread::sleep_for(
-          auth_token_pump_period() *
-          std::pow(BACKOFF_RATE, _pump_failure_count));
+      const auto sleep_duration = auth_token_pump_period() *
+          std::pow(BACKOFF_RATE, _pump_failure_count);
+      std::unique_lock lock{_pump_mutex};
+      _pump_cv.wait_for(
+          lock,
+          std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+              sleep_duration),
+          [this]() { return !_continue_pumping; });
+      if (!_continue_pumping) break;
     }
   }};
 }
@@ -256,12 +321,22 @@ token_manager::token_manager(
 token_manager::~token_manager() = default;
 
 std::string token_manager::get_bearer_token(
-    bool clear_cache, std::chrono::milliseconds timeout) {
+    bool clear_cache,
+    std::chrono::milliseconds timeout,
+    std::optional<std::reference_wrapper<const cancellation>> cancel) {
+  if (is_cancelled(cancel)) {
+    throw std::runtime_error("Cancelled while waiting for bearer token.");
+  }
+
   std::string cache_token = _implementation->check_cache(clear_cache);
   if (!cache_token.empty()) return cache_token;
 
-  cache_token = _implementation->wait_for(timeout);
+  cache_token = _implementation->wait_for(timeout, cancel);
   if (!cache_token.empty()) return cache_token;
+
+  if (is_cancelled(cancel)) {
+    throw std::runtime_error("Cancelled while waiting for bearer token.");
+  }
 
   throw std::runtime_error("Timed out waiting for bearer token.");
 }

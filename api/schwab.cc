@@ -207,11 +207,12 @@ net::url make_url(
       .target = absl::StrCat(url.path(), "?", url.query())};
 }
 
-Json::Value get_streamer_info() {
+Json::Value get_streamer_info(const cancellation& cancel) {
   net::url user_pref_url = make_net_url("/trader/v1/userPreference");
   std::unique_ptr<net::connection> api_conn =
       net::make_connection(user_pref_url);
-  std::string bearer_token = token_manager::get_instance().get_bearer_token();
+  std::string bearer_token = token_manager::get_instance().get_bearer_token(
+      /*clear_cache=*/false, std::chrono::minutes(5), cancel);
   Json::Value root = send_request(api_conn, bearer_token, user_pref_url);
   Json::Value streamer_info = Json::nullValue;
 
@@ -224,8 +225,8 @@ Json::Value get_streamer_info() {
   return streamer_info;
 }
 
-streamer_session_info fetch_default_session_info() {
-  Json::Value streamer_info = get_streamer_info();
+streamer_session_info fetch_default_session_info(const cancellation& cancel) {
+  Json::Value streamer_info = get_streamer_info(cancel);
   urls::url stream_url{streamer_info["streamerSocketUrl"].asString()};
   return streamer_session_info{
       .socket_url =
@@ -236,7 +237,8 @@ streamer_session_info fetch_default_session_info() {
       .correlation_id = streamer_info["schwabClientCorrelId"].asString(),
       .channel = streamer_info["schwabClientChannel"].asString(),
       .function_id = streamer_info["schwabClientFunctionId"].asString(),
-      .bearer_token = token_manager::get_instance().get_bearer_token(),
+      .bearer_token = token_manager::get_instance().get_bearer_token(
+          /*clear_cache=*/false, std::chrono::minutes(5), cancel),
   };
 }
 
@@ -842,8 +844,8 @@ void stream::_process_message() {
 // MARK: stream login
 
 void stream::_login() {
-  streamer_session_info session =
-      fetch_streamer_session_info(fetch_default_session_info);
+  streamer_session_info session = fetch_streamer_session_info(
+      [this]() { return fetch_default_session_info(_cancellation); });
   _customer_id = std::move(session.customer_id);
   _correlation_id = std::move(session.correlation_id);
 
