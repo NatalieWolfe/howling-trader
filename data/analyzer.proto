@@ -22,6 +22,7 @@ message Analyzer {
     NOOP = 1;
     PIVOT_POINTS = 12;
     PROFIT = 6;
+    RSI = 10;
     VWAP = 9;
     ZIG_ZAG = 7;
   }
@@ -113,6 +114,18 @@ message Analyzer {
     double minor_confidence = 4;
   }
   message Profit {}
+  message Rsi {
+    // Optional. Wilder RMA smoothing period in bars. Default 14.
+    int32 period = 1;
+    // Optional. RSI level below which a BUY/HOLD signal is emitted.
+    // Default 30.0.
+    double oversold_threshold = 2;
+    // Optional. RSI level above which a SELL/HOLD signal is emitted.
+    // Default 70.0.
+    double overbought_threshold = 3;
+    // Required. Aggregation candle timeframe to evaluate RSI on.
+    Period candle_period = 4;
+  }
   message Vwap {
     enum Mode {
       MODE_UNSPECIFIED = 0;
@@ -146,6 +159,7 @@ message Analyzer {
     Noop noop = 1;
     PivotPoints pivot_points = 12;
     Profit profit = 6;
+    Rsi rsi = 10;
     Vwap vwap = 9;
     ZigZag zig_zag = 7;
   }
