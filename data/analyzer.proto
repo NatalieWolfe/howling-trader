@@ -15,6 +15,7 @@ message Analyzer {
     ATR = 8;
     BOLLINGER = 2;
     EMA_RIBBON = 11;
+    GAP_MOMENTUM = 13;
     HOWLING = 3;
     MACD = 4;
     MARKET_HOURS = 5;
@@ -52,6 +53,29 @@ message Analyzer {
     double confidence_scaler = 3;
     // Required. Candle aggregation period used to feed the EMA ribbon.
     Period candle_period = 4;
+  }
+  message GapMomentum {
+    // Optional. Minimum overnight gap percentage for Gap and Go momentum
+    // signals. Defaults to 0.02.
+    double momentum_gap_threshold = 1;
+    // Optional. Minimum overnight gap percentage for Gap Fill mean-reversion
+    // signals. Defaults to 0.03.
+    double fill_gap_threshold = 2;
+    // Optional. Minimum relative opening volume required for Gap and Go
+    // signals. Defaults to 1.5.
+    double high_relative_volume = 3;
+    // Optional. Maximum relative opening volume for Gap Fill signals.
+    // Defaults to 0.8.
+    double low_relative_volume = 4;
+    // Optional. Duration in minutes of the initial opening range window.
+    // Defaults to 5.
+    int32 opening_window_minutes = 5;
+    // Optional. Duration in minutes after market open during which signals are
+    // active. Defaults to 90.
+    int32 active_window_minutes = 6;
+    // Optional. Number of prior trading days used to compute the average
+    // opening-window volume baseline. Defaults to 10.
+    int32 volume_baseline_days = 7;
   }
   message Howling {}
   message Macd {
@@ -115,6 +139,7 @@ message Analyzer {
     Atr atr = 8;
     Bollinger bollinger = 2;
     EmaRibbon ema_ribbon = 11;
+    GapMomentum gap_momentum = 13;
     Howling howling = 3;
     Macd macd = 4;
     MarketHours market_hours = 5;

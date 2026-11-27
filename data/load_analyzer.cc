@@ -12,6 +12,7 @@
 #include "data/analyzers/atr.h"
 #include "data/analyzers/bollinger.h"
 #include "data/analyzers/ema_ribbon.h"
+#include "data/analyzers/gap_momentum.h"
 #include "data/analyzers/howling.h"
 #include "data/analyzers/macd.h"
 #include "data/analyzers/market_hours.h"
@@ -48,6 +49,7 @@ load_analyzer(std::string_view name, const stock::History& history) {
   if (name == "ema_ribbon20") {
     return std::make_unique<ema_ribbon_analyzer>(&aggregations::twenty_minute);
   }
+  if (name == "gap_momentum") return std::make_unique<gap_momentum_analyzer>();
   if (name == "howling") return std::make_unique<howling_analyzer>();
   if (name == "macd" || name == "macd1") {
     return std::make_unique<macd_crossover_analyzer>(&aggregations::one_minute);
@@ -120,6 +122,32 @@ std::unique_ptr<analyzer> load_analyzer(const Analyzer& opts) {
       }
       return std::make_unique<ema_ribbon_analyzer>(
           period_member(config.candle_period()), std::move(ribbon_options));
+    }
+    case Analyzer::GAP_MOMENTUM: {
+      const Analyzer::GapMomentum& config = opts.gap_momentum();
+      gap_momentum_analyzer::options options;
+      if (config.momentum_gap_threshold() != 0.0) {
+        options.momentum_gap_threshold = config.momentum_gap_threshold();
+      }
+      if (config.fill_gap_threshold() != 0.0) {
+        options.fill_gap_threshold = config.fill_gap_threshold();
+      }
+      if (config.high_relative_volume() != 0.0) {
+        options.high_relative_volume = config.high_relative_volume();
+      }
+      if (config.low_relative_volume() != 0.0) {
+        options.low_relative_volume = config.low_relative_volume();
+      }
+      if (config.opening_window_minutes() != 0) {
+        options.opening_window_minutes = config.opening_window_minutes();
+      }
+      if (config.active_window_minutes() != 0) {
+        options.active_window_minutes = config.active_window_minutes();
+      }
+      if (config.volume_baseline_days() != 0) {
+        options.volume_baseline_days = config.volume_baseline_days();
+      }
+      return std::make_unique<gap_momentum_analyzer>(options);
     }
     case Analyzer::HOWLING: {
       return std::make_unique<howling_analyzer>();

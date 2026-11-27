@@ -130,6 +130,7 @@ cc_library(
         "//data/analyzers:atr",
         "//data/analyzers:bollinger",
         "//data/analyzers:ema_ribbon",
+        "//data/analyzers:gap_momentum",
         "//data/analyzers:howling",
         "//data/analyzers:macd",
         "//data/analyzers:market_hours",
