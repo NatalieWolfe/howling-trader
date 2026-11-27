@@ -24,6 +24,7 @@ cc_library(
     name = "environment",
     srcs = ["environment.cc"],
     hdrs = ["environment.h"],
+    visibility = ["//visibility:public"],
     deps = ["@abseil-cpp//absl/flags:flag"],
 )
 
@@ -39,6 +40,9 @@ cc_library(
         "//data:trade_cc_proto",
         "//services:database",
         "//services:security",
+        "//services/db/pg:connection",
+        "//services/db/pg:query",
+        "//services/db/pg:types",
         "//services/db/schema",
         "//services/db/schema:auth_token",
         "//time:conversion",
@@ -88,6 +92,7 @@ cc_library(
     hdrs = ["register.h"],
     visibility = ["//visibility:public"],
     deps = [
+        ":environment",
         ":postgres_database",
         ":sqlite_database",
         "//services:database",

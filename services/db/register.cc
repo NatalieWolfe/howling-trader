@@ -6,6 +6,7 @@
 #include "absl/flags/flag.h"
 #include "absl/log/log.h"
 #include "services/database.h"
+#include "services/db/environment.h"
 #include "services/db/postgres_database.h"
 #include "services/db/sqlite_database.h"
 #include "services/registry/register_service.h"
@@ -16,37 +17,6 @@ ABSL_FLAG(
     database,
     "sqlite",
     "Type of database to use (sqlite, postgres)");
-
-ABSL_FLAG(
-    std::string,
-    pg_user,
-    "postgres",
-    "User to connect as to the Postgres database.");
-ABSL_FLAG(
-    std::string,
-    pg_password,
-    "password",
-    "User password to connect to the Postgres database.");
-ABSL_FLAG(
-    std::string, pg_host, "localhost", "Hostname for the Postgres database.");
-ABSL_FLAG(int, pg_port, 5432, "Port to connect to for the Postgres database.");
-ABSL_FLAG(
-    std::string, pg_database, "howling", "Name of the Postgres database.");
-ABSL_FLAG(
-    bool,
-    pg_enable_encryption,
-    false,
-    "Enable encryption for the Postgres connection.");
-ABSL_FLAG(
-    size_t,
-    db_pool_min_size,
-    1,
-    "Minimum number of database connections in pool.");
-ABSL_FLAG(
-    size_t,
-    db_pool_max_size,
-    10,
-    "Maximum number of database connections in pool.");
 
 namespace howling {
 namespace {
