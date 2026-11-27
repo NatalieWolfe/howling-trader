@@ -8,16 +8,30 @@ package howling.stock;
 
 // Available symbols for trading.
 //
-// Next tag: 7
+// Next tag: 22
 enum Symbol {
   SYMBOL_UNSPECIFIED = 0;
   AAPL = 2;
+  ANT = 7;
   AMD = 4;
-  // Intel is too low of a share price.
-  // INTC = 5;
+  AMZN = 8;
+  ARM = 9;
+  AVGO = 10;
+  COIN = 11;
+  CRWD = 12;
+  GOOGL = 13;
+  INTC = 5;
+  META = 14;
+  MRVL = 15;
+  MSFT = 16;
+  MSTF = 17;
   MU = 3;
+  NFLX = 18;
   NVDA = 1;
+  PLTR = 19;
   RIVN = 6;
+  SMCI = 20;
+  TSLA = 21;
 }
 
 message History {
