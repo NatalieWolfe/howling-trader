@@ -133,22 +133,36 @@ services:
       - "--bao_token=root"
       - "--db_encryption_key_name=default"
       - "--logging_always_flush"
-      - "--schwab_oauth_redirect_url=https://local.wolfe.dev/schwab/oauth-callback"
+      - "--schwab_oauth_redirect_url=https://den.lupine.farm/schwab/oauth-callback"
 
   gateway:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: caddy.Dockerfile
     restart: no
     ports:
       - "443:443"
+    environment:
+      NAMECHEAP_API_KEY: "${NAMECHEAP_API_KEY:-}"
+      NAMECHEAP_USER: "${NAMECHEAP_USER:-}"
+      NAMECHEAP_CLIENT_IP: "${NAMECHEAP_CLIENT_IP:-}"
+    entrypoint:
+      - /bin/sh
+      - -eu
+      - -c
+      - |
+        : "$${NAMECHEAP_API_KEY:?NAMECHEAP_API_KEY is required (set in environment or infrastructure/.env)}"
+        : "$${NAMECHEAP_USER:?NAMECHEAP_USER is required (set in environment or infrastructure/.env)}"
+        exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
     volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ../net/local.wolfe.dev.crt:/etc/nginx/certs/local.wolfe.dev.crt:ro
-      - ../net/local.wolfe.dev.key:/etc/nginx/certs/local.wolfe.dev.key:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       auth_service:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- --no-check-certificate https://127.0.0.1/status > /dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8081/status > /dev/null 2>&1 || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -278,3 +292,5 @@ services:
 volumes:
   postgres_data:
   grafana_data:
+  caddy_data:
+  caddy_config:
