@@ -27,6 +27,19 @@ sh_binary(
 )
 
 sh_binary(
+    name = "compose-run",
+    srcs = ["local-run.sh"],
+    data = [
+        "docker-compose.yml",
+        "nginx.conf",
+        "//grafana:dashboards",
+        "//grafana:provisioning",
+        "//net:local.wolfe.dev.crt",
+        "//net:local.wolfe.dev.key",
+    ],
+)
+
+sh_binary(
     name = "compose-restart",
     srcs = ["local-restart.sh"],
     data = [
@@ -67,6 +80,8 @@ multirun(
     name = "services-up",
     args = [
         "-d",
+        "bao_init",
+        "auth_service",
         "gateway",
         "grafana",
         "simulation_service",
@@ -74,6 +89,17 @@ multirun(
     commands = [
         ":load-service-images",
         ":compose-up",
+    ],
+)
+
+multirun(
+    name = "auth-refresh",
+    args = [
+        "auth_refresh",
+    ],
+    commands = [
+        "//services/oauth:auth_refresh_image_load",
+        ":compose-run",
     ],
 )
 
