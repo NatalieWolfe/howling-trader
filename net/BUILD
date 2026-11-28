@@ -51,14 +51,6 @@ cc_test(
     ],
 )
 
-exports_files(
-    [
-        "local.wolfe.dev.crt",
-        "local.wolfe.dev.key",
-    ],
-    visibility = ["//visibility:public"],
-)
-
 cc_library(
     name = "url",
     hdrs = ["url.h"],
