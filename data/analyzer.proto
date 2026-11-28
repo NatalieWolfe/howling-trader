@@ -14,6 +14,7 @@ message Analyzer {
     TYPE_UNSPECIFIED = 0;
     ATR = 8;
     BOLLINGER = 2;
+    CMF = 14;
     EMA_RIBBON = 11;
     GAP_MOMENTUM = 13;
     HOWLING = 3;
@@ -40,6 +41,20 @@ message Analyzer {
     Period candle_period = 4;
   }
   message Bollinger {}
+  message Cmf {
+    // Required. Aggregation period to sample.
+    Period period = 1;
+    // Optional. Number of bars in the rolling lookback window. Default 21.
+    int32 lookback_periods = 2;
+    // Optional. Deadzone threshold around zero in [0.0, 1.0). Default 0.05.
+    double threshold = 3;
+    // Optional. Multiplier applied to signal magnitude for confidence.
+    // Default 2.0.
+    double confidence_scaler = 4;
+    // Optional. Enable bearish price-vs-CMF divergence detection.
+    // Default false.
+    bool enable_divergence_check = 5;
+  }
   message EmaRibbon {
     // Optional. EMA periods forming the ribbon (at least two positive unique
     // values). Defaults to [9, 21, 50].
@@ -151,6 +166,7 @@ message Analyzer {
   oneof type {
     Atr atr = 8;
     Bollinger bollinger = 2;
+    Cmf cmf = 14;
     EmaRibbon ema_ribbon = 11;
     GapMomentum gap_momentum = 13;
     Howling howling = 3;
