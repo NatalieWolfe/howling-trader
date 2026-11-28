@@ -11,10 +11,11 @@ ABSL_DECLARE_FLAG(std::string, schwab_oauth_redirect_url);
 namespace howling::schwab {
 
 /**
- * @brief Fetches Schwab API secrets from the security client and injects them
- * into the global configuration via absl::SetFlag.
+ * @brief Fetches Schwab API secrets from the security client, injects them
+ * into the global configuration via absl::SetFlag, and validates that all
+ * required Schwab flags are non-empty.
  *
- * @throws std::runtime_error on failure.
+ * @throws std::runtime_error on failure or if any required flags are empty.
  */
 void fetch_schwab_secrets();
 

@@ -47,16 +47,28 @@ services:
       VAULT_ADDR: http://bao:8200
       BAO_TOKEN: root
       VAULT_TOKEN: root
+      # Required secrets (provide via environment or infrastructure/.env; see
+      # infrastructure/.env.example).
+      SCHWAB_API_KEY: "${SCHWAB_API_KEY:-}"
+      SCHWAB_API_SECRET: "${SCHWAB_API_SECRET:-}"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:-}"
+      TELEGRAM_CHAT_ID: "${TELEGRAM_CHAT_ID:-}"
+      BAO_BACKUP_KEY: "${BAO_BACKUP_KEY:-}"
     entrypoint:
       - /bin/sh
+      - -eu
       - -c
       - |
-        bao kv put secret/howling/prod/schwab api_key="${SCHWAB_API_KEY:-}" api_secret="${SCHWAB_API_SECRET:-}"
-        bao kv put secret/howling/prod/telegram token="${TELEGRAM_BOT_TOKEN:-}" chat_id="${TELEGRAM_CHAT_ID:-}"
+        : "$${SCHWAB_API_KEY:?SCHWAB_API_KEY is required (set in environment or infrastructure/.env)}"
+        : "$${SCHWAB_API_SECRET:?SCHWAB_API_SECRET is required (set in environment or infrastructure/.env)}"
+        : "$${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required (set in environment or infrastructure/.env)}"
+        : "$${TELEGRAM_CHAT_ID:?TELEGRAM_CHAT_ID is required (set in environment or infrastructure/.env)}"
+        bao kv put secret/howling/prod/schwab api_key="$${SCHWAB_API_KEY}" api_secret="$${SCHWAB_API_SECRET}"
+        bao kv put secret/howling/prod/telegram token="$${TELEGRAM_BOT_TOKEN}" chat_id="$${TELEGRAM_CHAT_ID}"
         bao kv put secret/howling/prod/database username="postgres" password="password"
         bao kv put secret/howling/admin/database username="postgres" password="password"
         bao secrets enable transit || true
-        bao write transit/restore/default backup="${BAO_BACKUP_KEY:-}" force=true || bao write -f transit/keys/default
+        bao write transit/restore/default backup="$${BAO_BACKUP_KEY}" force=true || bao write -f transit/keys/default
         bao secrets enable pki || true
         bao secrets tune -max-lease-ttl=87600h pki || true
         bao write pki/root/generate/internal common_name="howling.local" ttl=87600h || true

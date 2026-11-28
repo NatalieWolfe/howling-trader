@@ -31,6 +31,20 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "configuration_test",
+    srcs = ["configuration_test.cc"],
+    deps = [
+        ":configuration",
+        "//services:mock_security",
+        "//services/registry:register_service",
+        "//services/registry:test_utils",
+        "@abseil-cpp//absl/flags:flag",
+        "@googletest//:gtest_main",
+        "@jsoncpp",
+    ],
+)
+
 cc_library(
     name = "oauth",
     srcs = ["oauth.cc"],
