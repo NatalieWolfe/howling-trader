@@ -34,9 +34,8 @@ TEST(EscapeMarkdownV2, FullSet) {
 }
 
 TEST(EscapeMarkdownV2, Mixed) {
-  std::string input = "Check out: https://howling-oauth.wolfe.dev/callback";
-  std::string expected =
-      R"(Check out: https://howling\-oauth\.wolfe\.dev/callback)";
+  std::string input = "Check out: https://den.lupine.farm/callback";
+  std::string expected = R"(Check out: https://den\.lupine\.farm/callback)";
   EXPECT_EQ(escape_markdown_v2(input), expected);
 }
 

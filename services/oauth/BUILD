@@ -93,6 +93,7 @@ cc_test(
         "//services/db/schema:auth_token",
         "//services/oauth/proto:auth_service_cc_grpc",
         "@abseil-cpp//absl/flags:flag",
+        "@abseil-cpp//absl/flags:reflection",
         "@googletest//:gtest_main",
         "@grpc//:grpc++",
     ],

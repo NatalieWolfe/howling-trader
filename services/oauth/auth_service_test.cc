@@ -6,6 +6,7 @@
 #include <optional>
 
 #include "absl/flags/flag.h"
+#include "absl/flags/reflection.h"
 #include "api/schwab/configuration.h"
 #include "google/protobuf/empty.pb.h"
 #include "grpcpp/grpcpp.h"
@@ -31,8 +32,7 @@ protected:
     absl::SetFlag(&FLAGS_schwab_api_key_id, "test_id");
     absl::SetFlag(&FLAGS_schwab_api_key_secret, "test_secret");
     absl::SetFlag(
-        &FLAGS_schwab_oauth_redirect_url,
-        "https://howling-auth.wolfe.dev/callback");
+        &FLAGS_schwab_oauth_redirect_url, "https://den.lupine.farm/callback");
 
     _service = std::make_unique<auth_service>(_db);
     grpc::ServerBuilder builder;
@@ -44,6 +44,7 @@ protected:
 
   void TearDown() override { _server->Shutdown(); }
 
+  absl::FlagSaver _flag_saver;
   mock_database _db;
   std::unique_ptr<auth_service> _service;
   std::unique_ptr<grpc::Server> _server;
