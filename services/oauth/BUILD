@@ -30,15 +30,9 @@ cc_test(
 cc_test(
     name = "auth_service_integration_test",
     srcs = ["auth_service_integration_test.cc"],
-    data = [
-        "//net:local.wolfe.dev.crt",
-        "//net:local.wolfe.dev.key",
-    ],
     deps = [
         ":auth_service",
-        ":mock_telegram_server",
-        "//environment:runfiles",
-        "//files",
+        "//net:test_tls_cert",
         "//services:mock_database",
         "//services/db/schema:auth_token",
         "//services/oauth/proto:auth_service_cc_grpc",
@@ -140,13 +134,9 @@ cc_library(
     testonly = True,
     srcs = ["mock_telegram_server.cc"],
     hdrs = ["mock_telegram_server.h"],
-    data = [
-        "//net:local.wolfe.dev.crt",
-        "//net:local.wolfe.dev.key",
-    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//environment:runfiles",
+        "//net:test_tls_cert",
         "@abseil-cpp//absl/flags:flag",
         "@boost.asio",
         "@boost.beast",

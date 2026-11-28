@@ -1,16 +1,18 @@
 #include "services/oauth/mock_telegram_server.h"
 
-#include <iostream>
-#include <memory>
+#include <cstdint>
+#include <exception>
 #include <string>
 #include <thread>
+#include <utility>
 
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "boost/asio.hpp"
+#include "boost/asio/buffer.hpp"
 #include "boost/asio/ssl.hpp"
 #include "boost/beast.hpp"
-#include "environment/runfiles.h"
+#include "net/test_tls_cert.h"
 
 ABSL_DECLARE_FLAG(std::string, telegram_bot_token);
 ABSL_DECLARE_FLAG(std::string, telegram_chat_id);
@@ -28,10 +30,10 @@ mock_telegram_server::mock_telegram_server(bool configure_flags)
     : _acceptor(_ioc, {asio::ip::make_address("127.0.0.1"), 0}),
       _ssl_ctx(ssl::context::tlsv12_server) {
   _port = _acceptor.local_endpoint().port();
-  _ssl_ctx.use_certificate_chain_file(
-      runfile("howling-trader/net/local.wolfe.dev.crt"));
-  _ssl_ctx.use_private_key_file(
-      runfile("howling-trader/net/local.wolfe.dev.key"), ssl::context::pem);
+  net::testing::self_signed_cert cert =
+      net::testing::generate_self_signed_cert();
+  _ssl_ctx.use_certificate_chain(asio::buffer(cert.cert_pem));
+  _ssl_ctx.use_private_key(asio::buffer(cert.key_pem), ssl::context::pem);
 
   if (configure_flags) {
     absl::SetFlag(&FLAGS_telegram_bot_token, std::string{BOT_TOKEN});

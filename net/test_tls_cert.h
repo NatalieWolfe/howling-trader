@@ -14,8 +14,9 @@ struct self_signed_cert {
 
 /**
  * @brief Generates an ephemeral self-signed ECDSA TLS certificate for local
- * loopback tests.
+ * loopback tests with `DNS:localhost` and `IP:127.0.0.1` subject alternative
+ * names.
  */
-self_signed_cert generate_self_signed_cert();
+[[nodiscard]] self_signed_cert generate_self_signed_cert();
 
 } // namespace howling::net::testing

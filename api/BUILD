@@ -25,10 +25,6 @@ cc_library(
     name = "schwab",
     srcs = ["schwab.cc"],
     hdrs = ["schwab.h"],
-    data = [
-        "//net:local.wolfe.dev.crt",
-        "//net:local.wolfe.dev.key",
-    ],
     visibility = ["//visibility:public"],
     deps = [
         "//api/schwab:connect",

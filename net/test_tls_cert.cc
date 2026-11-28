@@ -71,6 +71,28 @@ x509_ptr create_self_signed_x509(EVP_PKEY* pkey) {
     throw std::runtime_error("Failed to add Basic Constraints extension.");
   }
 
+  X509V3_CTX extension_context{};
+  X509V3_set_ctx(
+      &extension_context,
+      /*issuer=*/x509.get(),
+      /*subject=*/x509.get(),
+      /*req=*/nullptr,
+      /*crl=*/nullptr,
+      /*flags=*/0);
+  X509V3_set_ctx_nodb(&extension_context);
+  std::unique_ptr<X509_EXTENSION, decltype(&X509_EXTENSION_free)> san_extension{
+      X509V3_EXT_nconf_nid(
+          /*conf=*/nullptr,
+          &extension_context,
+          NID_subject_alt_name,
+          "DNS:localhost,IP:127.0.0.1"),
+      &X509_EXTENSION_free};
+  if (!san_extension ||
+      X509_add_ext(x509.get(), san_extension.get(), /*loc=*/-1) != 1) {
+    throw std::runtime_error(
+        "Failed to add Subject Alternative Name extension.");
+  }
+
   if (X509_sign(x509.get(), pkey, EVP_sha256()) == 0) {
     throw std::runtime_error("Failed to sign test X509 certificate.");
   }

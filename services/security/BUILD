@@ -29,15 +29,10 @@ cc_library(
 cc_test(
     name = "bao_client_test",
     srcs = ["bao_client_test.cc"],
-    data = [
-        "//net:local.wolfe.dev.crt",
-        "//net:local.wolfe.dev.key",
-    ],
     deps = [
         ":bao_client",
         ":certificate_bundle",
         ":mock_bao_server",
-        "//environment:runfiles",
         "//functional:retry",
         "//strings:json",
         "@abseil-cpp//absl/flags:flag",
@@ -52,17 +47,28 @@ cc_library(
     testonly = True,
     srcs = ["mock_bao_server.cc"],
     hdrs = ["mock_bao_server.h"],
-    data = [
-        "//net:local.wolfe.dev.crt",
-        "//net:local.wolfe.dev.key",
-    ],
     visibility = ["//visibility:public"],
     deps = [
-        "//environment:runfiles",
+        ":bao_client",
+        "//net:test_tls_cert",
         "@abseil-cpp//absl/flags:flag",
         "@abseil-cpp//absl/strings",
         "@boost.asio",
         "@boost.beast",
+    ],
+)
+
+cc_test(
+    name = "mock_bao_server_test",
+    size = "small",
+    srcs = ["mock_bao_server_test.cc"],
+    deps = [
+        ":mock_bao_server",
+        "@boost.asio",
+        "@boost.beast",
+        "@googletest//:gtest_main",
+        "@openssl//:crypto",
+        "@openssl//:ssl",
     ],
 )
 
