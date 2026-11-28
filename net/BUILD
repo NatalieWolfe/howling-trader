@@ -40,6 +40,17 @@ cc_library(
     ],
 )
 
+cc_test(
+    name = "test_tls_cert_test",
+    size = "small",
+    srcs = ["test_tls_cert_test.cc"],
+    deps = [
+        ":test_tls_cert",
+        "@googletest//:gtest_main",
+        "@openssl//:crypto",
+    ],
+)
+
 exports_files(
     [
         "local.wolfe.dev.crt",

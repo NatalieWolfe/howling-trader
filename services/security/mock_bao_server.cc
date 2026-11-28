@@ -1,18 +1,18 @@
 #include "services/security/mock_bao_server.h"
 
-#include <iostream>
-#include <memory>
 #include <string>
 #include <thread>
+#include <type_traits>
 #include <utility>
 
 #include "absl/flags/declare.h"
 #include "absl/flags/flag.h"
 #include "absl/strings/str_cat.h"
 #include "boost/asio.hpp"
+#include "boost/asio/buffer.hpp"
 #include "boost/asio/ssl.hpp"
 #include "boost/beast.hpp"
-#include "environment/runfiles.h"
+#include "net/test_tls_cert.h"
 
 ABSL_DECLARE_FLAG(std::string, bao_address);
 
@@ -91,10 +91,11 @@ mock_bao_server::mock_bao_server(bool configure_flags, bool use_ssl)
       _ssl_ctx(ssl::context::tlsv12_server), _use_ssl(use_ssl) {
   _port = _acceptor.local_endpoint().port();
   if (_use_ssl) {
-    _ssl_ctx.use_certificate_chain_file(
-        runfile("howling-trader/net/local.wolfe.dev.crt"));
-    _ssl_ctx.use_private_key_file(
-        runfile("howling-trader/net/local.wolfe.dev.key"), ssl::context::pem);
+    net::testing::self_signed_cert cert =
+        net::testing::generate_self_signed_cert();
+    _ca_cert_pem = cert.cert_pem;
+    _ssl_ctx.use_certificate_chain(asio::buffer(cert.cert_pem));
+    _ssl_ctx.use_private_key(asio::buffer(cert.key_pem), ssl::context::pem);
   }
 
   if (configure_flags) {

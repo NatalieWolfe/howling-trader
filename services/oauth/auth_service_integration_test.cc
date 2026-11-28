@@ -1,15 +1,13 @@
 #include <chrono>
-#include <fstream>
+#include <future>
 #include <memory>
-#include <sstream>
+#include <optional>
 #include <string>
-#include <string_view>
 
-#include "absl/flags/flag.h"
-#include "environment/runfiles.h"
-#include "files/files.h"
 #include "google/protobuf/empty.pb.h"
 #include "grpcpp/grpcpp.h"
+#include "grpcpp/security/server_credentials.h"
+#include "net/test_tls_cert.h"
 #include "services/db/schema/auth_token.h"
 #include "services/mock_database.h"
 #include "services/oauth/auth_service.h"
@@ -23,13 +21,12 @@ namespace {
 
 using ::testing::Return;
 
-auto make_server_credentials(std::string_view cert) {
+std::shared_ptr<grpc::ServerCredentials>
+make_server_credentials(const net::testing::self_signed_cert& cert) {
   grpc::SslServerCredentialsOptions ssl_opts;
-  ssl_opts.pem_root_certs = cert;
+  ssl_opts.pem_root_certs = cert.cert_pem;
   ssl_opts.pem_key_cert_pairs.push_back(
-      {.private_key =
-           files::read_file(runfile("howling-trader/net/local.wolfe.dev.key")),
-       .cert_chain = std::string{cert}});
+      {.private_key = cert.key_pem, .cert_chain = cert.cert_pem});
   return grpc::SslServerCredentials(ssl_opts);
 }
 
@@ -37,8 +34,8 @@ class AuthServiceIntegrationTest : public ::testing::Test {
 protected:
   void SetUp() override {
     _service = std::make_unique<auth_service>(_db);
-    std::string cert =
-        files::read_file(runfile("howling-trader/net/local.wolfe.dev.crt"));
+    net::testing::self_signed_cert cert =
+        net::testing::generate_self_signed_cert();
 
     grpc::ServerBuilder builder;
     builder.AddListeningPort(
@@ -47,9 +44,9 @@ protected:
     _server = builder.BuildAndStart();
 
     grpc::SslCredentialsOptions ssl_call_opts;
-    ssl_call_opts.pem_root_certs = cert;
+    ssl_call_opts.pem_root_certs = cert.cert_pem;
     grpc::ChannelArguments args;
-    args.SetSslTargetNameOverride("local.wolfe.dev");
+    args.SetSslTargetNameOverride("localhost");
     _channel = grpc::CreateCustomChannel(
         "127.0.0.1:" + std::to_string(_port),
         grpc::SslCredentials(ssl_call_opts),

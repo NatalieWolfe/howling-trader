@@ -24,6 +24,10 @@ public:
   }
 
   unsigned short port() const { return _port; }
+  /**
+   * @brief Returns the PEM-encoded CA certificate when SSL is enabled.
+   */
+  [[nodiscard]] const std::string& ca_cert_pem() const { return _ca_cert_pem; }
   const std::string& last_request_body() const { return _last_request_body; }
 
 private:
@@ -32,6 +36,7 @@ private:
   boost::asio::ssl::context _ssl_ctx;
   bool _use_ssl;
   unsigned short _port;
+  std::string _ca_cert_pem;
   int _secret_not_found_count = 0;
   std::atomic<bool> _stopped = false;
   std::string _last_request_body;
