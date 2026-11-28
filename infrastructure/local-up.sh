@@ -11,6 +11,6 @@ fi
 
 # Execute docker compose up, forwarding any additional command-line arguments.
 # Local secrets (SCHWAB_API_KEY, SCHWAB_API_SECRET, TELEGRAM_BOT_TOKEN,
-# TELEGRAM_CHAT_ID) can be provided via environment variables or
-# infrastructure/.env (see infrastructure/.env.example).
-exec docker compose -f docker-compose.yml up --force-recreate "$@"
+# TELEGRAM_CHAT_ID, NAMECHEAP_API_KEY, NAMECHEAP_USER) can be provided via
+# environment variables or infrastructure/.env (see infrastructure/.env.example).
+exec docker compose -f docker-compose.yml up --build --force-recreate "$@"

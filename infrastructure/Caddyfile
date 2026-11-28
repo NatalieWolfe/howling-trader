@@ -1,0 +1,41 @@
+{
+	auto_https disable_redirects
+	servers {
+		protocols h1 h2
+	}
+	acme_dns namecheap {
+		api_key {env.NAMECHEAP_API_KEY}
+		user {env.NAMECHEAP_USER}
+		client_ip {env.NAMECHEAP_CLIENT_IP}
+	}
+}
+
+# Loopback-only HTTP healthcheck endpoint for Docker Compose, avoiding TLS SNI
+# mismatch and ACME certificate issuance startup coupling.
+http://127.0.0.1:8081 {
+	bind 127.0.0.1
+
+	handle /status {
+		reverse_proxy auth_service:8080
+	}
+
+	handle {
+		respond 404
+	}
+}
+
+den.lupine.farm {
+	# Explicit path-based handle blocks so future service routes (e.g.
+	# /monitoring/*) can be added cleanly alongside OAuth endpoints.
+	handle /status {
+		reverse_proxy auth_service:8080
+	}
+
+	handle /schwab/* {
+		reverse_proxy auth_service:8080
+	}
+
+	handle {
+		reverse_proxy auth_service:8080
+	}
+}

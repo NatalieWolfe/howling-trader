@@ -7,22 +7,24 @@ package_group(
 )
 
 exports_files([
+    ".dockerignore",
+    "Caddyfile",
+    "caddy.Dockerfile",
     "containers.bzl",
     "docker-compose.yml",
     "multirun.bzl",
-    "nginx.conf",
 ])
 
 sh_binary(
     name = "compose-up",
     srcs = ["local-up.sh"],
     data = [
+        ".dockerignore",
+        "Caddyfile",
+        "caddy.Dockerfile",
         "docker-compose.yml",
-        "nginx.conf",
         "//grafana:dashboards",
         "//grafana:provisioning",
-        "//net:local.wolfe.dev.crt",
-        "//net:local.wolfe.dev.key",
     ],
 )
 
@@ -30,12 +32,12 @@ sh_binary(
     name = "compose-run",
     srcs = ["local-run.sh"],
     data = [
+        ".dockerignore",
+        "Caddyfile",
+        "caddy.Dockerfile",
         "docker-compose.yml",
-        "nginx.conf",
         "//grafana:dashboards",
         "//grafana:provisioning",
-        "//net:local.wolfe.dev.crt",
-        "//net:local.wolfe.dev.key",
     ],
 )
 
